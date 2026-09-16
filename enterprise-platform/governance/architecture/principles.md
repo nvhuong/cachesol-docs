@@ -70,10 +70,19 @@ Tài liệu này định nghĩa các nguyên tắc cốt lõi để xây dựng 
 - **Lý do:** CacheSol là SaaS B2B, mỗi tenant là 1 công ty/tập đoàn — phải cô lập data tuyệt đối.
 - **Chi tiết:** Xem `multi-tenant.md`.
 
-## 17. Identity từ Keycloak (không tự build)
-- **Mô tả:** Mọi tính năng liên quan identity (login/register/LDAP/SSO/OAuth2/MFA) **delegate** cho Keycloak. `iam-service` chỉ làm JWT verify (JWK cache) + nhận webhook events. User/role/permission CRUD thuộc `tenant-config-service`.
-- **Lý do:** Identity cực kỳ phức tạp và rủi ro bảo mật cao — không nên tự build khi đã có giải pháp open-source trưởng thành. Tách user CRUD sang `tenant-config` để IAM service giữ vai trò siêu mỏng (chỉ verify JWT), dễ scale, dễ audit.
-- **Chi tiết:** Xem `keycloak.md`, [`../src/backend/platform/iam/README.md`](../src/backend/platform/iam/README.md), [`../src/backend/platform/tenant-config/README.md`](../src/backend/platform/tenant-config/README.md).
+## 17. Identity từ Keycloak + tách user/role ra tenant-manager
+- **Mô tả:** Mọi tính năng liên quan identity (login/register/LDAP/SSO/OAuth2/MFA) **delegate** cho Keycloak. `iam-service` chỉ làm JWT verify (JWK cache) + nhận webhook events. User CRUD → `tenant-manager`. Role/Permission CRUD → `tenant-manager`. Tenant metadata + mini-apps → `platform-registry`.
+- **Lý do:** Identity cực kỳ phức tạp và rủi ro bảo mật cao — không nên tự build. Tách user/role ra `tenant-manager` (per-tenant schema) để cô lập data giữa các tenant.
+- **Chi tiết:** Xem `keycloak.md`, [`../src/backend/platform/iam/README.md`](../src/backend/platform/iam/README.md), [`../src/backend/platform/platform-registry/README.md`](../src/backend/platform/platform-registry/README.md), [`../src/backend/platform/tenant-manager/README.md`](../src/backend/platform/tenant-manager/README.md).
+
+## 19. API Patterns — 4 Prefix Convention
+- **Mô tả:** Mỗi backend service phải expose 4 loại API prefix riêng biệt, KHÔNG trộn lẫn:
+  - `/client-api/v1/*` — Web/Mobile (user JWT + RBAC)
+  - `/service-api/v1/*` — Service-to-service (service JWT hoặc forward user JWT + scope)
+  - `/integration-api/v1/*` — External system webhook (HMAC signature)
+  - `/public-api/v1/*` — Public, no auth (health check, public catalog)
+- **Lý do:** Audit rõ ràng (biết caller là user/service/external), security policy riêng per prefix, rate limit chính xác.
+- **Chi tiết:** Xem `api-patterns.md`.
 
 ## 18. Platform Service Tối Giản
 - **Mô tả:** Chỉ giữ lại platform service khi nó thật sự cần HTTP API riêng + DB riêng. Mọi thứ có thể là library (shared-common) hoặc gộp vào application → đều KHÔNG làm service riêng.

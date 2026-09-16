@@ -92,9 +92,10 @@ src/backend/
 │   ├── finance/
 │   └── marketing/
 │
-├── platform/                  ← Microservices nền tảng (CHỈ 7 — xem ARCHITECTURE.md §4)
+├── platform/                  ← Microservices nền tảng (CHỈ 8 — xem ARCHITECTURE.md §4)
 │   ├── iam/                   # JWT verify only (Keycloak JWK cache + webhook receiver)
-│   ├── tenant-config/         # ★ Tenants, users (qua Keycloak Admin API), roles/permissions, mini-apps registry
+│   ├── platform-registry/     # ★ Tenants registry, mini-apps catalog, org-root mapping (cross-tenant + per-tenant)
+│   ├── tenant-manager/        # ★ Users (qua Keycloak Admin API), roles/permissions (per-tenant schema)
 │   ├── configuration/         # Feature flags + system params
 │   ├── master-data/           # Danh mục dùng chung (country, currency, unit...)
 │   ├── notification/          # Đa kênh: email, SMS, push, in-app
@@ -107,8 +108,8 @@ src/backend/
     └── shared-security/       # KeycloakJwtDecoder, TenantContextFilter, @PreAuthorize
 ```
 
-> **So với v2:** Từ 15 platform services đã giảm xuống **7** (xoá `organization`, `employee`, `customer`, `audit`, `file`, `search`, `reporting`, `scheduler`, `integration`).
-> Tách thêm `tenant-config` (user/role/mini-app management) để giữ IAM service siêu gọn (chỉ JWT verify).
+> **So với v2:** Từ 15 platform services đã giảm xuống **8** (xoá `organization`, `employee`, `customer`, `audit`, `file`, `search`, `reporting`, `scheduler`, `integration`).
+> Tách `iam` (JWT verify only), `platform-registry` (tenants + mini-apps + org-root), `tenant-manager` (users + roles per-tenant) — mỗi service có schema riêng phù hợp.
 
 ### 1.2 Cấu trúc từng Application
 

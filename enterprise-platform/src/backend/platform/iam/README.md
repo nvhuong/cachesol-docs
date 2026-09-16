@@ -2,9 +2,9 @@
 
 ## Vai trò
 
-IAM Service **CHỈ** làm 1 việc chính: **verify JWT do Keycloak phát hành** và cung cấp JWK cache cho gateway. Nó KHÔNG quản lý user, role, hay tenant metadata — tất cả những thứ đó nằm ở **tenant-config service** và **Keycloak** trực tiếp.
+IAM Service **CHỈ** làm 1 việc chính: **verify JWT do Keycloak phát hành** và cung cấp JWK cache cho gateway. Nó KHÔNG quản lý user, role, hay tenant metadata — tất cả những thứ đó nằm ở **`platform-registry`**, **`tenant-manager`**, và **Keycloak** trực tiếp.
 
-> **Lý do tách:** Keycloak đã có sẵn User/Role management UI + Admin API. Tự build thêm trong IAM là duplicate. Tất cả user/role/permission nghiệp vụ → tenant-config.
+> **Lý do tách:** Keycloak đã có sẵn User/Role management UI + Admin API. Tự build thêm trong IAM là duplicate.
 
 ## Trách nhiệm (rất gọn)
 
@@ -13,23 +13,21 @@ IAM Service **CHỈ** làm 1 việc chính: **verify JWT do Keycloak phát hành
 | 1 | Verify JWT signature (RS256) với Keycloak public key | JWK cache, refresh mỗi 1h |
 | 2 | Verify JWT claims (iss, aud, exp, nbf) | Validate trước khi pass xuống service khác |
 | 3 | Cache JWK public key (rotating keys) | Caffeine cache TTL 1h |
-| 4 | Nhận Keycloak webhook (user lifecycle events) | POST /webhooks/keycloak → log + forward Kafka |
-| 5 | (Optional) Cung cấp endpoint `/api/v1/keys/jwks.json` cho client-side verify | Mirror của Keycloak JWKS |
+| 4 | Nhận Keycloak webhook (user lifecycle events) → forward Kafka | `POST /integration-api/v1/webhooks/keycloak` |
 
 ## KHÔNG thuộc IAM (chuyển sang chỗ khác)
 
 | Tính năng | Service mới |
 |-----------|-------------|
-| CRUD user, user_extra mapping | **tenant-config** |
-| CRUD role/permission, user_app_roles | **tenant-config** |
-| Tenant registry, org units metadata | **tenant-config** |
-| Mini-apps registry | **tenant-config** |
+| CRUD user, users_extra mapping | **tenant-manager** |
+| CRUD role/permission, user_app_roles | **tenant-manager** |
+| Tenant registry, mini-apps catalog | **platform-registry** |
 | LDAP/SSO config | Keycloak (trực tiếp) |
 | Login/register UI | Keycloak theme |
 
 ## Bounded Context (database)
 
-IAM service về cơ bản **không cần DB riêng**. Nếu cần lưu trữ thì chỉ:
+IAM service về cơ bản **không cần DB riêng**. Nếu cần lưu trữ thì chỉ ở schema `public`:
 
 ```sql
 -- public.keycloak_webhook_events (audit cho events nhận từ Keycloak)
@@ -40,27 +38,23 @@ CREATE TABLE keycloak_webhook_events (
     keycloak_user_id UUID NULL,
     payload         JSONB NOT NULL,
     received_at     TIMESTAMPTZ NOT NULL,
-    processed       BOOLEAN NOT NULL DEFAULT FALSE,  -- forward sang Kafka chưa
+    processed       BOOLEAN NOT NULL DEFAULT FALSE,
     error_msg       TEXT NULL
 );
 ```
 
-## API Overview
+## API (4 prefix pattern)
 
 ```
-# Health
-GET  /health/live
-GET  /health/ready
+# INTEGRATION-API — Keycloak SPI gọi vào
+POST   /integration-api/v1/webhooks/keycloak        → Nhận event từ Keycloak SPI
+                                                       (verify HMAC signature trước khi xử lý)
 
-# JWK mirror (cho client-side JWT verify)
-GET  /api/v1/keys/jwks.json                    → Keycloak public keys (cache 1h)
+# PUBLIC-API — Health check (không auth)
+GET    /public-api/v1/health/live
+GET    /public-api/v1/health/ready
 
-# Webhook (Keycloak SPI gọi vào)
-POST /webhooks/keycloak                        → Nhận event từ Keycloak SPI
-
-# (Internal) JWKS for service-to-service verify
-# Mỗi microservice KHÔNG gọi IAM mà dùng trực tiếp Keycloak JWKS endpoint.
-# IAM chỉ làm layer bảo vệ tại gateway.
+# (Không có /client-api hay /service-api ở IAM service)
 ```
 
 ## JWT Verify (shared-security library)
@@ -136,29 +130,26 @@ services:
       - "8080:8080"
 ```
 
-## Keycloak Realms
+## Keycloak Realms — 1 Realm per tenant
 
-### Chiến lược: 1 Realm per tenant (cô lập user pool)
-
-Mỗi tenant = 1 Keycloak realm (`acme`, `globex`, `initech`). Realm URL: `https://kc.platform.com/realms/acme`.
+Mỗi tenant = 1 Keycloak realm (`tenant-acme`, `tenant-globex`, `tenant-initech`). **Realm URL**: `https://kc.platform.com/realms/tenant-acme`.
 
 **Lý do chọn per-realm:**
 - User pool cô lập hoàn toàn giữa các công ty (bảo mật tốt hơn).
 - LDAP Federation per-tenant (mỗi công ty có 1 LDAP server riêng).
 - Theme riêng (logo, màu sắc) nếu cần.
-
-**Trade-off:** Nặng Keycloak hơn (~50MB RAM / realm). Chấp nhận được.
+- Custom login flow per-tenant (qua `login_flow_alias` lưu trong `tenants`).
 
 ### Realm bootstrap
 
-Mỗi tenant mới được tạo qua **tenant-config service** → gọi Keycloak Admin API tạo realm:
+`platform-registry` gọi Keycloak Admin API khi tạo tenant mới:
 
 ```java
-// tenant-config service gọi sang Keycloak
 POST /admin/realms
 {
   "realm": "tenant-acme",
   "enabled": true,
+  "displayName": "ACME Corporation",
   "loginTheme": "cachesol",
   "userFederationProviders": [
     {
@@ -171,44 +162,45 @@ POST /admin/realms
         "usernameLDAPAttribute": ["sAMAccountName"]
       }
     }
-  ]
+  ],
+  "browserFlow": "acme-flow"
 }
 ```
 
 ## Custom Login Flow per tenant
 
-**Mặc định:** Username + Password (Keycloak built-in flow `browser`).
-
-**Tuỳ chỉnh theo từng công ty (sau này):** Keycloak hỗ trợ tạo custom flow qua Admin API:
+Keycloak hỗ trợ custom Authentication Flow qua Admin API:
 
 ```
-POST /admin/realms/{realm}/authentication/flows
-  - Flow "acme-strict": username → password → email-otp → success
-  - Flow "globex-simple": username → password → success
-  - Flow "acme-sso-only": org-mail-detection → saml-redirect → success
+Flow "acme-strict":    username → password → email-otp → success
+Flow "globex-simple":  username → password → success
+Flow "initech-sso":    saml-redirect (Okta) → success
 ```
 
-→ tenant-config lưu `login_flow_id` của mỗi tenant → bind với realm qua Keycloak API.
+→ `tenants.login_flow_alias` lưu flow key → bind với realm qua Keycloak API.
 
-## SSO qua email công ty (Browser Flow + Conditional OTP)
+Sau này customize:
+- Email-only (magic link)
+- SMS OTP
+- WebAuthn (passkey)
+- Certificate (smartcard)
 
-Keycloak có sẵn **Conditional Authenticator** — phát hiện email domain → bật SSO hoặc bắt MFA.
+## SSO qua email công ty (Conditional Authenticator)
+
+Keycloak có Conditional Authenticator — phát hiện email domain → bật SSO hoặc bắt MFA:
 
 ```
 Browser flow:
   1. Username/Password Form
-  2. Conditional - Level:  ☐ Username/Password
-  3. Conditional - Authenticator: ☐ Identity Provider Redirect
+  2. Conditional - Authenticator: Identity Provider Redirect
        Condition: User Attribute → email → matches-regex → "@acme\\.com$"
        THEN: redirect to IdP "acme-saml" (SAML SSO tới Okta/Azure-AD của ACME)
 ```
 
 → User có email `@acme.com` login → tự redirect qua SSO công ty ACME.
-→ User có email bất kỳ khác → login username/password bình thường.
+→ User email khác → login username/password bình thường.
 
-## LDAP Sync
-
-Keycloak User Federation tự động sync:
+## LDAP Sync (Keycloak User Federation)
 
 ```
 Realm → User Federation → ldap provider
@@ -218,23 +210,22 @@ Realm → User Federation → ldap provider
   Cache Policy: NO_CACHE  # luôn query LDAP khi login
 ```
 
-→ Nhân viên mới được thêm vào AD công ty ACME → tự động có user trong realm `acme` → có thể login ngay.
-
 ## IAM Service Configuration
 
 ```yaml
 # application.yml (iam-service)
 keycloak:
   server-url: https://kc.platform.com
-  default-realm: cachesol-admin           # realm admin (super-user) để gọi Admin API
+  default-realm: master                    # realm admin (super-user) để gọi Admin API
   admin-client-id: admin-cli
   admin-username: ${KC_SUPER_ADMIN}
   admin-password: ${KC_SUPER_ADMIN_PASS}
 
 iam:
-  jwks-cache-ttl: 3600000                 # 1h
+  jwks-cache-ttl: 3600000                  # 1h
   webhook:
     forward-to-kafka-topic: keycloak.events.<realm>
+    hmac-secret: ${KC_WEBHOOK_HMAC_SECRET}
     max-retries: 3
 ```
 
@@ -242,10 +233,12 @@ iam:
 
 - IAM service KHÔNG lưu bất kỳ user credential nào.
 - JWT verify ngay tại gateway, IAM service KHÔNG nằm trong hot path của mọi request (gateway cache JWK 1h).
-- Webhook endpoint PHẢI có signature verification (HMAC-SHA256 từ Keycloak SPI).
+- Webhook endpoint PHẢI có HMAC signature verification (Keycloak SPI ký event với shared secret).
 
 ## Xem thêm
 
-- Tenant + user + role + mini-app registry: [`tenant-config/README.md`](../tenant-config/README.md)
-- Multi-tenant schema: [`../../../governance/architecture/multi-tenant.md`](../../../governance/architecture/multi-tenant.md)
-- JWT verify lib: [`../../shared/shared-security/`](../../shared/shared-security/)
+- API patterns (4 prefix): [`../../../governance/architecture/api-patterns.md`](../../../governance/architecture/api-patterns.md)
+- Tenants + mini-apps: [`../platform-registry/README.md`](../platform-registry/README.md)
+- User + role: [`../tenant-manager/README.md`](../tenant-manager/README.md)
+- Multi-tenant: [`../../../governance/architecture/multi-tenant.md`](../../../governance/architecture/multi-tenant.md)
+- Keycloak chi tiết: [`../../../governance/architecture/keycloak.md`](../../../governance/architecture/keycloak.md)

@@ -48,7 +48,7 @@ services:
       - 'Subdomain acme.platform.com → tenant_id=acme.'
       - 'JWT verify ngay tại gateway (cache Keycloak JWK 1h).'
 
-  # ===== PLATFORM SERVICES (CHỈ 7) =====
+  # ===== PLATFORM SERVICES (CHỈ 8) =====
   - id: iam-service
     name: 'IAM Service (Keycloak JWT Verifier)'
     domain: platform
@@ -56,29 +56,45 @@ services:
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: public — chỉ keycloak_webhook_events audit)
     port: 8081
-    api-prefix: '/api/v1'
+    api-prefix: '/integration-api/v1, /public-api/v1'
     events-published: []
     events-consumed: []
     dependencies: [keycloak, postgres]
     notes:
       - 'IAM service CHỈ verify JWT, không có user CRUD.'
-      - 'User/role CRUD do tenant-config service đảm nhiệm (qua Keycloak Admin API).'
+      - 'User/role CRUD do tenant-manager service đảm nhiệm.'
       - 'See src/backend/platform/iam/README.md.'
 
-  - id: tenant-config-service
-    name: 'Tenant Config Service'
+  - id: platform-registry-service
+    name: 'Platform Registry Service'
     domain: platform
-    description: 'Quản lý tenants, users (CRUD qua Keycloak Admin API), roles/permissions, mini-apps registry, root-org mapping.'
+    description: 'Quản lý tenants registry (cross-tenant metadata), mini-apps catalog + per-tenant enable, org-root mapping.'
     technology: 'Spring Boot 21'
-    database: PostgreSQL (schema: public)
+    database: PostgreSQL (schema: public + tenant_<slug>_platformregistry)
     port: 8082
-    api-prefix: '/api/v1'
-    events-published: ['TenantCreated', 'TenantActivated', 'TenantSuspended', 'TenantOffboarded', 'UserCreated', 'UserRoleGranted', 'MiniAppEnabled']
+    api-prefix: '/client-api/v1, /service-api/v1, /public-api/v1'
+    events-published: ['TenantCreated', 'TenantActivated', 'TenantSuspended', 'TenantOffboarded', 'MiniAppEnabled', 'MiniAppDisabled']
     events-consumed: []
     dependencies: [keycloak, postgres, kafka]
     notes:
-      - '5 bounded contexts: tenants, org_root_mapping, users, roles/permissions, mini-apps registry.'
-      - 'See src/backend/platform/tenant-config/README.md.'
+      - '3 bounded contexts: tenants, mini-apps, org-root mapping.'
+      - 'See src/backend/platform/platform-registry/README.md.'
+
+  - id: tenant-manager-service
+    name: 'Tenant Manager Service'
+    domain: platform
+    description: 'Quản lý users (CRUD qua Keycloak Admin API), roles, permissions, user_app_roles + org_scope_path. Per-tenant schema.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL (schema: tenant_<slug>_tenantmanager)
+    port: 8083
+    api-prefix: '/client-api/v1, /service-api/v1'
+    events-published: ['UserCreated', 'UserDeactivated', 'UserRoleGranted', 'UserRoleRevoked', 'RoleCreated']
+    events-consumed: []
+    dependencies: [keycloak, platform-registry-service, kafka]
+    notes:
+      - '2 bounded contexts: users, roles/permissions.'
+      - 'Mỗi tenant 1 schema riêng.'
+      - 'See src/backend/platform/tenant-manager/README.md.'
 
   - id: configuration-service
     name: 'Configuration Service'
@@ -86,8 +102,8 @@ services:
     description: 'Cross-tenant feature flags + system params + tenant-specific configs.'
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: public) + Redis cache
-    port: 8083
-    api-prefix: '/api/v1/configs'
+    port: 8084
+    api-prefix: '/client-api/v1, /service-api/v1'
     events-published: ['ConfigChanged']
     events-consumed: []
     dependencies: [postgres]
@@ -98,14 +114,11 @@ services:
     description: 'Danh mục dùng chung: country, currency, unit, payment-terms, tax-codes...'
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: public) + Redis cache
-    port: 8084
-    api-prefix: '/api/v1/master-data'
+    port: 8085
+    api-prefix: '/client-api/v1, /service-api/v1, /public-api/v1'
     events-published: ['MasterDataUpdated']
     events-consumed: []
     dependencies: [postgres]
-    notes:
-      - 'Dữ liệu seed sẵn qua Flyway.'
-      - 'Có thể move sang per-tenant nếu tenant muốn custom.'
 
   - id: notification-service
     name: 'Notification Service'
@@ -113,8 +126,8 @@ services:
     description: 'Gửi đa kênh: email (SendGrid/SMTP), SMS (Twilio/VNFPT), in-app (WebSocket), push (Firebase).'
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_notif + public registry)
-    port: 8085
-    api-prefix: '/api/v1/notifications'
+    port: 8086
+    api-prefix: '/client-api/v1, /service-api/v1, /integration-api/v1'
     events-published: ['NotificationSent', 'NotificationFailed']
     events-consumed: ['*']
     dependencies: [postgres, kafka]
@@ -125,8 +138,8 @@ services:
     description: 'Engine xử lý quy trình nghiệp vụ dài hơi (BPMN-lite, state machine).'
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_workflow)
-    port: 8086
-    api-prefix: '/api/v1/workflows'
+    port: 8087
+    api-prefix: '/client-api/v1, /service-api/v1'
     events-published: ['ProcessStarted', 'ProcessCompleted', 'UserTaskCreated']
     events-consumed: []
     dependencies: [postgres]
@@ -137,11 +150,11 @@ services:
     description: 'Ticket duyệt gắn với workflow user-tasks, lịch sử duyệt, comment, attachment.'
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_approval)
-    port: 8087
-    api-prefix: '/api/v1/approvals'
+    port: 8088
+    api-prefix: '/client-api/v1, /service-api/v1'
     events-published: ['ApprovalRequested', 'ApprovalApproved', 'ApprovalRejected']
     events-consumed: ['UserTaskCreated']
-    dependencies: [workflow-service, tenant-config-service]
+    dependencies: [workflow-service, tenant-manager-service]
 
   # ===== APPLICATIONS (nghiệp vụ) =====
   - id: hrm-service
@@ -151,10 +164,10 @@ services:
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_hrm)
     port: 8090
-    api-prefix: '/api/v1'
+    api-prefix: '/client-api/v1, /service-api/v1'
     events-published: ['EmployeeOnboarded', 'EmployeeTerminated', 'EmployeeTransferred', 'LeaveRequested', 'LeaveApproved']
     events-consumed: ['UserCreated', 'UserDeactivated', 'DepartmentDeleted']
-    dependencies: [tenant-config-service, workflow-service, approval-service]
+    dependencies: [tenant-manager-service, workflow-service, approval-service]
 
   - id: sales-service
     name: 'Sales Service'
@@ -163,10 +176,10 @@ services:
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_sales)
     port: 8091
-    api-prefix: '/api/v1'
+    api-prefix: '/client-api/v1, /service-api/v1'
     events-published: ['CustomerCreated', 'OrderCreated', 'InvoiceCreated']
     events-consumed: ['EmployeeTransferred']
-    dependencies: [tenant-config-service, master-data-service]
+    dependencies: [tenant-manager-service, master-data-service]
 
   - id: erp-service
     name: 'ERP Service'
@@ -175,7 +188,7 @@ services:
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_erp)
     port: 8092
-    api-prefix: '/api/v1'
+    api-prefix: '/client-api/v1, /service-api/v1'
     events-published: ['StockUpdated', 'LowStockAlert', 'ProductionOrderCompleted']
     events-consumed: ['OrderCreated', 'PurchaseOrderCreated']
     dependencies: [master-data-service]
@@ -187,7 +200,7 @@ services:
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_finance)
     port: 8093
-    api-prefix: '/api/v1'
+    api-prefix: '/client-api/v1, /service-api/v1'
     events-published: ['JournalPosted', 'PaymentReceived']
     events-consumed: ['InvoiceCreated', 'InvoicePaid', 'PayrollProcessed']
     dependencies: [master-data-service]
@@ -199,7 +212,7 @@ services:
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_marketing)
     port: 8094
-    api-prefix: '/api/v1'
+    api-prefix: '/client-api/v1, /service-api/v1'
     events-published: ['CampaignLaunched', 'LeadCaptured']
     events-consumed: ['CustomerCreated']
     dependencies: []

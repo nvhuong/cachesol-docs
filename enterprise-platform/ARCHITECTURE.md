@@ -149,17 +149,18 @@ CREATE TABLE employee_assignments (
 
 > **Nguyên tắc:** ít platform service nhất có thể. Mọi thứ có thể là library hoặc gộp vào application → đều KHÔNG làm service riêng.
 
-### 4.1 Danh sách 7 platform services
+### 4.1 Danh sách 8 platform services
 
 | # | Service | Lý do GIỮ riêng |
 |---|---------|-----------------|
-| 1 | **iam** | JWT verify, JWK cache, Keycloak webhook receiver — KHÔNG có user CRUD (delegate Keycloak) |
-| 2 | **tenant-config** | Tenant metadata, user CRUD (qua Keycloak Admin API), role/permission, mini-apps registry, org-root mapping |
-| 3 | **configuration** | Cross-tenant feature flags + system params, cần API CRUD + cache invalidation |
-| 4 | **master-data** | Cross-tenant lookup (country, currency, unit), nhiều app đọc, cần API CRUD + cache |
-| 5 | **notification** | Đa kênh (email/SMS/push/in-app), cần retry queue, template engine, log lịch sử |
-| 6 | **workflow** | BPMN-lite engine, state machine dài hơi, cần DB riêng cho process instances |
-| 7 | **approval** | Ticket duyệt gắn với workflow user-tasks, lịch sử duyệt dài |
+| 1 | **iam** | JWT verify, JWK cache, Keycloak webhook receiver — KHÔNG có user CRUD |
+| 2 | **platform-registry** | Tenants registry, mini-apps catalog, org-root mapping (cross-tenant metadata + per-tenant enable data) |
+| 3 | **tenant-manager** | Users (CRUD qua Keycloak Admin API), roles/permissions, user_app_roles + org_scope_path — per-tenant schema |
+| 4 | **configuration** | Cross-tenant feature flags + system params, cần API CRUD + cache invalidation |
+| 5 | **master-data** | Cross-tenant lookup (country, currency, unit), nhiều app đọc, cần API CRUD + cache |
+| 6 | **notification** | Đa kênh (email/SMS/push/in-app), cần retry queue, template engine, log lịch sử |
+| 7 | **workflow** | BPMN-lite engine, state machine dài hơi, cần DB riêng cho process instances |
+| 8 | **approval** | Ticket duyệt gắn với workflow user-tasks, lịch sử duyệt dài |
 
 ### 4.2 Các service ĐÃ XOÁ khỏi platform → gộp vào đâu
 
@@ -180,34 +181,37 @@ CREATE TABLE employee_assignments (
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │            API Gateway (per-tenant subdomain, JWT verify)                  │
-└──────┬───────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────┘
-       │           │         │         │         │         │         │
-       ▼           ▼         ▼         ▼         ▼         ▼         ▼
-   ┌────────┐ ┌──────────┐ ┌───────┐ ┌─────────┐ ┌────────┐ ┌────────┐ ┌──────────┐
-   │  IAM   │ │ Tenant   │ │ Config│ │ Master  │ │ Notif  │ │Workflow│ │ Approval │
-   │(verify)│ │ Config   │ │ Flags │ │ Data    │ │        │ │ Engine │ │          │
-   │ JWK    │ │ user/role│ │       │ │         │ │        │ │        │ │          │
-   │ cache  │ │ /miniapps│ │       │ │         │ │        │ │        │ │          │
-   └────┬───┘ └────┬─────┘ └───┬───┘ └────┬────┘ └───┬────┘ └───┬────┘ └────┬─────┘
-        │          │           │          │           │          │           │
-        │      Keycloak API   │          │           │          │           │
-        ▼          ▼           ▼          ▼           ▼          ▼           ▼
-   ┌────────────────────────────────────────────────────────────────────────┐
-   │                     Keycloak (1 realm / tenant)                        │
-   │      users · credentials · roles · LDAP sync · SSO · MFA              │
-   └────────────────────────────────────────────────────────────────────────┘
-        │
-        └─────────────────────────────────────────────────────────┐
-                                                                  ▼
-                                                       ┌──────────────────┐
-                                                       │   Applications   │
-                                                       │ HRM/ERP/Sales/... │
-                                                       └────────┬─────────┘
-                                                                │
+│   4 prefix routing:                                                       │
+│     /client-api/v1      → user JWT + RBAC                                │
+│     /service-api/v1     → service JWT + scope                            │
+│     /integration-api/v1 → HMAC signature                                  │
+│     /public-api/v1      → no auth                                          │
+└──┬───────────┬──────────┬──────┬──────┬───────┬──────┬──────┬────────┬────┘
+   │           │          │      │      │       │      │      │        │
+   ▼           ▼          ▼      ▼      ▼       ▼      ▼      ▼        ▼
+┌──────┐ ┌──────────┐ ┌──────┐ ┌─────┐ ┌──────┐ ┌────┐ ┌────┐ ┌─────┐ ┌──────┐
+│ IAM  │ │ Platform │ │Tenant│ │Conf │ │Master│ │Noti│ │Wfl │ │Appr │ │  HRM │
+│(JWT) │ │ Registry │ │ Mgr  │ │ ig  │ │ Data │ │ fi │ │     │ │ oval │ │      │
+└──┬───┘ └────┬─────┘ └──┬───┘ └──┬──┘ └──┬───┘ └──┬─┘ └──┬─┘ └──┬──┘ └──┬───┘
+   │          │            │        │       │        │     │     │       │
+   │      Keycloak API    │        │       │        │     │     │       │
+   ▼          ▼            ▼        ▼       ▼        ▼     ▼     ▼       ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│            Keycloak (1 realm / tenant)                                  │
+│      users · credentials · roles · LDAP sync · SSO · MFA              │
+└────────────────────────────────────────────────────────────────────────┘
+   │
+   └────────────────────────────────────────────────────────────────┐
                                                                 ▼
-                                                       ┌──────────────────┐
-                                                       │  Kafka (events)  │
-                                                       └──────────────────┘
+                                                  ┌──────────────────┐
+                                                  │   Applications   │
+                                                  │ HRM/ERP/Sales/... │
+                                                  └────────┬─────────┘
+                                                           │
+                                                           ▼
+                                                  ┌──────────────────┐
+                                                  │  Kafka (events)  │
+                                                  └──────────────────┘
                             ┌──────────────────┐
                             │  Kafka (events)  │
                             └──────────────────┘
@@ -255,21 +259,30 @@ IAM service CHỈ verify JWT. Mọi user/role CRUD do **tenant-config service** 
 └───────────────────────────────────────────────────────────────┘
 ```
 
-### 5.3 Tenant Config Service — quản lý user, role, mini-app
+### 5.3 Platform Registry Service — tenants, mini-apps, org-root mapping
 
-`tenant-config` là service riêng, dùng schema `public` (cross-tenant metadata). 5 bounded contexts:
+`platform-registry` quản lý metadata cross-tenant + per-tenant enable mapping:
 
-| # | Bounded Context | Vai trò |
-|---|-----------------|---------|
-| 1 | **Tenants** | Metadata công ty khách hàng + schema + keycloak_realm |
-| 2 | **Org Units Mapping** | Lookup root-level: tenant ↔ root org (chi tiết cây ở HRM) |
-| 3 | **Users** | CRUD user qua Keycloak Admin API + users_extra + link employee |
-| 4 | **Roles / Permissions** | roles per-tenant + user_app_roles + org_scope_path (ltree) |
-| 5 | **Mini-apps Registry** | catalog mini-app + per-tenant enable/disable + config |
+| # | Bounded Context | Schema |
+|---|-----------------|--------|
+| 1 | **Tenants** | `public` |
+| 2 | **Mini-apps** (catalog + per-tenant enable) | `public` (catalog) + `tenant_<slug>_platformregistry` (per-tenant enable) |
+| 3 | **Org-root mapping** | `tenant_<slug>_platformregistry` |
 
-Xem chi tiết: [`src/backend/platform/tenant-config/README.md`](src/backend/platform/tenant-config/README.md).
+Service này KHÔNG có users/roles (chuyển sang `tenant-manager`). Xem chi tiết: [`src/backend/platform/platform-registry/README.md`](src/backend/platform/platform-registry/README.md).
 
-### 5.4 Login flow (1 realm per tenant + custom SSO + LDAP)
+### 5.4 Tenant Manager Service — users, roles, permissions
+
+`tenant-manager` quản lý users + roles + permissions cho từng tenant. Mỗi tenant có schema riêng `tenant_<slug>_tenantmanager`:
+
+| # | Bounded Context | Schema |
+|---|-----------------|--------|
+| 1 | **Users** (CRUD qua Keycloak Admin API + users_extra + link employee) | `tenant_<slug>_tenantmanager` |
+| 2 | **Roles / Permissions** (per-tenant + org_scope_path ltree) | `tenant_<slug>_tenantmanager` |
+
+Xem chi tiết: [`src/backend/platform/tenant-manager/README.md`](src/backend/platform/tenant-manager/README.md).
+
+### 5.5 API patterns (4 prefix)
 
 ```
 acme.platform.com  →  Keycloak realm "tenant-acme"   (LDAP: ldap.acme.local)
@@ -302,7 +315,13 @@ Flow "globex-simple":  username → password → success
 Flow "initech-sso":    saml-redirect (Okta) → success
 ```
 
-→ `tenant-config` lưu `login_flow_alias` của mỗi tenant → bind với realm qua Keycloak API.
+→ `platform-registry.tenants.login_flow_alias` bind với realm qua Keycloak API.
+
+Sau này có thể customize theo nhiều flow của từng công ty:
+- Email-only (magic link)
+- SMS OTP
+- WebAuthn (passkey)
+- Certificate (smartcard)
 
 Sau này có thể customize theo nhiều flow của từng công ty:
 - Email-only (magic link)
@@ -346,7 +365,7 @@ Host: globex.platform.com → JWT claim: { "tenant_id": "globex", ... }
 
 ### 5.8 RBAC + Org-scope
 
-`user_app_roles` ở `tenant-config` (public schema), có `org_scope_path` ltree:
+`user_app_roles` ở `tenant-manager` (per-tenant schema `tenant_<slug>_tenantmanager`), có `org_scope_path` ltree:
 
 ```sql
 CREATE TABLE user_app_roles (
@@ -390,9 +409,10 @@ src/backend/
 │   ├── finance/
 │   └── marketing/
 │
-├── platform/                            ← nền tảng (7 services — GIẢM từ 15)
+├── platform/                            ← nền tảng (8 services — GIẢM từ 15)
 │   ├── iam/                  (JWT verify only — thin)
-│   ├── tenant-config/        (tenants, users, roles, mini-apps registry)
+│   ├── platform-registry/    (tenants, mini-apps catalog, org-root mapping)
+│   ├── tenant-manager/       (users, roles, permissions — per-tenant schema)
 │   ├── configuration/        (feature flags, system params)
 │   ├── master-data/          (danh mục dùng chung)
 │   ├── notification/         (đa kênh, async)
