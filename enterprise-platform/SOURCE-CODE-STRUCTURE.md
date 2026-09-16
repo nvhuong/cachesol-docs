@@ -86,23 +86,28 @@ enterprise-platform/
 ```
 src/backend/
 ├── applications/              ← Microservices nghiệp vụ (theo domain)
-│   ├── hrm/
+│   ├── hrm/                   # ★ HRM chứa organizations, employees, job_titles, attendance, payroll,...
+│   ├── sales/                 # ★ Sales chứa customers, contacts, opportunities
 │   ├── erp/
-│   ├── sales/
-│   └── finance/
+│   ├── finance/
+│   └── marketing/
 │
-├── platform/                  ← Microservices nền tảng (shared infrastructure)
-│   ├── iam/                   # Identity & Access Management
-│   ├── notification/          # Notification Service
-│   ├── workflow/              # Workflow Engine
-│   ├── file/                  # File Management
-│   └── search/                # Search Service
+├── platform/                  ← Microservices nền tảng (CHỈ 6 — xem ARCHITECTURE.md §4)
+│   ├── iam/                   # Identity & Access Management (Keycloak-backed thin bridge)
+│   ├── configuration/         # Feature flags + system params
+│   ├── master-data/           # Danh mục dùng chung (country, currency, unit...)
+│   ├── notification/          # Đa kênh: email, SMS, push, in-app
+│   ├── workflow/              # BPMN-lite engine
+│   └── approval/              # Ticket duyệt (gắn với workflow user-tasks)
 │
 └── shared/                    ← Backend shared libraries
-    ├── shared-common/         # com.cachesol.platform.shared
-    ├── shared-messaging/
-    └── shared-security/
+    ├── shared-common/         # com.cachesol.platform.shared (audit publisher, file wrapper, tenant util)
+    ├── shared-messaging/      # Kafka producer/consumer, event base classes
+    └── shared-security/       # KeycloakJwtDecoder, TenantContextFilter, @PreAuthorize
 ```
+
+> **So với v2:** Từ 15 platform services đã giảm xuống **6** (xoá `organization`, `employee`, `customer`, `audit`, `file`, `search`, `reporting`, `scheduler`, `integration`, `master-data` ban đầu... master-data giữ lại vì cross-tenant).
+> `organization/employee/job_title` gộp vào HRM; `customer` gộp vào Sales; `audit/file/search/reporting/scheduler/integration` chuyển thành library hoặc xoá.
 
 ### 1.2 Cấu trúc từng Application
 

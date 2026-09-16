@@ -1,180 +1,229 @@
+# CacheSol Service Registry — v3 (Multi-tenant, tối giản platform)
+# File này là Source of Truth cho CI/CD, deployment, observability tooling.
+# Cập nhật khi thêm/xoá service.
+
 services:
+
+  # ===== INFRASTRUCTURE (chạy riêng, không phải Java app) =====
+  - id: keycloak
+    name: 'Keycloak (Identity Provider)'
+    domain: infrastructure
+    type: container
+    description: 'Source of Truth cho identity. Login/register/LDAP/SSO/OAuth2/MFA.'
+    technology: 'Keycloak 24+'
+    database: PostgreSQL (cachesol_platform/public)
+    port: 8080
+    dependencies: [postgres]
+    notes:
+      - '1 realm cachesol (ban đầu). Có thể split per-tenant khi > 50 tenants.'
+
+  - id: postgres
+    name: 'PostgreSQL (multi-schema, schema-per-tenant)'
+    domain: infrastructure
+    type: container
+    description: 'Cachesol_platform DB. 1 schema public (registry + Keycloak) + N schemas tenant_<slug>.'
+    technology: 'PostgreSQL 16 + ltree extension'
+    port: 5432
+    notes:
+      - 'Schema-per-tenant: cô lập dữ liệu giữa các công ty.'
+      - 'See governance/architecture/multi-tenant.md.'
+
+  - id: kafka
+    name: 'Apache Kafka'
+    domain: infrastructure
+    type: container
+    description: 'Event bus giữa các service.'
+    technology: 'Apache Kafka 3.7+'
+    port: 9092
+
+  - id: api-gateway
+    name: 'API Gateway'
+    domain: infrastructure
+    type: service
+    description: 'Tenant resolution (Host/X-Tenant-Id), JWT verify, rate limit, CORS.'
+    technology: 'Spring Cloud Gateway hoặc Kong'
+    port: 80
+    dependencies: [keycloak, iam-service]
+    notes:
+      - 'Subdomain acme.platform.com → tenant_id=acme.'
+      - 'JWT verify ngay tại gateway (cache Keycloak JWK 1h).'
+
+  # ===== PLATFORM SERVICES (CHỈ 6) =====
   - id: iam-service
-    name: 'IAM Service'
+    name: 'IAM Service (Keycloak thin bridge)'
     domain: platform
-    description: 'Quản lý danh tính, xác thực và phân quyền (RBAC/ABAC).'
+    description: 'App-specific user data (users_extra), app-specific roles (user_app_roles), nhận Keycloak webhook events, expose API cho frontend.'
     technology: 'Spring Boot 21'
-    database: PostgreSQL
+    database: PostgreSQL (schema: public)
     port: 8081
-    api-prefix: '/api/v1/iam'
-    events-published: ['UserCreated', 'UserUpdated', 'UserDeleted', 'RoleAssigned']
+    api-prefix: '/api/v1'
+    events-published: ['UserCreated', 'UserUpdated', 'UserDeactivated', 'RoleGranted', 'RoleRevoked']
     events-consumed: []
-    dependencies: []
+    dependencies: [keycloak, postgres]
+    notes:
+      - 'Keycloak là Source of Truth cho credentials/identity.'
+      - 'IAM service KHÔNG lưu password.'
+      - 'See src/backend/platform/iam/README.md.'
 
-  - id: organization-service
-    name: 'Organization Service'
+  - id: configuration-service
+    name: 'Configuration Service'
     domain: platform
-    description: 'Quản lý cơ cấu phòng ban, sơ đồ tổ chức.'
+    description: 'Cross-tenant feature flags + system params + tenant-specific configs.'
     technology: 'Spring Boot 21'
-    database: PostgreSQL
+    database: PostgreSQL (schema: public) + Redis cache
     port: 8082
-    api-prefix: '/api/v1/org'
-    events-published: ['DepartmentCreated', 'DepartmentUpdated']
+    api-prefix: '/api/v1/configs'
+    events-published: ['ConfigChanged']
     events-consumed: []
-    dependencies: ['iam-service']
+    dependencies: [postgres]
 
-  - id: employee-service
-    name: 'Employee Service'
-    domain: hrm
-    description: 'Quản lý hồ sơ nhân viên.'
+  - id: master-data-service
+    name: 'Master Data Service'
+    domain: platform
+    description: 'Danh mục dùng chung: country, currency, unit, payment-terms, tax-codes...'
     technology: 'Spring Boot 21'
-    database: PostgreSQL
+    database: PostgreSQL (schema: public) + Redis cache
     port: 8083
-    api-prefix: '/api/v1/employees'
-    events-published: ['EmployeeOnboarded', 'EmployeeTerminated']
-    events-consumed: ['UserCreated']
-    dependencies: ['iam-service', 'organization-service']
+    api-prefix: '/api/v1/master-data'
+    events-published: ['MasterDataUpdated']
+    events-consumed: []
+    dependencies: [postgres]
+    notes:
+      - 'Dữ liệu seed sẵn qua Flyway.'
+      - 'Có thể move sang per-tenant nếu tenant muốn custom.'
 
-  - id: attendance-service
-    name: 'Attendance Service'
-    domain: hrm
-    description: 'Quản lý chấm công, nghỉ phép.'
+  - id: notification-service
+    name: 'Notification Service'
+    domain: platform
+    description: 'Gửi đa kênh: email (SendGrid/SMTP), SMS (Twilio/VNFPT), in-app (WebSocket), push (Firebase).'
     technology: 'Spring Boot 21'
-    database: PostgreSQL
+    database: PostgreSQL (schema: tenant_<slug>_notif + public registry)
     port: 8084
-    api-prefix: '/api/v1/attendance'
-    events-published: ['LeaveApproved']
-    events-consumed: ['EmployeeOnboarded']
-    dependencies: ['employee-service', 'workflow-service']
+    api-prefix: '/api/v1/notifications'
+    events-published: ['NotificationSent', 'NotificationFailed']
+    events-consumed: ['*']
+    dependencies: [postgres, kafka]
 
-  - id: payroll-service
-    name: 'Payroll Service'
-    domain: hrm
-    description: 'Tính toán lương thưởng.'
+  - id: workflow-service
+    name: 'Workflow Service (BPMN-lite)'
+    domain: platform
+    description: 'Engine xử lý quy trình nghiệp vụ dài hơi (BPMN-lite, state machine).'
     technology: 'Spring Boot 21'
-    database: PostgreSQL
+    database: PostgreSQL (schema: tenant_<slug>_workflow)
     port: 8085
-    api-prefix: '/api/v1/payroll'
-    events-published: ['PayrollProcessed']
-    events-consumed: ['EmployeeTerminated', 'LeaveApproved']
-    dependencies: ['employee-service', 'attendance-service', 'finance-service']
+    api-prefix: '/api/v1/workflows'
+    events-published: ['ProcessStarted', 'ProcessCompleted', 'UserTaskCreated']
+    events-consumed: []
+    dependencies: [postgres]
 
-  - id: inventory-service
-    name: 'Inventory Service'
-    domain: erp
-    description: 'Quản lý kho bãi, hàng hóa.'
+  - id: approval-service
+    name: 'Approval Service'
+    domain: platform
+    description: 'Ticket duyệt gắn với workflow user-tasks, lịch sử duyệt, comment, attachment.'
     technology: 'Spring Boot 21'
-    database: PostgreSQL
+    database: PostgreSQL (schema: tenant_<slug>_approval)
     port: 8086
-    api-prefix: '/api/v1/inventory'
-    events-published: ['StockUpdated', 'LowStockAlert']
-    events-consumed: ['OrderCreated']
-    dependencies: []
+    api-prefix: '/api/v1/approvals'
+    events-published: ['ApprovalRequested', 'ApprovalApproved', 'ApprovalRejected']
+    events-consumed: ['UserTaskCreated']
+    dependencies: [workflow-service, iam-service]
 
-  - id: purchasing-service
-    name: 'Purchasing Service'
-    domain: erp
-    description: 'Quản lý mua sắm vật tư.'
+  # ===== APPLICATIONS (nghiệp vụ) =====
+  - id: hrm-service
+    name: 'HRM Service'
+    domain: hrm
+    description: 'Quản lý nhân sự + cây tổ chức (organizations, job_titles, employee_assignments) + attendance/leave/payroll/recruitment.'
     technology: 'Spring Boot 21'
-    database: PostgreSQL
-    port: 8087
-    api-prefix: '/api/v1/purchasing'
-    events-published: ['PurchaseOrderCreated']
-    events-consumed: ['LowStockAlert']
-    dependencies: ['inventory-service', 'finance-service']
+    database: PostgreSQL (schema: tenant_<slug>_hrm)
+    port: 8090
+    api-prefix: '/api/v1'
+    events-published: ['EmployeeOnboarded', 'EmployeeTerminated', 'EmployeeTransferred', 'LeaveRequested', 'LeaveApproved']
+    events-consumed: ['UserCreated', 'UserDeactivated', 'DepartmentDeleted']
+    dependencies: [iam-service, workflow-service, approval-service]
+
+  - id: sales-service
+    name: 'Sales Service'
+    domain: sales
+    description: 'CRM mini: customers, contacts, opportunities, orders, invoices. Chứa customer (trước là platform).'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL (schema: tenant_<slug>_sales)
+    port: 8091
+    api-prefix: '/api/v1'
+    events-published: ['CustomerCreated', 'OrderCreated', 'InvoiceCreated']
+    events-consumed: ['EmployeeTransferred']
+    dependencies: [iam-service, master-data-service]
+
+  - id: erp-service
+    name: 'ERP Service'
+    domain: erp
+    description: 'Inventory, procurement, production, fixed-assets.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL (schema: tenant_<slug>_erp)
+    port: 8092
+    api-prefix: '/api/v1'
+    events-published: ['StockUpdated', 'LowStockAlert', 'ProductionOrderCompleted']
+    events-consumed: ['OrderCreated', 'PurchaseOrderCreated']
+    dependencies: [master-data-service]
 
   - id: finance-service
     name: 'Finance Service'
     domain: finance
-    description: 'Quản lý tài khoản kế toán, thu chi.'
+    description: 'Chart of accounts, journal entries, GL, AP/AR, banking.'
     technology: 'Spring Boot 21'
-    database: PostgreSQL
-    port: 8088
-    api-prefix: '/api/v1/finance'
-    events-published: ['TransactionRecorded']
-    events-consumed: ['PayrollProcessed', 'PurchaseOrderCreated', 'InvoicePaid']
-    dependencies: []
-
-  - id: billing-service
-    name: 'Billing Service'
-    domain: finance
-    description: 'Phát hành hóa đơn, thu tiền.'
-    technology: 'Spring Boot 21'
-    database: PostgreSQL
-    port: 8089
-    api-prefix: '/api/v1/billing'
-    events-published: ['InvoiceCreated', 'InvoicePaid']
-    events-consumed: ['OrderDelivered']
-    dependencies: ['finance-service', 'customer-service']
-
-  - id: customer-service
-    name: 'Customer Service'
-    domain: crm
-    description: 'Quản lý thông tin khách hàng.'
-    technology: 'Spring Boot 21'
-    database: PostgreSQL
-    port: 8090
-    api-prefix: '/api/v1/customers'
-    events-published: ['CustomerCreated', 'CustomerUpdated']
-    events-consumed: []
-    dependencies: []
-
-  - id: support-ticket-service
-    name: 'Support Ticket Service'
-    domain: crm
-    description: 'Quản lý ticket hỗ trợ khách hàng.'
-    technology: 'Spring Boot 21'
-    database: PostgreSQL
-    port: 8091
-    api-prefix: '/api/v1/tickets'
-    events-published: ['TicketCreated', 'TicketResolved']
-    events-consumed: ['CustomerCreated']
-    dependencies: ['customer-service', 'employee-service']
-
-  - id: notification-service
-    name: 'Notification Service'
-    domain: communication
-    description: 'Gửi Email, SMS, In-app Notification.'
-    technology: 'Spring Boot 21'
-    database: PostgreSQL
-    port: 8092
-    api-prefix: '/api/v1/notifications'
-    events-published: ['NotificationSent']
-    events-consumed: ['*'] # Nghe nhiều events để gửi thông báo
-    dependencies: []
-
-  - id: workflow-service
-    name: 'Workflow Service'
-    domain: workflow
-    description: 'Xử lý luồng phê duyệt động.'
-    technology: 'Spring Boot 21'
-    database: PostgreSQL
+    database: PostgreSQL (schema: tenant_<slug>_finance)
     port: 8093
-    api-prefix: '/api/v1/workflows'
-    events-published: ['TaskAssigned', 'TaskCompleted', 'ProcessFinished']
-    events-consumed: []
-    dependencies: ['iam-service', 'employee-service']
+    api-prefix: '/api/v1'
+    events-published: ['JournalPosted', 'PaymentReceived']
+    events-consumed: ['InvoiceCreated', 'InvoicePaid', 'PayrollProcessed']
+    dependencies: [master-data-service]
 
-  - id: api-gateway
-    name: 'API Gateway'
-    domain: platform
-    description: 'Cổng giao tiếp duy nhất cho client, handle rate-limit, CORS, auth routing.'
-    technology: 'Spring Cloud Gateway'
-    database: None
-    port: 8080
-    api-prefix: '/'
-    events-published: []
-    events-consumed: []
-    dependencies: ['iam-service']
-
-  - id: audit-log-service
-    name: 'Audit Log Service'
-    domain: platform
-    description: 'Lưu vết mọi thao tác của người dùng.'
+  - id: marketing-service
+    name: 'Marketing Service'
+    domain: marketing
+    description: 'Campaigns, leads, segments, analytics.'
     technology: 'Spring Boot 21'
-    database: MongoDB # hoặc PostgreSQL
+    database: PostgreSQL (schema: tenant_<slug>_marketing)
     port: 8094
-    api-prefix: '/api/v1/audit'
-    events-published: []
-    events-consumed: ['*']
+    api-prefix: '/api/v1'
+    events-published: ['CampaignLaunched', 'LeadCaptured']
+    events-consumed: ['CustomerCreated']
     dependencies: []
+
+  # ===== FRONTEND =====
+  - id: web-shell
+    name: 'Web Shell (Frontend host)'
+    domain: frontend
+    type: frontend-app
+    description: 'ReactJS host shell. Load mini-apps + auth flow.'
+    technology: 'ReactJS 18 + Vite + Module Federation'
+    port: 5173
+    dependencies: [keycloak, api-gateway]
+
+# ===== SHARED LIBRARIES (Java, không phải service) =====
+shared-libraries:
+  - id: shared-common
+    name: 'shared-common'
+    description: 'Tenant util, audit event publisher (Kafka), file wrapper (S3/MinIO), util chung.'
+    published-as: 'com.cachesol.platform:shared-common'
+
+  - id: shared-messaging
+    name: 'shared-messaging'
+    description: 'Kafka producer/consumer base classes, event envelope, retry policy.'
+    published-as: 'com.cachesol.platform:shared-messaging'
+
+  - id: shared-security
+    name: 'shared-security'
+    description: 'Keycloak JWT decoder (JWK), TenantContextFilter, @PreAuthorize với user_app_roles.'
+    published-as: 'com.cachesol.platform:shared-security'
+
+# ===== CÁC SERVICE ĐÃ GỘP/XOÁ (v2 → v3) =====
+removed-services:
+  - organization-service: '→ gộp vào hrm-service (organizations + job_titles)'
+  - employee-service: '→ gộp vào hrm-service (employees + employee_assignments)'
+  - customer-service: '→ gộp vào sales-service (customers)'
+  - audit-service: '→ library audit publisher trong shared-common (Kafka topic audit.<tenant>.events)'
+  - file-service: '→ library file wrapper trong shared-common (S3/MinIO)'
+  - search-service: '→ xoá. Dùng PostgreSQL full-text + ltree trước.'
+  - reporting-service: '→ xoá. Để trong từng application.'
+  - scheduler-service: '→ xoá. Spring @Scheduled in-app.'
+  - integration-service: '→ xoá. 3rd-party connector trong từng application.'

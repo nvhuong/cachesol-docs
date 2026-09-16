@@ -1,14 +1,14 @@
 # Enterprise Platform
 
 ## Tổng quan
-Enterprise Platform là hệ sinh thái nền tảng doanh nghiệp (microservices) gồm **platform services dùng chung** và các **miniapp nghiệp vụ** (`applications/`).
+Enterprise Platform là hệ sinh thái microservice phục vụ **multi-tenant SaaS doanh nghiệp**:
 
-Mục tiêu vận hành tài liệu + AI pipeline:
+- **Mỗi khách hàng (tenant) = 1 công ty / tập đoàn**, có thể có nhiều công ty con, chi nhánh, trung tâm, phòng ban, chức danh tự khai báo.
+- **Multi-tenant schema-per-tenant**: mỗi tenant 1 PostgreSQL schema riêng → cô lập dữ liệu tuyệt đối.
+- **Backend tối giản**: 6 platform services (IAM/Config/Master-data/Notification/Workflow/Approval) + 6+ applications nghiệp vụ.
+- **IAM dùng Keycloak**: login/register/LDAP/SSO/OAuth2/MFA qua Keycloak, IAM service chỉ là thin bridge.
 
-**`requirement/` (txt + ảnh theo feature) → docs kỹ thuật → implement code → testing`**
-
-Xem chi tiết: [`FEATURE-LIFECYCLE.md`](FEATURE-LIFECYCLE.md).
-**Copy-paste prompts:** [`PROMPTS.md`](PROMPTS.md).
+Xem chi tiết: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Cấu trúc nền tảng
 - **Backend:** Microservices với package gốc `com.cachesol.platform` (Xem: [`SOURCE-CODE-STRUCTURE.md`](SOURCE-CODE-STRUCTURE.md))
@@ -16,33 +16,36 @@ Xem chi tiết: [`FEATURE-LIFECYCLE.md`](FEATURE-LIFECYCLE.md).
 - **Cấu trúc tài liệu:** Xem [`DOCUMENTATION-STRUCTURE.md`](DOCUMENTATION-STRUCTURE.md)
 
 ## Mục tiêu
-- Chuẩn hóa phát triển phần mềm doanh nghiệp.
-- Mở rộng dịch vụ độc lập (microservice, database-per-service).
-- Tái sử dụng module nền (IAM, Notification, Workflow, …).
-- Squad tự chủ triển khai từng miniapp/feature.
+- Chuẩn hoá phát triển phần cứng doanh nghiệp **multi-tenant**.
+- Tối giản platform services (6 thay vì 15) → giảm overhead vận hành.
+- Tái sử dụng module nền (Keycloak cho identity, shared libs cho audit/file/notification).
+- Squad tự chủ triển khai từng miniapp/feature trong tenant của họ.
 
 ## Tech Stack
-- **Backend:** Java Spring Boot 21
+- **Backend:** Java Spring Boot 21, PostgreSQL (schema-per-tenant + ltree)
 - **Frontend:** ReactJS + Ant Design 5
+- **Identity:** Keycloak 24+ (login/LDAP/SSO/OAuth2)
 - **Messaging:** Apache Kafka
-- **Database:** PostgreSQL (per service)
 - **Infrastructure:** Docker, Kubernetes
 
 ## Kiến trúc Tổng quan
 ```mermaid
 graph TD
-    Client[Web Browser / ReactJS] -->|REST| API_Gateway[API Gateway]
-    API_Gateway --> IAM[IAM Service]
-    API_Gateway --> HRM[HRM Miniapp]
-    API_Gateway --> ERP[ERP Miniapp]
+    Client[Web Browser / ReactJS] -->|Host: acme.platform.com| API_Gateway[API Gateway + Tenant Resolver]
+    API_Gateway -->|JWT verify| Keycloak[Keycloak - acme realm]
+    API_Gateway --> IAM[IAM Service - thin bridge]
+    API_Gateway --> HRM[HRM Miniapp - tenant_acme schema]
+    API_Gateway --> Sales[Sales Miniapp - tenant_acme schema]
+    API_Gateway --> Config[Configuration Service]
+    API_Gateway --> Notif[Notification Service]
 
-    IAM --> DB_IAM[(PostgreSQL IAM)]
-    HRM --> DB_HRM[(PostgreSQL HRM)]
-    ERP --> DB_ERP[(PostgreSQL ERP)]
+    IAM --> Keycloak
+    HRM --> DB_HRM[(PostgreSQL tenant_acme_hrm)]
+    Sales --> DB_Sales[(PostgreSQL tenant_acme_sales)]
 
-    IAM -->|Events| Kafka[Kafka]
-    HRM -->|Events| Kafka
-    ERP -->|Events| Kafka
+    HRM -->|Events| Kafka[Kafka]
+    Sales -->|Events| Kafka
+    Notif -->|Consume| Kafka
 ```
 
 ## Cấu trúc Thư mục
@@ -58,9 +61,15 @@ enterprise-platform/
 │
 ├── src/                      # ⭐ SOURCE CODE DUY NHẤT
 │   ├── backend/
-│   │   ├── applications/     # Microservices nghiệp vụ (HRM, ERP, Sales, ...)
-│   │   ├── platform/         # Microservices nền tảng (IAM, Notification, Workflow, ...)
-│   │   └── shared/           # Backend shared libs (shared-common, shared-messaging, shared-security)
+│   │   ├── applications/     # Microservices nghiệp vụ (HRM, ERP, Sales, Finance, Marketing, ...)
+│   │   │                     # HRM chứa organizations, employees, job_titles, attendance, ...
+│   │   │                     # Sales chứa customers
+│   │   ├── platform/         # Microservices nền tảng (CHỈ 6 — xem ARCHITECTURE.md)
+│   │   │                     # iam, configuration, master-data, notification, workflow, approval
+│   │   └── shared/           # Backend shared libs
+│   │       ├── shared-common  # audit publisher, file wrapper, tenant util
+│   │       ├── shared-messaging  # Kafka producer/consumer
+│   │       └── shared-security  # Keycloak JWT decoder, TenantContextFilter, @PreAuthorize
 │   └── frontend/
 │       ├── apps/web-shell/
 │       ├── mini-apps/
@@ -88,6 +97,9 @@ enterprise-platform/
 - **Design System có 2 vị trí**:
   - `design-system/` ở root: **DOCS** (markdown) — components, patterns, tokens, templates.
   - `src/frontend/design-system/`: **CODE LIBRARY** — package `@cachesol/design-system` (tokens TS, base React components).
+- **Multi-tenant**: mỗi tenant 1 PostgreSQL schema riêng (`tenant_<slug>`), tenant registry ở schema `public`.
+- **Platform services tối giản** — CHỈ 6 services: iam, configuration, master-data, notification, workflow, approval.
+- **IAM dùng Keycloak** cho mọi thứ liên quan identity (login/register/LDAP/SSO/OAuth2/MFA). IAM service chỉ là thin bridge.
 - Mọi microservice backend **bắt buộc** có logging đầy đủ (access, audit, performance, error) — xem `SOURCE-CODE-STRUCTURE.md` §1.6.
 
 ## Luồng làm việc Feature (tóm tắt)

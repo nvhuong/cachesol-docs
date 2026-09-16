@@ -64,3 +64,19 @@ Tài liệu này định nghĩa các nguyên tắc cốt lõi để xây dựng 
 ## 15. Continuous Delivery Ready
 - **Mô tả:** Code trên branch `main` luôn phải ở trạng thái sẵn sàng deploy lên Production bất kỳ lúc nào.
 - **Lý do:** Giảm thời gian time-to-market.
+
+## 16. Multi-tenant Schema Isolation (Schema-per-tenant)
+- **Mô tả:** Mỗi tenant (công ty khách hàng) có 1 PostgreSQL schema riêng. Application service **không bao giờ** query bỏ qua `WHERE tenant_id` — schema đã đảm bảo cô lập.
+- **Lý do:** CacheSol là SaaS B2B, mỗi tenant là 1 công ty/tập đoàn — phải cô lập data tuyệt đối.
+- **Chi tiết:** Xem `multi-tenant.md`.
+
+## 17. Identity từ Keycloak (không tự build)
+- **Mô tả:** Mọi tính năng liên quan identity (login/register/LDAP/SSO/OAuth2/MFA) **delegate** cho Keycloak. IAM service chỉ là thin bridge lưu app-specific data.
+- **Lý do:** Identity cực kỳ phức tạp và rủi ro bảo mật cao — không nên tự build khi đã có giải pháp open-source trưởng thành.
+- **Chi tiết:** Xem `keycloak.md`.
+
+## 18. Platform Service Tối Giản
+- **Mô tả:** Chỉ giữ lại platform service khi nó thật sự cần HTTP API riêng + DB riêng. Mọi thứ có thể là library (shared-common) hoặc gộp vào application → đều KHÔNG làm service riêng.
+- **Lý do:** Microservice càng ít càng tốt → giảm overhead vận hành, networking, distributed tracing, deployment.
+- **Quy tắc cụ thể:** Audit/file/notification → library. Scheduler/reporting → in-app. Organization/employee/customer → gộp vào nghiệp vụ chính. Workflow/approval → service riêng nếu có state machine dài hơi.
+- **Hiện tại: 6 platform services** (iam, configuration, master-data, notification, workflow, approval).
