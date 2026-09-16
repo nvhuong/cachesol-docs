@@ -83,17 +83,18 @@ services:
   - id: tenant-manager-service
     name: 'Tenant Manager Service'
     domain: platform
-    description: 'Quản lý users (CRUD qua Keycloak Admin API), roles, permissions, user_app_roles + org_scope_path. Per-tenant schema.'
+    description: 'Quản lý users (CRUD qua Keycloak Admin API), roles, permissions, user_app_roles, TOÀN BỘ cây tổ chức (organizations/job_titles/employees/employee_assignments). Per-tenant schema.'
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_tenantmanager)
     port: 8083
     api-prefix: '/client-api/v1, /service-api/v1'
-    events-published: ['UserCreated', 'UserDeactivated', 'UserRoleGranted', 'UserRoleRevoked', 'RoleCreated']
+    events-published: ['UserCreated', 'UserDeactivated', 'UserRoleGranted', 'UserRoleRevoked', 'RoleCreated', 'OrganizationCreated', 'OrganizationMoved', 'EmployeeCreated', 'EmployeeAssigned']
     events-consumed: []
     dependencies: [keycloak, platform-registry-service, kafka]
     notes:
-      - '2 bounded contexts: users, roles/permissions.'
-      - 'Mỗi tenant 1 schema riêng.'
+      - '5 bounded contexts: users, roles/permissions, organizations, job_titles, employees.'
+      - 'HRM đọc org/employee qua service-api này.'
+      - 'Role snapshot clone từ platform-registry khi tenant khởi tạo.'
       - 'See src/backend/platform/tenant-manager/README.md.'
 
   - id: configuration-service
@@ -160,13 +161,13 @@ services:
   - id: hrm-service
     name: 'HRM Service'
     domain: hrm
-    description: 'Quản lý nhân sự + cây tổ chức (organizations, job_titles, employee_assignments) + attendance/leave/payroll/recruitment.'
+    description: 'HR nghiệp vụ (attendance, leave, payroll, recruitment, performance, training). KHÔNG quản lý org/employee — đọc qua tenant-manager service-api.'
     technology: 'Spring Boot 21'
     database: PostgreSQL (schema: tenant_<slug>_hrm)
     port: 8090
     api-prefix: '/client-api/v1, /service-api/v1'
-    events-published: ['EmployeeOnboarded', 'EmployeeTerminated', 'EmployeeTransferred', 'LeaveRequested', 'LeaveApproved']
-    events-consumed: ['UserCreated', 'UserDeactivated', 'DepartmentDeleted']
+    events-published: ['LeaveRequested', 'LeaveApproved', 'PayrollProcessed']
+    events-consumed: ['UserCreated', 'UserDeactivated', 'OrganizationMoved', 'EmployeeAssigned']
     dependencies: [tenant-manager-service, workflow-service, approval-service]
 
   - id: sales-service

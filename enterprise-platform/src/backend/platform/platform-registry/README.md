@@ -2,75 +2,81 @@
 
 ## Vai trò
 
-`platform-registry` quản lý **registry metadata cross-tenant** và **per-tenant mapping root-level**:
+`platform-registry` quản lý **registry metadata cross-tenant** + **role/permission template**:
 
 | # | Bounded Context | Schema |
 |---|-----------------|--------|
-| 1 | **Tenants** (metadata công ty khách hàng) | `public` |
+| 1 | **Tenants** | `public` |
 | 2 | **Mini-apps Catalog + Per-tenant enable** | `public` (catalog) + `tenant_<slug>_platformregistry` (per-tenant enable) |
 | 3 | **Org-root mapping** (lookup root-level) | `tenant_<slug>_platformregistry` |
+| 4 | **Role / Permission Template** | `public` |
 
-> **Tách khỏi `tenant-manager`:** User/Role/Permission CRUD đã chuyển sang service `tenant-manager` (per-tenant schema riêng `tenant_<slug>_tenantmanager`).
+> **Tách khỏi `tenant-manager`:** `tenant-manager` quản lý users + **toàn bộ cây tổ chức (organizations, job_titles, employees, employee_assignments)** + roles/permissions runtime (per-tenant schema).
+> `platform-registry` chỉ giữ **role template snapshot** (catalog cross-tenant) — khi tạo tenant mới, clone snapshot này sang schema per-tenant của `tenant-manager`.
 
 ## Schema layout
 
 ```
 cachesol_platform (1 PostgreSQL DB)
-├── schema: public
-│   ├── tenants                       ← registry tất cả tenants
-│   ├── mini_apps                     ← catalog mini-apps (cross-tenant)
-│   ├── flyway_schema_history         ← migrations cho public
-│   └── ...
 │
-└── schema: tenant_<slug>_platformregistry   ← mỗi tenant có schema riêng
-    ├── tenant_root_orgs              ← mapping tenant ↔ root org (HRM)
+├── schema: public
+│   ├── tenants                       ← registry tenants
+│   ├── mini_apps                     ← catalog mini-apps (cross-tenant)
+│   │
+│   ├── # Role/Permission Template (NEW)
+│   ├── permission_templates          ← atomic permission codes mặc định
+│   ├── role_templates                ← role templates có sẵn (HRM_MANAGER, SALES_ADMIN, ...)
+│   └── role_template_permissions      ← role ↔ permission (n-n)
+│
+└── schema: tenant_<slug>_platformregistry
+    ├── tenant_root_orgs              ← mapping tenant ↔ root org (HRM → tenant-manager)
     ├── tenant_mini_apps              ← mini-apps enabled cho tenant + config
     ├── tenant_mini_app_user_access   ← per-user access cho mini-app
     └── flyway_schema_history
 ```
 
-→ Service này **KHÔNG CHỨA** users, roles, permissions (chuyển sang `tenant-manager`).
-
 ---
 
-## 1. Tenants — metadata công ty khách hàng
+## 1. Tenants
 
 ```sql
 CREATE TABLE tenants (
     id                UUID PRIMARY KEY,
     slug              VARCHAR(50) UNIQUE NOT NULL,
-    schema_name       VARCHAR(63) UNIQUE NOT NULL,        -- 'tenant_<slug>'
+    schema_name       VARCHAR(63) UNIQUE NOT NULL,
     display_name      VARCHAR(255) NOT NULL,
     legal_name        VARCHAR(255) NULL,
     tax_code          VARCHAR(50)  NULL,
     plan              VARCHAR(20)  NOT NULL DEFAULT 'trial',
     status            VARCHAR(20)  NOT NULL DEFAULT 'active',
     region            VARCHAR(20)  NOT NULL DEFAULT 'vn',
-    keycloak_realm    VARCHAR(50)  NOT NULL,              -- 'tenant-acme'
+    keycloak_realm    VARCHAR(50)  NOT NULL,
     default_locale    VARCHAR(10)  NOT NULL DEFAULT 'vi',
     default_currency  VARCHAR(10)  NOT NULL DEFAULT 'VND',
     default_timezone  VARCHAR(50)  NOT NULL DEFAULT 'Asia/Ho_Chi_Minh',
     contact_email     VARCHAR(255) NOT NULL,
     contact_phone     VARCHAR(50)  NULL,
-    login_flow_alias  VARCHAR(50)  NULL,                  -- Keycloak custom flow
+    login_flow_alias  VARCHAR(50)  NULL,
+    role_template_id  UUID NULL REFERENCES role_templates(id),   -- ★ template sẽ clone khi tạo tenant
     metadata          JSONB        NOT NULL DEFAULT '{}'::jsonb,
     created_at        TIMESTAMPTZ  NOT NULL,
     activated_at      TIMESTAMPTZ  NULL,
     suspended_at      TIMESTAMPTZ  NULL,
     offboarded_at     TIMESTAMPTZ  NULL
 );
-CREATE INDEX idx_tenants_status ON tenants(status) WHERE status != 'offboarding';
 ```
 
-**Khi tạo tenant mới, service này tự trigger:**
+**Khi tạo tenant → orchestrator trigger (qua Kafka hoặc direct call):**
 
-1. `CREATE SCHEMA tenant_<slug>_platformregistry` (Flyway callback)
-2. Migrate schema per-tenant với file ở `classpath:db/migration/tenant-registry/`
-3. Gọi Keycloak Admin API tạo realm `tenant-<slug>` (qua shared-keycloak-client lib)
-4. Tạo LDAP Federation nếu tenant có LDAP config
-5. Tạo root organization trong HRM (HTTP call sang HRM) → lưu mapping vào `tenant_root_orgs`
-6. Tạo super-admin user đầu tiên (qua Keycloak Admin API)
-7. Enable default mini-apps cho tenant (insert `tenant_mini_apps` rows)
+1. `CREATE SCHEMA tenant_<slug>_platformregistry` (Flyway)
+2. Migrate schema per-tenant
+3. Gọi Keycloak Admin API → tạo realm `tenant-<slug>` + LDAP Federation
+4. Gọi `tenant-manager` HTTP → `POST /service-api/v1/internal/init-schema`:
+   - Tạo schema `tenant_<slug>_tenantmanager`
+   - **Clone role template snapshot** từ `platform-registry` (idempotent)
+   - Tạo root organization (COMPANY) đầu tiên
+5. Tạo super-admin user đầu tiên (Keycloak Admin API + insert users_extra vào tenant-manager)
+6. Enable default mini-apps
 
 ---
 
@@ -81,15 +87,15 @@ CREATE INDEX idx_tenants_status ON tenants(status) WHERE status != 'offboarding'
 ```sql
 CREATE TABLE mini_apps (
     id                 UUID PRIMARY KEY,
-    code               VARCHAR(50) UNIQUE NOT NULL,       -- 'hrm', 'sales', 'erp'
+    code               VARCHAR(50) UNIQUE NOT NULL,
     name               VARCHAR(255) NOT NULL,
     description        TEXT NULL,
     version            VARCHAR(20)  NOT NULL,
-    category           VARCHAR(50)  NOT NULL,            -- core | addon | industry-specific
+    category           VARCHAR(50)  NOT NULL,
     icon_url           TEXT NULL,
     documentation_url  TEXT NULL,
     base_price         DECIMAL(12,2) NULL,
-    is_core            BOOLEAN NOT NULL DEFAULT FALSE,   -- auto-enable cho mọi tenant
+    is_core            BOOLEAN NOT NULL DEFAULT FALSE,
     is_active          BOOLEAN NOT NULL DEFAULT TRUE,
     metadata           JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at         TIMESTAMPTZ NOT NULL,
@@ -105,7 +111,7 @@ CREATE TABLE tenant_mini_apps (
     mini_app_id     UUID NOT NULL REFERENCES public.mini_apps(id),
     enabled         BOOLEAN NOT NULL DEFAULT TRUE,
     enabled_at      TIMESTAMPTZ NOT NULL,
-    enabled_by      UUID NOT NULL,                        -- keycloak_user_id
+    enabled_by      UUID NOT NULL,
     config          JSONB NOT NULL DEFAULT '{}'::jsonb,
     notes           TEXT NULL,
     UNIQUE (mini_app_id)
@@ -128,50 +134,197 @@ CREATE TABLE tenant_mini_app_user_access (
 
 ```sql
 CREATE TABLE tenant_root_orgs (
-    hrm_root_org_id   UUID NOT NULL,                  -- organizations.id trong HRM per-tenant schema
-    root_org_code     VARCHAR(50) NOT NULL,           -- 'ACME_ROOT'
-    hrm_employee_id   UUID NULL,                      -- nhân viên đầu tiên của tenant
+    hrm_root_org_id   UUID NOT NULL,
+    root_org_code     VARCHAR(50) NOT NULL,
+    hrm_employee_id   UUID NULL,
     metadata          JSONB NOT NULL DEFAULT '{}'::jsonb,
     synced_at         TIMESTAMPTZ NOT NULL,
     PRIMARY KEY (root_org_code)
 );
 ```
 
-→ Cấy con/cháu vẫn query từ HRM (`tenant_<slug>_hrm.organizations`). `platform-registry` chỉ giữ root mapping để biết "tenant nào ↔ root org nào".
+→ Hỗ trợ lookup "tenant nào ↔ root org nào" nhanh. Các cây con/cháu vẫn query `service-api` từ `tenant-manager`.
 
 ---
 
-## API (4 prefix pattern)
+## 4. Role / Permission Template (NEW)
 
-> Service này expose tất cả 4 loại prefix theo chuẩn CacheSol (xem [`governance/architecture/api-patterns.md`](../../../governance/architecture/api-patterns.md)):
+> **Mục đích:** Cung cấp bộ role/permission mặc định có sẵn trong platform. Khi tạo tenant mới, bộ này được **clone snapshot** sang schema per-tenant của `tenant-manager`.
+
+### 4.1 Permission Template (schema `public`)
+
+```sql
+CREATE TABLE permission_templates (
+    id          UUID PRIMARY KEY,
+    code        VARCHAR(100) NOT NULL,                  -- 'HRM.EMPLOYEE.READ'
+    description VARCHAR(255) NULL,
+    category    VARCHAR(50) NULL,                       -- 'HRM' | 'SALES' | 'ERP' | 'COMMON'
+    UNIQUE (code)
+);
+```
+
+### 4.2 Role Template
+
+```sql
+CREATE TABLE role_templates (
+    id           UUID PRIMARY KEY,
+    code         VARCHAR(100) NOT NULL,                 -- 'HRM_MANAGER', 'SALES_ADMIN', 'COMPANY_ADMIN'
+    name         VARCHAR(255) NOT NULL,
+    description  TEXT NULL,
+    category     VARCHAR(50) NULL,                      -- 'HRM' | 'SALES' | 'COMMON' (super-admin,...)
+    is_default   BOOLEAN NOT NULL DEFAULT FALSE,        -- template mặc định khi tạo tenant
+    metadata     JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at   TIMESTAMPTZ NOT NULL,
+    UNIQUE (code)
+);
+
+CREATE TABLE role_template_permissions (
+    role_template_id      UUID NOT NULL REFERENCES role_templates(id) ON DELETE CASCADE,
+    permission_template_id UUID NOT NULL REFERENCES permission_templates(id) ON DELETE CASCADE,
+    PRIMARY KEY (role_template_id, permission_template_id)
+);
+```
+
+### 4.3 Mẫu seed (ban đầu)
+
+```sql
+-- Permission templates (chạy 1 lần khi migrate)
+INSERT INTO permission_templates (code, description, category) VALUES
+  ('COMMON.USER.READ',         'Xem users',                'COMMON'),
+  ('COMMON.USER.WRITE',        'CRUD users',               'COMMON'),
+  ('COMMON.ROLE.READ',         'Xem roles',                'COMMON'),
+  ('COMMON.ROLE.WRITE',        'Quản lý roles',            'COMMON'),
+  ('COMMON.ORG.READ',          'Xem cây tổ chức',          'COMMON'),
+  ('COMMON.ORG.WRITE',         'CRUD cây tổ chức',         'COMMON'),
+  ('COMMON.AUDIT.READ',        'Xem audit log',            'COMMON'),
+  ('HRM.EMPLOYEE.READ',        'Xem nhân viên',            'HRM'),
+  ('HRM.EMPLOYEE.WRITE',       'CRUD nhân viên',           'HRM'),
+  ('HRM.EMPLOYEE.APPROVE',     'Duyệt đơn HR',             'HRM'),
+  ('SALES.CUSTOMER.READ',      'Xem khách hàng',           'SALES'),
+  ('SALES.CUSTOMER.WRITE',     'CRUD khách hàng',          'SALES'),
+  ('SALES.ORDER.CREATE',       'Tạo đơn hàng',             'SALES'),
+  ('SALES.ORDER.APPROVE',      'Duyệt đơn hàng',           'SALES');
+
+-- Role templates
+INSERT INTO role_templates (code, name, description, category, is_default) VALUES
+  ('COMPANY_ADMIN',  'Company Admin',   'Quản trị viên cấp công ty',            'COMMON', TRUE),
+  ('HRM_MANAGER',    'HRM Manager',     'Quản lý nhân sự',                       'HRM',    TRUE),
+  ('HRM_EMPLOYEE',   'HRM Employee',    'Nhân viên (đọc profile)',              'HRM',    TRUE),
+  ('SALES_MANAGER',  'Sales Manager',   'Quản lý bán hàng',                     'SALES',  TRUE),
+  ('SALES_REP',      'Sales Rep',       'Nhân viên bán hàng',                   'SALES',  TRUE),
+  ('AUDITOR',        'Auditor',         'Xem audit logs (compliance)',          'COMMON', FALSE);
+
+-- Role ↔ Permission
+INSERT INTO role_template_permissions (role_template_id, permission_template_id)
+SELECT rt.id, pt.id
+FROM role_templates rt, permission_templates pt
+WHERE
+  (rt.code = 'COMPANY_ADMIN' AND pt.code LIKE 'COMMON.%')
+  OR
+  (rt.code = 'HRM_MANAGER' AND pt.code IN ('HRM.EMPLOYEE.READ', 'HRM.EMPLOYEE.WRITE', 'HRM.EMPLOYEE.APPROVE', 'COMMON.ORG.READ'))
+  ...
+```
+
+### 4.4 API
 
 ```
-# CLIENT-API — Web/Mobile gọi vào (cần JWT authorize)
+# PUBLIC-API (super-admin dùng nội bộ)
+GET    /public-api/v1/mini-apps/catalog
+GET    /public-api/v1/health
+
+# CLIENT-API (super-admin only)
+GET    /client-api/v1/permissions/templates                   ← List permission codes
+POST   /client-api/v1/permissions/templates                   ← Tạo permission template mới
+
+GET    /client-api/v1/roles/templates                         ← List role templates
+POST   /client-api/v1/roles/templates                         ← Tạo role template
+GET    /client-api/v1/roles/templates/{id}                    ← Detail (kèm permissions)
+PATCH  /client-api/v1/roles/templates/{id}                    ← Update name/description/permissions
+DELETE /client-api/v1/roles/templates/{id}
+POST   /client-api/v1/roles/templates/{id}/set-default        ← Đánh dấu template default
+
+# CLIENT-API — Tenant management
 POST   /client-api/v1/tenants
 GET    /client-api/v1/tenants
 GET    /client-api/v1/tenants/{slug}
-PATCH  /client-api/v1/tenants/{slug}
+PATCH  /client-api/v1/tenants/{slug}                          ← Có thể đổi role_template_id
 POST   /client-api/v1/tenants/{slug}/activate
 POST   /client-api/v1/tenants/{slug}/suspend
 POST   /client-api/v1/tenants/{slug}/offboard
 GET    /client-api/v1/tenants/{slug}/root-org
 
-GET    /client-api/v1/tenants/{slug}/mini-apps                  ← List enabled mini-apps (FE render sidebar)
+GET    /client-api/v1/tenants/{slug}/mini-apps                ← FE render sidebar
 POST   /client-api/v1/tenants/{slug}/mini-apps
 PATCH  /client-api/v1/tenants/{slug}/mini-apps/{code}
 DELETE /client-api/v1/tenants/{slug}/mini-apps/{code}
 
-# SERVICE-API — Service khác gọi vào (cần service JWT)
-GET    /service-api/v1/tenants/{slug}/mini-apps                  ← HRM/Sales check "có enabled không"
-GET    /service-api/v1/tenants/{slug}/root-org                   ← Lookup root org ID
-POST   /service-api/v1/tenants                                   ← Tạo tenant + bootstrap (orchestrator only)
-
-# PUBLIC-API — Không cần authorize (hiếm)
-GET    /public-api/v1/mini-apps                                  ← Catalog public
-
-# INTEGRATION-API — Từ hệ thống ngoài
-POST   /integration-api/v1/webhooks/keycloak                    ← Keycloak realm event cho registry
+# SERVICE-API — Service khác gọi
+GET    /service-api/v1/roles/templates                        ← tenant-manager clone từ đây khi tạo tenant
+GET    /service-api/v1/roles/templates/default               ← Get default templates
+GET    /service-api/v1/permissions/templates
+GET    /service-api/v1/tenants/{slug}/mini-apps               ← Check enable
+GET    /service-api/v1/tenants/{slug}/root-org                ← Lookup root org ID
+POST   /service-api/v1/tenants                                ← Orchestrator tạo tenant
+POST   /service-api/v1/role-templates/{code}/snapshot        ← tenant-manager gọi khi cần clone
 ```
+
+### 4.5 Clone snapshot sang tenant-manager (lúc tạo tenant)
+
+Khi `platform-registry` tạo tenant → gọi `POST /service-api/v1/internal/init-schema` của `tenant-manager`:
+
+```java
+// tenant-manager service
+@PostMapping("/service-api/v1/internal/init-schema")
+public void initTenantSchema(@PathVariable String slug, @RequestBody InitTenantRequest req) {
+    String schema = "tenant_" + slug + "_tenantmanager";
+
+    // 1. CREATE SCHEMA + migrate
+    flyway.migrate(schema);
+
+    // 2. Set search_path
+    DataSourceContextHolder.setSchema(schema);
+
+    // 3. Snapshot permission templates
+    List<PermissionTemplate> permTemplates = platformRegistryClient.getPermissionTemplates();
+    Map<UUID, UUID> permTemplateIdToNewId = new HashMap<>();
+    for (PermissionTemplate pt : permTemplates) {
+        Permission cloned = new Permission();
+        cloned.setCode(pt.getCode());
+        cloned.setDescription(pt.getDescription());
+        permissionRepo.save(cloned);
+        permTemplateIdToNewId.put(pt.getId(), cloned.getId());
+    }
+
+    // 4. Snapshot role templates
+    List<RoleTemplate> roleTemplates = platformRegistryClient.getRoleTemplates();
+    for (RoleTemplate rt : roleTemplates) {
+        Role role = new Role();
+        role.setCode(rt.getCode());
+        role.setName(rt.getName());
+        role.setDescription(rt.getDescription());
+        role.setIsSystem(true);                      // role snapshot gốc → system role
+        role.setTemplateRoleId(rt.getId());
+        roleRepo.save(role);
+
+        // 5. Clone role_permissions
+        for (PermissionTemplate pt : rt.getPermissions()) {
+            UUID newPermId = permTemplateIdToNewId.get(pt.getId());
+            rolePermissionRepo.save(new RolePermission(role.getId(), newPermId));
+        }
+    }
+
+    // 6. Tạo root organization (COMPANY type)
+    Organization root = new Organization();
+    root.setCode(req.companyCode);    // 'ACME_ROOT'
+    root.setName(req.companyName);
+    root.setType("COMPANY");
+    root.setPath(Ltree.of(req.companyCode.toLowerCase()));    // 'acme_root'
+    root.setLevel(0);
+    organizationRepo.save(root);
+}
+```
+
+→ Sau khi `tenant-manager` xong, nó publish `TenantInitializedEvent`. `platform-registry` listen event → cập nhật `tenants.status = 'active'`.
 
 ---
 
@@ -179,35 +332,40 @@ POST   /integration-api/v1/webhooks/keycloak                    ← Keycloak rea
 
 | Dependency | Vai trò |
 |------------|---------|
-| **Keycloak Admin API** | Tạo realm, LDAP Federation, super-admin user |
-| **HRM service** | Tạo root organization (per-tenant schema HRM) |
-| **Kafka** | Publish `TenantCreatedEvent`, `MiniAppEnabledEvent` |
+| **Keycloak Admin API** | Tạo realm, LDAP Federation |
+| **tenant-manager** | Gọi khi tạo tenant (clone template + tạo schema + tạo root org) |
+| **HRM** | (qua service-api của tenant-manager) |
+| **Kafka** | Publish events |
 
 ## Domain Events Published
 
 ```
-TenantCreatedEvent      (tenant_id, slug, plan, keycloak_realm)
+TenantCreatedEvent
+TenantInitializedEvent      (sau khi tenant-manager init xong)
 TenantActivatedEvent
 TenantSuspendedEvent
 TenantOffboardedEvent
-MiniAppEnabledEvent     (tenant_id, mini_app_code)
+MiniAppEnabledEvent
 MiniAppDisabledEvent
-TenantRootOrgSyncedEvent
+RoleTemplateCreatedEvent
+RoleTemplateUpdatedEvent
+PermissionTemplateCreatedEvent
 ```
 
 ## Không thuộc platform-registry
 
 | Tính năng | Service |
 |-----------|---------|
-| User CRUD | **`tenant-manager`** |
-| Role/Permission CRUD | **`tenant-manager`** |
-| Org tree CRUD | HRM |
-| Customer | Sales |
-| Workflow | workflow-service |
+| User CRUD | **tenant-manager** |
+| Role runtime (per-tenant) | **tenant-manager** |
+| **Org tree CRUD** | **tenant-manager** (đổi từ HRM) |
+| **Job title + employees + assignments** | **tenant-manager** (đổi từ HRM) |
+| HR nghiệp vụ (attendance/leave/payroll/...) | HRM (giờ chỉ nghiệp vụ, đọc data qua service-api của tenant-manager) |
+| Customer, Workflow, Approval | Sales, workflow-service, approval-service |
 
 ## Xem thêm
 
-- User + Role service: [`../tenant-manager/README.md`](../tenant-manager/README.md)
+- User + role + **cây tổ chức** runtime: [`../tenant-manager/README.md`](../tenant-manager/README.md)
 - IAM JWT verify: [`../iam/README.md`](../iam/README.md)
 - Multi-tenant: [`../../../governance/architecture/multi-tenant.md`](../../../governance/architecture/multi-tenant.md)
 - API patterns: [`../../../governance/architecture/api-patterns.md`](../../../governance/architecture/api-patterns.md)

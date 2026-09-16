@@ -259,28 +259,34 @@ IAM service CHỈ verify JWT. Mọi user/role CRUD do **tenant-config service** 
 └───────────────────────────────────────────────────────────────┘
 ```
 
-### 5.3 Platform Registry Service — tenants, mini-apps, org-root mapping
+### 5.3 Platform Registry Service — tenants, mini-apps, role template
 
-`platform-registry` quản lý metadata cross-tenant + per-tenant enable mapping:
+`platform-registry` quản lý metadata cross-tenant + role/permission template:
 
 | # | Bounded Context | Schema |
 |---|-----------------|--------|
 | 1 | **Tenants** | `public` |
 | 2 | **Mini-apps** (catalog + per-tenant enable) | `public` (catalog) + `tenant_<slug>_platformregistry` (per-tenant enable) |
 | 3 | **Org-root mapping** | `tenant_<slug>_platformregistry` |
+| 4 | **Role / Permission Template** (NEW) | `public` |
 
-Service này KHÔNG có users/roles (chuyển sang `tenant-manager`). Xem chi tiết: [`src/backend/platform/platform-registry/README.md`](src/backend/platform/platform-registry/README.md).
+Service này KHÔNG có users/roles/org runtime (chuyển sang `tenant-manager`). Xem chi tiết: [`src/backend/platform/platform-registry/README.md`](src/backend/platform/platform-registry/README.md).
 
-### 5.4 Tenant Manager Service — users, roles, permissions
+### 5.4 Tenant Manager Service — users, roles, cây tổ chức, employees
 
-`tenant-manager` quản lý users + roles + permissions cho từng tenant. Mỗi tenant có schema riêng `tenant_<slug>_tenantmanager`:
+`tenant-manager` là "service trung tâm quản lý cấu trúc tổ chức" của từng tenant. **5 bounded contexts**, tất cả trong per-tenant schema `tenant_<slug>_tenantmanager`:
 
-| # | Bounded Context | Schema |
-|---|-----------------|--------|
-| 1 | **Users** (CRUD qua Keycloak Admin API + users_extra + link employee) | `tenant_<slug>_tenantmanager` |
-| 2 | **Roles / Permissions** (per-tenant + org_scope_path ltree) | `tenant_<slug>_tenantmanager` |
+| # | Bounded Context | Vai trò |
+|---|-----------------|---------|
+| 1 | **Users** | CRUD qua Keycloak Admin API + users_extra |
+| 2 | **Roles / Permissions** | per-tenant runtime, clone snapshot từ `platform-registry` template |
+| 3 | **Organizations** | Toàn bộ cây đơn vị (ltree) — công ty mẹ → công ty con → chi nhánh → trung tâm → phòng ban → nhóm |
+| 4 | **Job Titles** | Chức danh tự khai báo (level, is_leader, scope_org_id) |
+| 5 | **Employees + Assignments** | Hồ sơ nhân viên, hợp đồng, employee_assignments (n-n-n) |
 
 Xem chi tiết: [`src/backend/platform/tenant-manager/README.md`](src/backend/platform/tenant-manager/README.md).
+
+> **HRM giờ KHÔNG còn quản lý org tree nữa.** HRM chỉ giữ nghiệp vụ HR (attendance/leave/payroll/recruitment/performance/training) và đọc data qua `service-api` của `tenant-manager`.
 
 ### 5.5 API patterns (4 prefix)
 
@@ -389,7 +395,7 @@ CREATE INDEX idx_uar_org_scope ON user_app_roles USING GIST (org_scope_path);
 
 | Application | Chứa gì |
 |-------------|---------|
-| **hrm** | employees, employee_assignments, organizations, job_titles, attendance, payroll, leave, recruitment, performance, training, **approval** in-app (HR workflows) |
+| **hrm** | HR nghiệp vụ (attendance, leave, payroll, recruitment, performance, training). **KHÔNG còn** org/employee — đọc qua `tenant-manager /service-api/v1/` |
 | **erp** | inventory, procurement, production, fixed-assets |
 | **sales** | customers, contacts, opportunities, orders, invoices |
 | **finance** | chart-of-accounts, journal, gl, ap/ar, banking |
