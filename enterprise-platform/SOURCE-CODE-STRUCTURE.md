@@ -101,75 +101,103 @@ src/backend/
     └── shared-security/
 ```
 
-### 1.2 Package Naming Convention
+### 1.2 Cấu trúc từng Application
 
-**Tất cả các microservice phải sử dụng package gốc: `com.cachesol.platform`**
-
-```
-com.cachesol.platform.{service-name}
-         │         │
-         │         └── Tên service (VD: hrm, erp, iam)
-         │
-         └── Package gốc bắt buộc
-```
-
-**Ví dụ:**
-- `com.cachesol.platform.hrm` - HRM Microservice
-- `com.cachesol.platform.erp` - ERP Microservice
-- `com.cachesol.platform.iam` - Identity & Access Management
-- `com.cachesol.platform.shared.common` - Shared common library
-
-### 1.3 Standard Project Structure
-
-Mỗi microservice tuân theo **Layered Architecture** hoặc **Onion Architecture**:
+**Mỗi microservice nằm ở `src/backend/applications/{name}/`** (hoặc `src/backend/platform/{name}/` cho platform services). Cấu trúc áp dụng **đồng nhất** cho cả applications và platform services.
 
 ```text
-{service-name}/
-├── src/
-│   ├── main/
-│   │   ├── java/com/cachesol/platform/{service-name}/
-│   │   │   │
-│   │   │   ├── application/              # Layer 1: Application Services
-│   │   │   │   ├── controller/           # REST Controllers
-│   │   │   │   ├── dto/                  # Data Transfer Objects
-│   │   │   │   ├── request/              # Request DTOs
-│   │   │   │   └── response/             # Response DTOs
-│   │   │   │
-│   │   │   ├── domain/                   # Layer 2: Domain Core
-│   │   │   │   ├── entity/               # JPA Entities
-│   │   │   │   ├── vo/                   # Value Objects
-│   │   │   │   ├── repository/           # Repository Interfaces
-│   │   │   │   ├── service/              # Domain Services
-│   │   │   │   └── exception/            # Domain Exceptions
-│   │   │   │
-│   │   │   ├── infrastructure/           # Layer 3: Infrastructure
-│   │   │   │   ├── persistence/          # JPA Repository Implementations
-│   │   │   │   ├── logging/              # ★ Logging infrastructure
-│   │   │   │   ├── messaging/            # Kafka Producers/Consumers
-│   │   │   │   ├── external/             # External API Clients
-│   │   │   │   └── config/               # Spring Configurations
-│   │   │   │
-│   │   │   └── {ServiceName}Application.java  # Main Application Class
+src/backend/applications/{name}/        ← cũng áp dụng cho src/backend/platform/{name}/
+├── src/main/
+│   ├── java/com/cachesol/platform/{name}/
+│   │   ├── HrmServiceApplication.java  ← @SpringBootApplication — tên class = {Name}ServiceApplication
 │   │   │
-│   │   └── resources/
-│   │       ├── application.yml           # Main config
-│   │       ├── application-local.yml      # Local profile
-│   │       ├── application-dev.yml        # Dev profile
-│   │       ├── application-prod.yml      # Production profile
-│   │       ├── logback-spring.xml         # ★ Logging config (JSON appender, MDC)
-│   │       └── db/migration/              # Flyway migrations
+│   │   ├── application/                ← Layer 1: Application Services
+│   │   │   ├── controller/             ← REST Controllers (@RestController)
+│   │   │   ├── dto/                    ← Request/Response DTOs (gộp chung, không tách request/response)
+│   │   │   └── service/                ← Application Service (gọi domain, orchestration)
+│   │   │
+│   │   ├── domain/                     ← Layer 2: Domain Core
+│   │   │   ├── entity/                 ← JPA Entities (@Entity)
+│   │   │   └── repository/             ← Spring Data JPA Repository Interface
+│   │   │
+│   │   └── (infrastructure/ sẽ thêm khi cần — messaging, external API, persistence impl)
 │   │
-│   └── test/
-│       └── java/com/cachesol/platform/{service-name}/
-│           ├── unit/                      # Unit tests
-│           ├── integration/               # Integration tests
-│           └── e2e/                       # E2E tests
+│   └── resources/
+│       ├── application.yml             ← Main config (profile chính)
+│       ├── application-local.yml       ← Local profile (dev)
+│       ├── logback-spring.xml          ← ★ Logging: JSON appender, MDC, AUDIT/PERFORMANCE logger
+│       └── db/migration/               ← Flyway migrations
+│           ├── V1__create_employees_table.sql
+│           └── V1__create_audit_logs.sql      ← Audit log table (bắt buộc)
 │
-├── pom.xml                               # Maven build file
-├── Dockerfile                             # Container build
-├── docker-compose.yml                     # Local development
-└── README.md
+├── pom.xml                             ← Maven build
+└── README.md                           ← Mô tả service (README phải khớp vị trí mới src/backend/applications/{name}/)
 ```
+
+**Quy tắc bắt buộc:**
+
+| Quy tắc | Mô tả |
+|---------|-------|
+| **Main class** | Phải tên `{Name}ServiceApplication` (VD: `HrmServiceApplication`, `IamServiceApplication`) |
+| **DTO gộp chung** | `application/dto/` chứa cả `*Request`, `*Response`, `ApiResponse`, `PageResponse`. Không tách `request/` và `response/`. |
+| **Logging bắt buộc** | Mọi microservice PHẢI có `logback-spring.xml` + `V1__create_audit_logs.sql`. Xem §1.6. |
+| **Inheritance shared libs** | `pom.xml` khai báo dependency vào `com.cachesol.platform:shared-common`, `shared-messaging`, `shared-security`. |
+| **README inline** | Service README chỉ mô tả service đó, KHÔNG lặp lại kiến trúc chung (link ra doc chính). |
+
+**Ví dụ thực tế (HRM sau khi migrate):**
+
+```text
+src/backend/applications/hrm/
+├── pom.xml
+├── README.md
+└── src/main/
+    ├── java/com/cachesol/platform/hrm/
+    │   ├── HrmServiceApplication.java
+    │   ├── application/
+    │   │   ├── controller/EmployeeController.java
+    │   │   ├── dto/{ApiResponse,CreateEmployeeRequest,EmployeeResponse,PageResponse}.java
+    │   │   └── service/EmployeeService.java
+    │   └── domain/
+    │       ├── entity/Employee.java
+    │       └── repository/EmployeeRepository.java
+    └── resources/
+        ├── application.yml
+        ├── logback-spring.xml
+        └── db/migration/
+            ├── V1__create_employees_table.sql
+            └── V1__create_audit_logs.sql
+```
+
+### 1.3 Package Naming Convention (chung cho mọi microservice)
+
+**Mọi package con đều bắt đầu bằng `com.cachesol.platform.{layer}.{name}`.**
+
+```text
+com.cachesol.platform.{layer}.{name}
+                 │         │       │
+                 │         │       └── Tên service (VD: hrm, iam) hoặc shared lib
+                 │         │
+                 │         └── application / domain / infrastructure
+                 │
+                 └── Package gốc bắt buộc
+```
+
+**Cụ thể:**
+
+| Layer | Pattern | Ví dụ |
+|-------|---------|-------|
+| Microservice (applications) | `com.cachesol.platform.{name}` | `com.cachesol.platform.hrm` |
+| Microservice (platform) | `com.cachesol.platform.{name}` | `com.cachesol.platform.iam` |
+| Application layer | `com.cachesol.platform.{name}.application.*` | `com.cachesol.platform.hrm.application.controller` |
+| Domain layer | `com.cachesol.platform.{name}.domain.*` | `com.cachesol.platform.hrm.domain.entity` |
+| Infrastructure layer | `com.cachesol.platform.{name}.infrastructure.*` | `com.cachesol.platform.hrm.infrastructure.persistence` |
+| Shared lib — common | `com.cachesol.platform.shared.{artifact}` | `com.cachesol.platform.shared.common`, `…shared.messaging`, `…shared.security` |
+
+**Quy tắc đặt tên:**
+- Tên service viết **thường** trong package path: `com.cachesol.platform.hrm` (KHÔNG `com.cachesol.platform.HRM`).
+- Main class tên `{Name}ServiceApplication` (PascalCase): `HrmServiceApplication`, `IamServiceApplication`.
+- Package shared lib dùng số ít: `shared.common`, không phải `shared.commons`.
+- Maven artifactId: kebab-case nhưng vẫn mang prefix: `shared-common`, `shared-messaging`, `shared-security`.
 
 ### 1.4 Chi tiết từng Layer
 
@@ -179,67 +207,103 @@ Mỗi microservice tuân theo **Layered Architecture** hoặc **Onion Architectu
 application/
 ├── controller/
 │   ├── {EntityName}Controller.java
-│   └── {EntityName}ControllerTest.java
+│   └── {EntityName}ControllerTest.java          # (sẽ thêm)
 │
-├── dto/
-│   ├── Create{EntityName}DTO.java
-│   ├── Update{EntityName}DTO.java
-│   ├── {EntityName}DTO.java
-│   └── {EntityName}SummaryDTO.java
+├── dto/                                          # ★ GỘP CHUNG — KHÔNG tách request/response/
+│   ├── Create{EntityName}Request.java
+│   ├── Update{EntityName}Request.java           # (sẽ thêm khi cần)
+│   ├── {EntityName}Response.java
+│   ├── ApiResponse.java                         # Wrapper response chuẩn: { success, message, data }
+│   └── PageResponse.java                        # Wrapper phân trang
 │
-├── request/
-│   └── ... (tương tự DTO, dùng cho input)
-│
-└── response/
-    ├── ApiResponse.java                   # Wrapper response chuẩn
-    ├── PageResponse.java                  # Wrapper phân trang
-    └── ErrorResponse.java                 # Error response RFC 7807
+└── service/                                     # Application Service (orchestration, transactional)
+    ├── {EntityName}Service.java
+    └── {EntityName}ServiceTest.java             # (sẽ thêm)
 ```
 
 **Nguyên tắc:**
 - Controller xử lý HTTP request/response, **KHÔNG** viết business logic.
-- Controller gọi **logger** để ghi access log (request/response, latency, status).
-- Sử dụng `@Validated` cho request validation.
-- Request/Response DTO khác với Domain Entity.
+- Controller **dùng SLF4J** cho access log (`RequestLoggingFilter` đã tự ghi ở backend — §1.6).
+- Sử dụng `@Valid` cho request validation (Bean Validation annotations).
+- DTO khác Domain Entity. DTO ở `dto/` gộp chung, không tách `request/` / `response/`.
+- Application Service nằm ở `application/service/`, KHÔNG đặt ở `domain/service/` (đó là Domain Service trong mô hình DDD — khi nào cần mới thêm).
+- Dùng Lombok (`@Data`, `@Builder`, `@RequiredArgsConstructor`, `@Slf4j`) để giảm boilerplate.
 
-**Ví dụ Controller có logging:**
+**Ví dụ Controller thực tế (HRM `EmployeeController`):**
 
 ```java
 @RestController
-@RequestMapping("/api/v1/employees")
+@RequestMapping("/employees")                       // ★ KHÔNG prefix /api/v1/ — server.servlet.context-path đã có /api/v1
 @RequiredArgsConstructor
 public class EmployeeController {
 
     private final EmployeeService employeeService;
-    private final AccessLogLogger accessLog;  // ★ Custom access logger
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PageResponse<EmployeeResponse>>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(employeeService.getAll(pageable)));
+    }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<EmployeeDTO>> create(
-            @Valid @RequestBody CreateEmployeeRequest request,
-            HttpServletRequest httpRequest) {
+    public ResponseEntity<ApiResponse<EmployeeResponse>> create(
+            @Valid @RequestBody CreateEmployeeRequest request) {
+        EmployeeResponse response = employeeService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
+    }
 
-        // ★ Log bắt đầu xử lý (INFO)
-        String traceId = accessLog.start("CREATE_EMPLOYEE", httpRequest);
-        log.info("Creating employee email={} tenantId={}",
-                request.getEmail(), SecurityContext.getTenantId());
-
-        try {
-            EmployeeDTO created = employeeService.create(request);
-            // ★ Log kết thúc thành công (INFO)
-            accessLog.success(traceId, created.getId());
-            return ResponseEntity.ok(ApiResponse.ok(created));
-        } catch (BusinessException e) {
-            // ★ Log business error (WARN)
-            accessLog.businessFail(traceId, e);
-            throw e;
-        } catch (Exception e) {
-            // ★ Log unexpected error (ERROR + stack trace)
-            accessLog.systemFail(traceId, e);
-            throw e;
-        }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
+        employeeService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
 ```
+
+**DTO & Wrapper (thực tế trong `application/dto/`):**
+
+```java
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
+public class ApiResponse<T> {
+    private boolean success;
+    private String message;
+    private T data;
+
+    public static <T> ApiResponse<T> success(T data) {
+        return ApiResponse.<T>builder().success(true).message("OK").data(data).build();
+    }
+}
+
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
+public class PageResponse<T> {
+    private List<T> content;
+    private int page;
+    private int size;
+    private long totalElements;
+    private int totalPages;
+
+    public static <T> PageResponse<T> of(List<T> content, int page, int size, long total) {
+        int totalPages = (int) Math.ceil((double) total / size);
+        return PageResponse.<T>builder()
+                .content(content).page(page).size(size).totalElements(total).totalPages(totalPages)
+                .build();
+    }
+}
+```
+
+```java
+@Data
+public class CreateEmployeeRequest {           // ★ Validation bằng Bean Validation
+    @NotBlank @Size(max = 20)  private String employeeCode;
+    @NotBlank @Size(max = 100) private String firstName;
+    @NotBlank @Size(max = 100) private String lastName;
+    @NotBlank @Email          private String email;
+    @Size(max = 20)            private String phone;
+    @NotNull                  private LocalDate dateOfJoining;
+    @NotBlank                 private String employmentType;   // enum name
+}
+```
+
+> **Ghi chú:** `RequestLoggingFilter` (shared) đã tự ghi access log ở `ACCESS` logger với trace_id, latency_ms, status. Controller KHÔNG cần ghi access log thủ công.
 
 #### Domain Layer (`domain/`)
 
@@ -247,32 +311,26 @@ public class EmployeeController {
 domain/
 ├── entity/
 │   ├── {EntityName}.java                  # JPA Entity
-│   └── {EntityName}EntityTest.java
+│   └── {EntityName}EntityTest.java        # (sẽ thêm)
 │
-├── vo/
-│   ├── Money.java                        # Value Object ví dụ
-│   ├── Address.java
+├── vo/                                    # (sẽ thêm khi cần DDD value object)
+│   ├── Money.java
 │   └── Email.java
 │
 ├── repository/
-│   └── {EntityName}Repository.java       # Spring Data JPA Interface
+│   └── {EntityName}Repository.java       # Spring Data JPA Interface (không có impl riêng)
 │
-├── service/
-│   ├── {EntityName}Service.java          # Service Interface
-│   ├── {EntityName}ServiceImpl.java      # Service Implementation
-│   └── {EntityName}ServiceTest.java
-│
-└── exception/
-    ├── {EntityName}NotFoundException.java
-    ├── {EntityName}BusinessException.java
-    └── GlobalExceptionHandler.java       # @RestControllerAdvice
+└── (service/ sẽ thêm khi cần Domain Service)
 ```
 
 **Nguyên tắc:**
-- Entity không chứa annotation framework cụ thể nếu có thể (hoặc chỉ JPA).
+- Entity dùng Lombok `@Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor`.
+- ID dùng UUID: `@GeneratedValue(strategy = GenerationType.UUID)`.
+- Enum dùng `@Enumerated(EnumType.STRING)`.
+- KHÔNG cần `Service` / `ServiceImpl` riêng — `application/service/{Name}Service` đã đủ cho CRUD.
+- Khi logic phức tạp không thuộc về entity nào, mới tạo `domain/service/{Name}DomainService` (DDD).
 - KHÔNG inject Infrastructure vào Domain.
-- Service chỉ phụ thuộc Repository interface.
-- Exception là unchecked exception.
+- Repository chỉ là interface — Spring Data JPA tự sinh implementation.
 - **Domain service ghi log business events** (audit trail) — KHÔNG ghi technical logs ở đây.
 
 **Ví dụ Domain Service có logging:**
