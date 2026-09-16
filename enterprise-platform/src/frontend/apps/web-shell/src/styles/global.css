@@ -1,0 +1,20 @@
+/* Shell Global Styles */
+:root {
+  --color-primary: #1890ff;
+  --color-bg: #ffffff;
+  --color-bg-secondary: #fafafa;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #262626;
+  background-color: var(--color-bg);
+}

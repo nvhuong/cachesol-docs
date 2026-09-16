@@ -1,0 +1,23 @@
+{
+  "menu": {
+    "employees": "Nhân viên"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "create": "Tạo mới",
+    "search": "Tìm kiếm",
+    "actions": "Thao tác",
+    "confirm": "Xác nhận"
+  },
+  "employee": {
+    "title": "Quản lý nhân viên",
+    "titleList": "Danh sách nhân viên",
+    "titleCreate": "Thêm nhân viên",
+    "titleEdit": "Sửa nhân viên",
+    "titleDetail": "Chi tiết nhân viên"
+  }
+}

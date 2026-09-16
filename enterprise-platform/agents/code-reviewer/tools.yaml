@@ -1,0 +1,14 @@
+agent: code-reviewer
+skills:
+  - skill: skills/enterprise/code-review
+    permission: execute
+  - skill: skills/enterprise/security-check
+    permission: execute
+governance:
+  - governance/quality/coding-standard.md
+  - governance/quality/code-review.md
+  - governance/architecture/standards/security.md
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - strict_mode: true
+  - output_path: applications/<miniapp>/docs/<feature-id>/reviews/code-review-report.md

@@ -1,0 +1,180 @@
+services:
+  - id: iam-service
+    name: 'IAM Service'
+    domain: platform
+    description: 'Quản lý danh tính, xác thực và phân quyền (RBAC/ABAC).'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8081
+    api-prefix: '/api/v1/iam'
+    events-published: ['UserCreated', 'UserUpdated', 'UserDeleted', 'RoleAssigned']
+    events-consumed: []
+    dependencies: []
+
+  - id: organization-service
+    name: 'Organization Service'
+    domain: platform
+    description: 'Quản lý cơ cấu phòng ban, sơ đồ tổ chức.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8082
+    api-prefix: '/api/v1/org'
+    events-published: ['DepartmentCreated', 'DepartmentUpdated']
+    events-consumed: []
+    dependencies: ['iam-service']
+
+  - id: employee-service
+    name: 'Employee Service'
+    domain: hrm
+    description: 'Quản lý hồ sơ nhân viên.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8083
+    api-prefix: '/api/v1/employees'
+    events-published: ['EmployeeOnboarded', 'EmployeeTerminated']
+    events-consumed: ['UserCreated']
+    dependencies: ['iam-service', 'organization-service']
+
+  - id: attendance-service
+    name: 'Attendance Service'
+    domain: hrm
+    description: 'Quản lý chấm công, nghỉ phép.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8084
+    api-prefix: '/api/v1/attendance'
+    events-published: ['LeaveApproved']
+    events-consumed: ['EmployeeOnboarded']
+    dependencies: ['employee-service', 'workflow-service']
+
+  - id: payroll-service
+    name: 'Payroll Service'
+    domain: hrm
+    description: 'Tính toán lương thưởng.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8085
+    api-prefix: '/api/v1/payroll'
+    events-published: ['PayrollProcessed']
+    events-consumed: ['EmployeeTerminated', 'LeaveApproved']
+    dependencies: ['employee-service', 'attendance-service', 'finance-service']
+
+  - id: inventory-service
+    name: 'Inventory Service'
+    domain: erp
+    description: 'Quản lý kho bãi, hàng hóa.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8086
+    api-prefix: '/api/v1/inventory'
+    events-published: ['StockUpdated', 'LowStockAlert']
+    events-consumed: ['OrderCreated']
+    dependencies: []
+
+  - id: purchasing-service
+    name: 'Purchasing Service'
+    domain: erp
+    description: 'Quản lý mua sắm vật tư.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8087
+    api-prefix: '/api/v1/purchasing'
+    events-published: ['PurchaseOrderCreated']
+    events-consumed: ['LowStockAlert']
+    dependencies: ['inventory-service', 'finance-service']
+
+  - id: finance-service
+    name: 'Finance Service'
+    domain: finance
+    description: 'Quản lý tài khoản kế toán, thu chi.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8088
+    api-prefix: '/api/v1/finance'
+    events-published: ['TransactionRecorded']
+    events-consumed: ['PayrollProcessed', 'PurchaseOrderCreated', 'InvoicePaid']
+    dependencies: []
+
+  - id: billing-service
+    name: 'Billing Service'
+    domain: finance
+    description: 'Phát hành hóa đơn, thu tiền.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8089
+    api-prefix: '/api/v1/billing'
+    events-published: ['InvoiceCreated', 'InvoicePaid']
+    events-consumed: ['OrderDelivered']
+    dependencies: ['finance-service', 'customer-service']
+
+  - id: customer-service
+    name: 'Customer Service'
+    domain: crm
+    description: 'Quản lý thông tin khách hàng.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8090
+    api-prefix: '/api/v1/customers'
+    events-published: ['CustomerCreated', 'CustomerUpdated']
+    events-consumed: []
+    dependencies: []
+
+  - id: support-ticket-service
+    name: 'Support Ticket Service'
+    domain: crm
+    description: 'Quản lý ticket hỗ trợ khách hàng.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8091
+    api-prefix: '/api/v1/tickets'
+    events-published: ['TicketCreated', 'TicketResolved']
+    events-consumed: ['CustomerCreated']
+    dependencies: ['customer-service', 'employee-service']
+
+  - id: notification-service
+    name: 'Notification Service'
+    domain: communication
+    description: 'Gửi Email, SMS, In-app Notification.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8092
+    api-prefix: '/api/v1/notifications'
+    events-published: ['NotificationSent']
+    events-consumed: ['*'] # Nghe nhiều events để gửi thông báo
+    dependencies: []
+
+  - id: workflow-service
+    name: 'Workflow Service'
+    domain: workflow
+    description: 'Xử lý luồng phê duyệt động.'
+    technology: 'Spring Boot 21'
+    database: PostgreSQL
+    port: 8093
+    api-prefix: '/api/v1/workflows'
+    events-published: ['TaskAssigned', 'TaskCompleted', 'ProcessFinished']
+    events-consumed: []
+    dependencies: ['iam-service', 'employee-service']
+
+  - id: api-gateway
+    name: 'API Gateway'
+    domain: platform
+    description: 'Cổng giao tiếp duy nhất cho client, handle rate-limit, CORS, auth routing.'
+    technology: 'Spring Cloud Gateway'
+    database: None
+    port: 8080
+    api-prefix: '/'
+    events-published: []
+    events-consumed: []
+    dependencies: ['iam-service']
+
+  - id: audit-log-service
+    name: 'Audit Log Service'
+    domain: platform
+    description: 'Lưu vết mọi thao tác của người dùng.'
+    technology: 'Spring Boot 21'
+    database: MongoDB # hoặc PostgreSQL
+    port: 8094
+    api-prefix: '/api/v1/audit'
+    events-published: []
+    events-consumed: ['*']
+    dependencies: []

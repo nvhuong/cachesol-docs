@@ -1,0 +1,76 @@
+name: 'Bug Fix Workflow'
+version: '2.0'
+description: 'Xử lý bug từ report đến hotfix — có thể gắn miniapp/feature'
+trigger:
+  type: event
+  input:
+    - name: bug-report
+      type: document
+      required: true
+    - name: miniapp
+      type: string
+      required: false
+    - name: feature-id
+      type: string
+      required: false
+steps:
+  - id: step-01
+    name: 'Bug Report Analysis'
+    agent: business-analyst
+    skill: skills/enterprise/requirement-analysis
+    input:
+      - bug-report
+    output:
+      - 'applications/${miniapp}/docs/bugfixes/${feature-id}/root-cause-analysis.md'
+    validation:
+      - 'Phải có steps to reproduce'
+    on_failure: escalate
+    next: step-02
+  - id: step-02
+    name: 'Root Cause Analysis'
+    agent: backend-developer
+    skill: skills/enterprise/debugging
+    input:
+      - 'applications/${miniapp}/docs/bugfixes/${feature-id}/root-cause-analysis.md'
+    output:
+      - 'applications/${miniapp}/docs/bugfixes/${feature-id}/fix-design.md'
+    validation:
+      - 'Xác định được component lỗi'
+    on_failure: escalate
+    next: step-03
+  - id: step-03
+    name: 'Implementation'
+    agent: backend-developer
+    skill: skills/enterprise/spring-boot-development
+    input:
+      - 'applications/${miniapp}/docs/bugfixes/${feature-id}/fix-design.md'
+    output:
+      - pull-request
+    validation:
+      - 'Test pass'
+    on_failure: escalate
+    next: step-04
+  - id: step-04
+    name: 'Testing'
+    agent: tester
+    skill: skills/enterprise/testing
+    input:
+      - pull-request
+    output:
+      - 'applications/${miniapp}/tests/bugfixes/${feature-id}/test-report.md'
+    validation:
+      - 'Bao phủ bug'
+    on_failure: escalate
+    next: step-05
+  - id: step-05
+    name: 'Code Review'
+    agent: code-reviewer
+    skill: skills/enterprise/code-review
+    input:
+      - pull-request
+    output:
+      - 'applications/${miniapp}/docs/bugfixes/${feature-id}/code-review-report.md'
+    validation:
+      - 'Không CRITICAL'
+    on_failure: escalate
+    next: done

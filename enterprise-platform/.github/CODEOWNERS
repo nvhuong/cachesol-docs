@@ -1,0 +1,19 @@
+# Phân quyền review theo module
+
+# Đội kiến trúc
+governance/** @architecture-team
+workflows/** @architecture-team
+
+# Đội thiết kế
+design-system/** @design-team
+
+# Core Platform
+platform/** @platform-team
+
+# Ứng dụng
+applications/erp/** @erp-team
+applications/sales/** @sales-team
+applications/marketing/** @marketing-team
+applications/hrm/** @hrm-team
+applications/attendance/** @attendance-team
+applications/finance/** @finance-team

@@ -1,0 +1,17 @@
+{
+  "shell": {
+    "menu": {
+      "dashboard": "Trang chủ",
+      "settings": "Cài đặt"
+    }
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "edit": "Sửa",
+    "create": "Tạo mới",
+    "search": "Tìm kiếm"
+  }
+}

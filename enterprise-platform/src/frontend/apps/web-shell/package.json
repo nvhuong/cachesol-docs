@@ -1,0 +1,43 @@
+{
+  "name": "web-shell",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CacheSol Web Shell - Host application cho mini apps",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@cachesol/shared-api": "workspace:*",
+    "@cachesol/shared-types": "workspace:*",
+    "@cachesol/shared-ui": "workspace:*",
+    "@cachesol/hrm-mini-app": "workspace:*",
+    "@tanstack/react-query": "^5.17.19",
+    "antd": "^5.14.0",
+    "@ant-design/icons": "^5.2.6",
+    "axios": "^1.6.5",
+    "dayjs": "^1.11.10",
+    "i18next": "^23.8.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-i18next": "^14.0.5",
+    "react-router-dom": "^6.22.0",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.2.0",
+    "@testing-library/react": "^14.1.2",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "jsdom": "^24.0.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vitest": "^1.2.2"
+  }
+}

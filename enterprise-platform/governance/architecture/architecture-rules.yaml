@@ -1,0 +1,164 @@
+version: '1.0'
+rules:
+  - id: ARCH-001
+    category: microservice
+    name: 'No Direct Cross-Service DB Access'
+    description: 'A service must not access the database of another service directly.'
+    severity: CRITICAL
+    rationale: 'Breaches bounded context and creates tight coupling at the database layer.'
+    enforcement: automated
+    examples:
+      wrong: 'iam-service reads from erp_orders table directly.'
+      correct: 'iam-service calls erp-service API or listens to ERP events.'
+
+  - id: ARCH-002
+    category: messaging
+    name: 'Must Publish Domain Events'
+    description: 'State changes to core aggregates must publish an event to Kafka.'
+    severity: WARNING
+    rationale: 'Required for event-driven async updates across microservices.'
+    enforcement: manual
+
+  - id: ARCH-003
+    category: security
+    name: 'No Hardcoded Secrets'
+    description: 'Credentials, keys, or passwords must not be hardcoded in source code or configuration files.'
+    severity: CRITICAL
+    rationale: 'Prevents security leaks.'
+    enforcement: automated
+
+  - id: ARCH-004
+    category: api
+    name: 'API First Versioning'
+    description: 'All REST APIs must include versioning (e.g. /api/v1/...).'
+    severity: ERROR
+    rationale: 'Allows backwards compatibility for API consumers.'
+    enforcement: automated
+    
+  - id: ARCH-005
+    category: resilience
+    name: 'Circuit Breaker on Sync Calls'
+    description: 'Synchronous cross-service calls (REST/gRPC) must use a circuit breaker.'
+    severity: ERROR
+    rationale: 'Prevents cascading failures.'
+    enforcement: automated
+
+  - id: ARCH-006
+    category: observability
+    name: 'Distributed Tracing Headers'
+    description: 'All services must propagate traceId and spanId via MDC.'
+    severity: ERROR
+    rationale: 'Essential for tracking requests across microservices.'
+    enforcement: automated
+
+  - id: ARCH-007
+    category: frontend
+    name: 'Feature Flags Wrap New Features'
+    description: 'New UI components must be toggleable via Feature Flags.'
+    severity: INFO
+    rationale: 'Enables dark launching and gradual rollouts.'
+    enforcement: manual
+
+  - id: ARCH-008
+    category: database
+    name: 'No Foreign Keys Across Microservices'
+    description: 'Database schema must not contain foreign keys referencing tables in other services.'
+    severity: CRITICAL
+    rationale: 'Database per service principle.'
+    enforcement: automated
+
+  - id: ARCH-009
+    category: backend
+    name: 'Dependency Injection Mandatory'
+    description: 'Components must use constructor injection rather than field injection (@Autowired).'
+    severity: WARNING
+    rationale: 'Improves testability and immutability.'
+    enforcement: automated
+
+  - id: ARCH-010
+    category: logging
+    name: 'JSON Logging Format'
+    description: 'Console and file logs must output in JSON format for production profiles.'
+    severity: ERROR
+    rationale: 'Centralized log aggregation requires structured logs.'
+    enforcement: automated
+
+  - id: ARCH-011
+    category: code
+    name: 'No God Classes'
+    description: 'Classes should not exceed 1000 lines of code.'
+    severity: WARNING
+    rationale: 'Maintainability and Single Responsibility Principle.'
+    enforcement: automated
+
+  - id: ARCH-012
+    category: testing
+    name: 'Unit Test Coverage > 80%'
+    description: 'Code coverage must be at least 80% on new code.'
+    severity: ERROR
+    rationale: 'Maintains platform stability.'
+    enforcement: automated
+
+  - id: ARCH-013
+    category: security
+    name: 'Stateless Auth via JWT'
+    description: 'Services must use stateless JWT tokens for authentication, not sessions.'
+    severity: CRITICAL
+    rationale: 'Enables horizontal scaling without sticky sessions.'
+    enforcement: automated
+
+  - id: ARCH-014
+    category: api
+    name: 'Standard HTTP Status Codes'
+    description: 'APIs must return semantic HTTP status codes (200, 201, 400, 401, 403, 404, 500).'
+    severity: ERROR
+    rationale: 'Consistency for clients.'
+    enforcement: automated
+
+  - id: ARCH-015
+    category: microservice
+    name: 'Health Check Endpoints'
+    description: 'Every service must expose /actuator/health.'
+    severity: CRITICAL
+    rationale: 'Required for K8s liveness and readiness probes.'
+    enforcement: automated
+
+  - id: ARCH-016
+    category: database
+    name: 'Automated DB Migrations'
+    description: 'Database schemas must be managed via Liquibase or Flyway.'
+    severity: ERROR
+    rationale: 'Version control for databases.'
+    enforcement: automated
+
+  - id: ARCH-017
+    category: messaging
+    name: 'Idempotent Consumers'
+    description: 'Kafka event consumers must be designed to be idempotent.'
+    severity: CRITICAL
+    rationale: 'At-least-once delivery semantics can cause duplicate messages.'
+    enforcement: manual
+
+  - id: ARCH-018
+    category: backend
+    name: 'Standardized Error Response'
+    description: 'All APIs must return a standardized ProblemDetails JSON structure on error.'
+    severity: ERROR
+    rationale: 'Simplifies frontend error handling.'
+    enforcement: automated
+
+  - id: ARCH-019
+    category: security
+    name: 'CORS Configuration'
+    description: 'CORS must be handled strictly at the API Gateway, not individual services.'
+    severity: WARNING
+    rationale: 'Centralized security management.'
+    enforcement: automated
+
+  - id: ARCH-020
+    category: infrastructure
+    name: 'Container Immutability'
+    description: 'Application container filesystems should be read-only.'
+    severity: WARNING
+    rationale: 'Security best practice.'
+    enforcement: automated

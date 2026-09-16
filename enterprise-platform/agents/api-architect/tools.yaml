@@ -1,0 +1,15 @@
+agent: api-architect
+skills:
+  - skill: skills/enterprise/api-design
+    permission: execute
+governance:
+  - governance/api/api-rules.yaml
+  - governance/api/naming.md
+  - governance/api/versioning.md
+  - governance/api/error-handling.md
+  - governance/api/pagination.md
+  - governance/api/security.md
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - schema_format: openapi_3
+  - output_path: applications/<miniapp>/docs/<feature-id>/api-spec.yaml

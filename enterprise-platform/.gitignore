@@ -1,0 +1,75 @@
+# ==============================================
+# CacheSol Enterprise Platform — .gitignore
+# ==============================================
+
+# --- IDE & Editor ---
+.vscode/
+.idea/
+.kilo/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Maven (Backend) ---
+**/target/
+!.mvn/wrapper/maven-wrapper.jar
+**/*.class
+**/*.jar
+!**/src/main/resources/*.xml
+
+# --- Gradle (Backend) ---
+**/.gradle/
+**/build/
+
+# --- npm / Node (Frontend) ---
+**/node_modules/
+**/.npm/
+**/.yarn/
+src/frontend/**/dist/
+src/frontend/**/*.tsbuildinfo
+
+# --- Logs ---
+**/logs/
+**/*.log
+**/*.log.gz
+
+# --- Environment & Secrets ---
+.env
+.env.*
+*.env
+!.env.example
+
+# --- Credentials & Keys ---
+**/*.pem
+**/*.p12
+**/*.jks
+**/credentials.json
+**/service-account.json
+
+# --- Container / DevOps ---
+**/Dockerfile
+**/docker-compose*.yml
+**/.docker/
+
+# --- Docs (non-code) at root level ---
+# src/frontend/design-system/ VẪN GIỮ trong git (code)
+# design-system/ ở root = docs markdown only → gitignore
+design-system/
+
+# --- Temporary & Generated ---
+*.tmp
+*.bak
+*.orig
+**/__pycache__/
+**/*.pyc
+**/.cache/
+**/.parcel-cache/
+
+# --- Build artifacts ---
+**/*.tgz
+**/*.zip
+**/*.tar
+
+# --- macOS ---
+.DS_Store

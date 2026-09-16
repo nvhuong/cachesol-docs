@@ -1,0 +1,11 @@
+agent: architecture-reviewer
+skills:
+  - skill: skills/enterprise/architecture-review
+    permission: execute
+governance:
+  - governance/architecture/principles.md
+  - governance/architecture/architecture-rules.yaml
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - check_tech_radar: true
+  - output_path: applications/<miniapp>/docs/<feature-id>/reviews/architecture-review-report.md

@@ -1,0 +1,10 @@
+agent: ux-designer
+skills:
+  - skill: skills/enterprise/ux-design
+    permission: execute
+governance:
+  - design-system/README.md
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - tool: figma-mock
+  - output_path: applications/<miniapp>/docs/<feature-id>/ui-spec.md

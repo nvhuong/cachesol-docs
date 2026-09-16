@@ -1,0 +1,12 @@
+name: AI Fix
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  ai-fix:
+    if: contains(github.event.comment.body, '/fix')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Trigger AI Fixer
+        run: echo "Tự động fix lỗi..."

@@ -1,0 +1,48 @@
+domains:
+  - id: platform
+    name: 'Nền tảng Cốt lõi (Platform Core)'
+    description: 'Cung cấp các dịch vụ nền móng cho các hệ thống khác (IAM, Tenant, Config).'
+    owner: 'Platform Team'
+    subdomains: [iam, organization, tenant, configuration]
+
+  - id: hrm
+    name: 'Quản trị Nguồn nhân lực (HRM)'
+    description: 'Quản lý thông tin nhân viên, chấm công, tiền lương.'
+    owner: 'HR Tech Team'
+    subdomains: [employee, attendance, payroll, recruitment]
+
+  - id: erp
+    name: 'Hoạch định Nguồn lực Doanh nghiệp (ERP)'
+    description: 'Quản lý tài nguyên, kho bãi, vật tư, chuỗi cung ứng.'
+    owner: 'ERP Squad'
+    subdomains: [inventory, purchasing, logistics]
+
+  - id: finance
+    name: 'Tài chính - Kế toán (Finance & Accounting)'
+    description: 'Kế toán tổng hợp, hóa đơn, thu chi.'
+    owner: 'Finance Squad'
+    subdomains: [accounting, billing, tax]
+
+  - id: crm
+    name: 'Quản trị Quan hệ Khách hàng (CRM)'
+    description: 'Quản lý thông tin khách hàng, lead, tickets hỗ trợ.'
+    owner: 'Customer Success Team'
+    subdomains: [customer, support, marketing]
+
+  - id: communication
+    name: 'Truyền thông (Communication)'
+    description: 'Quản lý việc gửi Email, SMS, Push notification đa kênh.'
+    owner: 'Platform Team'
+    subdomains: [notification, chat, template]
+
+  - id: workflow
+    name: 'Quy trình Trình duyệt (Workflow Engine)'
+    description: 'Quản lý các quy trình phê duyệt động, BPMN.'
+    owner: 'Automation Team'
+    subdomains: [approval, forms, tasks]
+
+  - id: analytics
+    name: 'Phân tích Dữ liệu (Analytics)'
+    description: 'Tổng hợp dữ liệu, tạo báo cáo BI, Data Warehouse.'
+    owner: 'Data Team'
+    subdomains: [reporting, bi, data-lake]

@@ -1,0 +1,11 @@
+agent: orchestrator
+skills:
+  - skill: skills/enterprise/orchestration
+    permission: execute
+governance:
+  - governance/workflow-rules.md
+  - FEATURE-LIFECYCLE.md
+  - workflows/feature-development.yaml
+constraints:
+  - max_concurrent_tasks: 50
+  - output_path: applications/<miniapp>/docs/<feature-id>/pipeline-progress.md

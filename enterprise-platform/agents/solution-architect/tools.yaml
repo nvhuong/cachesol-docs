@@ -1,0 +1,14 @@
+agent: solution-architect
+skills:
+  - skill: skills/enterprise/solution-design
+    permission: execute
+  - skill: skills/enterprise/architecture-analysis
+    permission: execute
+governance:
+  - governance/architecture/principles.md
+  - governance/architecture/architecture-rules.yaml
+  - governance/architecture/services.yaml
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - max_services_per_domain: 10
+  - output_path: applications/<miniapp>/docs/<feature-id>/solution-architecture.md

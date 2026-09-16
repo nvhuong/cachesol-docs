@@ -1,0 +1,76 @@
+name: 'API Change Workflow'
+version: '2.0'
+description: 'Cập nhật API/Event schema rồi triển khai + test'
+trigger:
+  type: manual
+  input:
+    - name: api-change-request
+      type: document
+      required: true
+    - name: miniapp
+      type: string
+      required: true
+    - name: feature-id
+      type: string
+      required: true
+steps:
+  - id: step-01
+    name: 'API Design Update'
+    agent: api-architect
+    skill: skills/enterprise/api-design
+    input:
+      - api-change-request
+    output:
+      - 'applications/${miniapp}/docs/${feature-id}/api-spec.yaml'
+    validation:
+      - 'Không breaking change nếu chưa tăng version'
+    on_failure: escalate
+    next: step-02
+  - id: step-02
+    name: 'API Review'
+    agent: architecture-reviewer
+    skill: skills/enterprise/architecture-review
+    input:
+      - 'applications/${miniapp}/docs/${feature-id}/api-spec.yaml'
+    output:
+      - 'applications/${miniapp}/docs/${feature-id}/reviews/architecture-review-report.md'
+    validation:
+      - 'Đạt chuẩn REST / governance/api'
+    on_failure: escalate
+    next: step-03
+  - id: step-03
+    name: 'Backend Update'
+    agent: backend-developer
+    skill: skills/enterprise/spring-boot-development
+    input:
+      - 'applications/${miniapp}/docs/${feature-id}/api-spec.yaml'
+    output:
+      - 'applications/${miniapp}/backend/'
+    validation:
+      - 'Compile pass'
+    on_failure: escalate
+    next: step-04
+  - id: step-04
+    name: 'Frontend Update'
+    agent: frontend-developer
+    skill: skills/enterprise/react-development
+    input:
+      - 'applications/${miniapp}/docs/${feature-id}/api-spec.yaml'
+    output:
+      - 'applications/${miniapp}/frontend/'
+    validation:
+      - 'Typecheck pass'
+    on_failure: escalate
+    next: step-05
+  - id: step-05
+    name: 'Testing'
+    agent: tester
+    skill: skills/enterprise/testing
+    input:
+      - 'applications/${miniapp}/docs/${feature-id}/api-spec.yaml'
+    output:
+      - 'applications/${miniapp}/tests/${feature-id}/test-report.md'
+    validation:
+      - 'API contract tests pass'
+    on_failure: escalate
+    next: done

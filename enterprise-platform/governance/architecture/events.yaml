@@ -1,0 +1,246 @@
+events:
+  - id: UserCreated
+    topic: 'platform.iam.user.created'
+    producer: iam-service
+    consumers: [employee-service, notification-service, audit-log-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: userId
+          type: UUID
+        - name: username
+          type: String
+        - name: email
+          type: String
+        - name: timestamp
+          type: Long
+
+  - id: UserUpdated
+    topic: 'platform.iam.user.updated'
+    producer: iam-service
+    consumers: [employee-service, audit-log-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: userId
+          type: UUID
+        - name: changes
+          type: Map<String, Object>
+
+  - id: RoleAssigned
+    topic: 'platform.iam.role.assigned'
+    producer: iam-service
+    consumers: [audit-log-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: userId
+          type: UUID
+        - name: roleId
+          type: String
+
+  - id: DepartmentCreated
+    topic: 'platform.org.department.created'
+    producer: organization-service
+    consumers: [audit-log-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: departmentId
+          type: UUID
+        - name: name
+          type: String
+
+  - id: EmployeeOnboarded
+    topic: 'hrm.employee.onboarded'
+    producer: employee-service
+    consumers: [attendance-service, payroll-service, notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: employeeId
+          type: UUID
+        - name: joinDate
+          type: String
+
+  - id: EmployeeTerminated
+    topic: 'hrm.employee.terminated'
+    producer: employee-service
+    consumers: [iam-service, payroll-service, notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: employeeId
+          type: UUID
+        - name: terminationDate
+          type: String
+
+  - id: LeaveApproved
+    topic: 'hrm.attendance.leave.approved'
+    producer: attendance-service
+    consumers: [payroll-service, notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: employeeId
+          type: UUID
+        - name: days
+          type: Integer
+        - name: type
+          type: String
+
+  - id: PayrollProcessed
+    topic: 'hrm.payroll.processed'
+    producer: payroll-service
+    consumers: [finance-service, notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: payrollId
+          type: UUID
+        - name: totalAmount
+          type: BigDecimal
+
+  - id: StockUpdated
+    topic: 'erp.inventory.stock.updated'
+    producer: inventory-service
+    consumers: [purchasing-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: productId
+          type: UUID
+        - name: quantity
+          type: Integer
+
+  - id: LowStockAlert
+    topic: 'erp.inventory.stock.low'
+    producer: inventory-service
+    consumers: [purchasing-service, notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: productId
+          type: UUID
+        - name: currentQuantity
+          type: Integer
+
+  - id: PurchaseOrderCreated
+    topic: 'erp.purchasing.order.created'
+    producer: purchasing-service
+    consumers: [finance-service, notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: poId
+          type: UUID
+        - name: totalAmount
+          type: BigDecimal
+
+  - id: TransactionRecorded
+    topic: 'finance.transaction.recorded'
+    producer: finance-service
+    consumers: [audit-log-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: transactionId
+          type: UUID
+        - name: amount
+          type: BigDecimal
+
+  - id: InvoiceCreated
+    topic: 'finance.billing.invoice.created'
+    producer: billing-service
+    consumers: [notification-service, customer-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: invoiceId
+          type: UUID
+        - name: customerId
+          type: UUID
+
+  - id: InvoicePaid
+    topic: 'finance.billing.invoice.paid'
+    producer: billing-service
+    consumers: [finance-service, notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: invoiceId
+          type: UUID
+        - name: amountPaid
+          type: BigDecimal
+
+  - id: CustomerCreated
+    topic: 'crm.customer.created'
+    producer: customer-service
+    consumers: [audit-log-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: customerId
+          type: UUID
+        - name: email
+          type: String
+
+  - id: TicketCreated
+    topic: 'crm.support.ticket.created'
+    producer: support-ticket-service
+    consumers: [notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: ticketId
+          type: UUID
+        - name: customerId
+          type: UUID
+
+  - id: TicketResolved
+    topic: 'crm.support.ticket.resolved'
+    producer: support-ticket-service
+    consumers: [notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: ticketId
+          type: UUID
+        - name: resolution
+          type: String
+
+  - id: TaskAssigned
+    topic: 'workflow.task.assigned'
+    producer: workflow-service
+    consumers: [notification-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: taskId
+          type: UUID
+        - name: assigneeId
+          type: UUID
+
+  - id: ProcessFinished
+    topic: 'workflow.process.finished'
+    producer: workflow-service
+    consumers: [attendance-service, purchasing-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: processId
+          type: UUID
+        - name: status
+          type: String
+          
+  - id: NotificationSent
+    topic: 'communication.notification.sent'
+    producer: notification-service
+    consumers: [audit-log-service]
+    version: '1.0'
+    schema:
+      fields:
+        - name: notificationId
+          type: UUID
+        - name: status
+          type: String

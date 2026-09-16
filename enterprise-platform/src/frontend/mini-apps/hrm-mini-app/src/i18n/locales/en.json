@@ -1,0 +1,23 @@
+{
+  "menu": {
+    "employees": "Employees"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "actions": "Actions",
+    "confirm": "Confirm"
+  },
+  "employee": {
+    "title": "Employee Management",
+    "titleList": "Employee List",
+    "titleCreate": "Add Employee",
+    "titleEdit": "Edit Employee",
+    "titleDetail": "Employee Details"
+  }
+}

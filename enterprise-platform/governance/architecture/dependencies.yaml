@@ -1,0 +1,84 @@
+# Ma trận phụ thuộc giữa các dịch vụ
+version: "1.0"
+rules:
+  # Quy tắc chung
+  general:
+    allowed:
+      - "Tất cả các service được phép gọi IAM Service để verify token/permissions."
+      - "Tất cả các service được phép đẩy message vào Notification Service thông qua Kafka."
+    forbidden:
+      - "Circular dependencies (VD: A gọi B, B gọi lại A) bị NGHIÊM CẤM."
+      - "Core platform services (IAM, Notification) KHÔNG ĐƯỢC phép gọi ngược lại các Business Services (HRM, ERP)."
+      
+dependencies:
+  - source: organization-service
+    targets:
+      - target: iam-service
+        type: sync
+        description: "Lấy thông tin tài khoản quản trị của phòng ban"
+
+  - source: employee-service
+    targets:
+      - target: iam-service
+        type: sync
+        description: "Sync thông tin user tương ứng với nhân viên"
+      - target: organization-service
+        type: sync
+        description: "Lấy thông tin phòng ban của nhân viên"
+
+  - source: attendance-service
+    targets:
+      - target: employee-service
+        type: sync
+        description: "Lấy chi tiết nhân viên để ghi nhận công"
+      - target: workflow-service
+        type: sync
+        description: "Khởi tạo quy trình duyệt đơn xin nghỉ"
+
+  - source: payroll-service
+    targets:
+      - target: employee-service
+        type: sync
+        description: "Lấy mức lương cơ bản và chế độ"
+      - target: attendance-service
+        type: sync
+        description: "Lấy tổng công thực tế"
+      - target: finance-service
+        type: async
+        description: "Gửi chứng từ kế toán trả lương qua Kafka"
+
+  - source: purchasing-service
+    targets:
+      - target: inventory-service
+        type: sync
+        description: "Kiểm tra mặt hàng và mã kho"
+      - target: finance-service
+        type: async
+        description: "Yêu cầu thanh toán cho NCC"
+
+  - source: billing-service
+    targets:
+      - target: customer-service
+        type: sync
+        description: "Lấy thông tin xuất hóa đơn của KH"
+      - target: finance-service
+        type: async
+        description: "Ghi nhận doanh thu"
+
+  - source: support-ticket-service
+    targets:
+      - target: customer-service
+        type: sync
+        description: "Lấy thông tin KH tạo ticket"
+      - target: employee-service
+        type: sync
+        description: "Lấy thông tin nhân viên xử lý"
+
+  - source: api-gateway
+    targets:
+      - target: "all-services"
+        type: routing
+        description: "Route requests tới các service phía sau"
+      - target: iam-service
+        type: sync
+        description: "Verify JWT Token"

@@ -1,0 +1,188 @@
+name: 'Feature Development Workflow'
+version: '2.0'
+description: 'Phát triển feature miniapp từ requirement.txt đến release-ready'
+trigger:
+  type: manual
+  input:
+    - name: miniapp
+      type: string
+      required: true
+      description: 'Tên miniapp trong applications/ (vd: hrm)'
+    - name: feature-id
+      type: string
+      required: true
+      description: 'ID feature kebab-case'
+    - name: requirement-path
+      type: path
+      required: true
+      description: 'applications/<miniapp>/requirement/<feature-id>/'
+variables:
+  req_dir: 'applications/${miniapp}/requirement/${feature-id}'
+  docs_dir: 'applications/${miniapp}/docs/${feature-id}'
+  tests_dir: 'applications/${miniapp}/tests/${feature-id}'
+steps:
+  - id: step-01
+    name: 'Phân tích Requirement'
+    agent: business-analyst
+    skill: skills/enterprise/requirement-analysis
+    input:
+      - '${req_dir}/requirement.txt'
+      - '${req_dir}/images/'
+    output:
+      - '${req_dir}/requirement-doc.md'
+    validation:
+      - 'File requirement-doc.md tồn tại'
+      - 'Acceptance criteria >= 3'
+    on_failure: escalate
+    next: step-02
+
+  - id: step-02
+    name: 'Solution Architecture'
+    agent: solution-architect
+    skill: skills/enterprise/solution-design
+    input:
+      - '${req_dir}/requirement-doc.md'
+    output:
+      - '${docs_dir}/solution-architecture.md'
+    validation:
+      - 'Có Mermaid diagram'
+      - 'Tuân thủ database-per-service'
+    on_failure: escalate
+    next: [step-03, step-04]
+
+  - id: step-03
+    name: 'API Design'
+    agent: api-architect
+    skill: skills/enterprise/api-design
+    input:
+      - '${docs_dir}/solution-architecture.md'
+      - '${req_dir}/requirement-doc.md'
+    output:
+      - '${docs_dir}/api-spec.yaml'
+      - '${docs_dir}/event-design.md'
+    validation:
+      - 'OpenAPI hợp lệ'
+      - 'Có versioning /api/v1'
+    on_failure: escalate
+    next: step-05
+
+  - id: step-04
+    name: 'UX Design'
+    agent: ux-designer
+    skill: skills/enterprise/ux-design
+    input:
+      - '${req_dir}/requirement-doc.md'
+      - '${req_dir}/images/'
+      - '${docs_dir}/solution-architecture.md'
+    output:
+      - '${docs_dir}/ui-spec.md'
+    validation:
+      - 'Cover Loading/Empty/Error/Success states'
+    on_failure: escalate
+    next: step-06
+
+  - id: step-05
+    name: 'Backend Implementation'
+    agent: backend-developer
+    skill: skills/enterprise/spring-boot-development
+    input:
+      - '${docs_dir}/solution-architecture.md'
+      - '${docs_dir}/api-spec.yaml'
+    output:
+      - 'applications/${miniapp}/backend/'
+      - '${docs_dir}/db-design.md'
+    validation:
+      - 'Compile thành công'
+      - 'Có @PreAuthorize trên endpoints'
+    on_failure: escalate
+    next: step-07
+
+  - id: step-06
+    name: 'Frontend Implementation'
+    agent: frontend-developer
+    skill: skills/enterprise/react-development
+    input:
+      - '${docs_dir}/api-spec.yaml'
+      - '${docs_dir}/ui-spec.md'
+    output:
+      - 'applications/${miniapp}/frontend/'
+    validation:
+      - 'TypeScript pass'
+      - 'Tuân thủ design-system'
+    on_failure: escalate
+    next: step-07
+
+  - id: step-07
+    name: 'Testing'
+    agent: tester
+    skill: skills/enterprise/testing
+    input:
+      - '${req_dir}/requirement-doc.md'
+      - '${docs_dir}/api-spec.yaml'
+      - 'applications/${miniapp}/backend/'
+      - 'applications/${miniapp}/frontend/'
+    output:
+      - '${tests_dir}/test-cases.md'
+      - '${tests_dir}/test-report.md'
+    validation:
+      - 'Cover Acceptance Criteria'
+      - 'Coverage đạt chuẩn testing-standard'
+    on_failure: escalate
+    next: [step-08, step-09, step-10]
+
+  - id: step-08
+    name: 'Code Review'
+    agent: code-reviewer
+    skill: skills/enterprise/code-review
+    input:
+      - 'applications/${miniapp}/backend/'
+      - 'applications/${miniapp}/frontend/'
+    output:
+      - '${docs_dir}/reviews/code-review-report.md'
+    validation:
+      - 'Không còn CRITICAL'
+    on_failure: escalate
+    next: step-11
+
+  - id: step-09
+    name: 'Architecture Review'
+    agent: architecture-reviewer
+    skill: skills/enterprise/architecture-review
+    input:
+      - '${docs_dir}/solution-architecture.md'
+      - 'applications/${miniapp}/backend/'
+    output:
+      - '${docs_dir}/reviews/architecture-review-report.md'
+    validation:
+      - 'Không vi phạm ARCH CRITICAL rules'
+    on_failure: escalate
+    next: step-11
+
+  - id: step-10
+    name: 'Design Review'
+    agent: design-reviewer
+    skill: skills/enterprise/design-review
+    input:
+      - '${docs_dir}/ui-spec.md'
+      - 'applications/${miniapp}/frontend/'
+    output:
+      - '${docs_dir}/reviews/design-review-report.md'
+    validation:
+      - 'Tuân thủ design-system tokens'
+    on_failure: escalate
+    next: step-11
+
+  - id: step-11
+    name: 'Orchestrate & Release Gate'
+    agent: orchestrator
+    skill: skills/enterprise/orchestration
+    input:
+      - '${tests_dir}/test-report.md'
+      - '${docs_dir}/reviews/'
+    output:
+      - '${docs_dir}/pipeline-progress.md'
+    validation:
+      - 'Mọi review không CRITICAL'
+      - 'Cập nhật requirement/_index.md status=testing|done'
+    on_failure: escalate
+    next: done

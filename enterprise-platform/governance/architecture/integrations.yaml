@@ -1,0 +1,40 @@
+integrations:
+  - id: smtp-sendgrid
+    name: 'SendGrid Email API'
+    type: EMAIL
+    provider: 'Twilio'
+    auth-method: 'API Key'
+    used-by: ['notification-service']
+    description: 'Dịch vụ gửi email giao dịch và marketing.'
+
+  - id: sms-twilio
+    name: 'Twilio SMS API'
+    type: SMS
+    provider: 'Twilio'
+    auth-method: 'API Key + Secret'
+    used-by: ['notification-service']
+    description: 'Dịch vụ gửi SMS OTP và thông báo.'
+
+  - id: payment-vnpay
+    name: 'VNPay Gateway'
+    type: PAYMENT
+    provider: 'VNPay'
+    auth-method: 'Hash Key'
+    used-by: ['finance-service']
+    description: 'Cổng thanh toán nội địa.'
+
+  - id: gov-tax-system
+    name: 'Tổng cục Thuế'
+    type: GOV
+    provider: 'Bộ Tài Chính'
+    auth-method: 'Digital Signature (Chữ ký số)'
+    used-by: ['billing-service']
+    description: 'Giao tiếp hệ thống hóa đơn điện tử của nhà nước.'
+    
+  - id: aws-s3
+    name: 'Amazon S3'
+    type: STORAGE
+    provider: 'AWS'
+    auth-method: 'IAM Role / Access Key'
+    used-by: ['employee-service', 'support-ticket-service', 'billing-service']
+    description: 'Lưu trữ file đính kèm, ảnh avatar, PDF hóa đơn.'

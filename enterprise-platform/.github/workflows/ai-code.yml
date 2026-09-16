@@ -1,0 +1,12 @@
+name: AI Code Generation
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  ai-code:
+    if: contains(github.event.comment.body, '/generate')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Trigger AI Developer
+        run: echo "Sinh mã nguồn tự động..."

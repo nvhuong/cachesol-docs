@@ -1,0 +1,12 @@
+agent: backend-developer
+skills:
+  - skill: skills/enterprise/spring-boot-development
+    permission: execute
+governance:
+  - governance/architecture/standards/backend.md
+  - governance/architecture/standards/database.md
+  - governance/database/naming.md
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - java_version: 21
+  - output_path: applications/<miniapp>/backend/

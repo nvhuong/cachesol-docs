@@ -1,0 +1,11 @@
+name: AI Analysis
+on:
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  ai-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run AI PR Analyzer
+        run: echo "Phân tích PR bằng AI Agent..."

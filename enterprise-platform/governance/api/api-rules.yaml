@@ -1,0 +1,155 @@
+version: '1.0'
+description: 'Machine-readable API rules cho Enterprise Platform'
+rules:
+  - id: API-001
+    category: naming
+    name: 'Sử dụng Kebab-Case cho URL Paths'
+    severity: ERROR
+    pattern: '^/api/v[0-9]+(/[a-z0-9-]+)+$'
+    description: 'Tất cả các path segments phải sử dụng kebab-case (chữ thường và dấu gạch ngang).'
+
+  - id: API-002
+    category: naming
+    name: 'Sử dụng danh từ số nhiều cho resources'
+    severity: WARNING
+    description: 'Các collection resources nên sử dụng danh từ số nhiều (VD: /users, /orders).'
+
+  - id: API-003
+    category: versioning
+    name: 'Bắt buộc phải có version trong URL'
+    severity: ERROR
+    pattern: '^/api/v[1-9][0-9]*/'
+    description: 'Mọi API path phải bắt đầu bằng /api/v{N}/ với N là số nguyên dương.'
+
+  - id: API-004
+    category: format
+    name: 'Query parameters phải dùng camelCase'
+    severity: ERROR
+    description: 'Các query parameter (như page, pageSize, sortBy) phải định dạng camelCase.'
+
+  - id: API-005
+    category: format
+    name: 'Request/Response fields phải dùng camelCase'
+    severity: ERROR
+    description: 'Các trường trong JSON body phải dùng camelCase.'
+
+  - id: API-006
+    category: headers
+    name: 'Bắt buộc Content-Type là application/json'
+    severity: ERROR
+    description: 'API yêu cầu request body và trả về response body bằng JSON (trừ file upload).'
+
+  - id: API-007
+    category: security
+    name: 'Không để lộ sensitive data trong URL'
+    severity: ERROR
+    description: 'Không truyền mật khẩu, token hoặc PII data thông qua query params hoặc path.'
+
+  - id: API-008
+    category: pagination
+    name: 'Chuẩn hóa tham số phân trang'
+    severity: ERROR
+    description: 'Luôn sử dụng `page` (0-indexed) và `size` cho offset-based pagination.'
+
+  - id: API-009
+    category: error-handling
+    name: 'Format lỗi chuẩn JSON'
+    severity: ERROR
+    description: 'Mọi lỗi trả về phải theo chuẩn cấu trúc (errorCode, message, traceId, timestamp).'
+
+  - id: API-010
+    category: headers
+    name: 'Bắt buộc có X-Correlation-ID'
+    severity: ERROR
+    description: 'Yêu cầu client truyền hoặc API Gateway tự sinh X-Correlation-ID để tracing.'
+
+  - id: API-011
+    category: methods
+    name: 'GET không được phép có Request Body'
+    severity: ERROR
+    description: 'Theo chuẩn HTTP, method GET không nên có body.'
+
+  - id: API-012
+    category: methods
+    name: 'POST trả về 201 Created'
+    severity: WARNING
+    description: 'Khi tạo resource mới thành công, nên trả về status 201.'
+
+  - id: API-013
+    category: methods
+    name: 'DELETE phải idempotency'
+    severity: ERROR
+    description: 'Gọi DELETE nhiều lần cùng một resource nên trả về 204 hoặc 404 nhất quán.'
+
+  - id: API-014
+    category: security
+    name: 'CORS Headers'
+    severity: ERROR
+    description: 'Phải cấu hình CORS header an toàn (không dùng `Access-Control-Allow-Origin: *` cho public API có auth).'
+
+  - id: API-015
+    category: performance
+    name: 'Giới hạn Max Page Size'
+    severity: ERROR
+    description: 'Không cho phép `size` > 100 trong các query phân trang mặc định.'
+
+  - id: API-016
+    category: documentation
+    name: 'Bắt buộc OpenAPI Specification'
+    severity: ERROR
+    description: 'Tất cả API phải được mô tả chi tiết bằng OpenAPI/Swagger 3.0.'
+
+  - id: API-017
+    category: security
+    name: 'Rate Limiting Headers'
+    severity: WARNING
+    description: 'API nên trả về các header X-RateLimit-Limit, X-RateLimit-Remaining.'
+
+  - id: API-018
+    category: error-handling
+    name: 'Không trả về Stacktrace cho Client'
+    severity: ERROR
+    description: 'Exception stacktrace không bao giờ được xuất ra response ở môi trường production.'
+
+  - id: API-019
+    category: format
+    name: 'Sử dụng ISO 8601 cho DateTime'
+    severity: ERROR
+    description: 'Format ngày tháng bắt buộc theo chuẩn ISO 8601 (VD: 2023-10-15T08:30:00Z).'
+
+  - id: API-020
+    category: methods
+    name: 'PATCH thay vì PUT cho update một phần'
+    severity: WARNING
+    description: 'Sử dụng PATCH khi chỉ cập nhật vài field, PUT khi replace toàn bộ resource.'
+
+  - id: API-021
+    category: error-handling
+    name: 'Sử dụng HTTP Status 401 vs 403 đúng cách'
+    severity: ERROR
+    description: '401 Unauthorized (khi chưa đăng nhập), 403 Forbidden (khi không có quyền).'
+
+  - id: API-022
+    category: security
+    name: 'Bắt buộc HTTPS'
+    severity: ERROR
+    description: 'Mọi API endpoint phải được phục vụ qua HTTPS/TLS 1.2+.'
+
+  - id: API-023
+    category: naming
+    name: 'Không dùng đuôi file trong URL'
+    severity: ERROR
+    pattern: '!^.*\.(json|xml)$'
+    description: 'Không dùng format extension ở URL (VD: /api/v1/users.json).'
+
+  - id: API-024
+    category: versioning
+    name: 'Header Deprecation'
+    severity: WARNING
+    description: 'Khi một API endpoint bị deprecate, phải trả về header Deprecation.'
+
+  - id: API-025
+    category: naming
+    name: 'Sub-resource hierarchy depth limit'
+    severity: WARNING
+    description: 'Không nên lồng resource quá 3 cấp (VD: /users/{id}/orders/{id}/items/{id}/details là quá sâu).'

@@ -1,0 +1,10 @@
+agent: design-reviewer
+skills:
+  - skill: skills/enterprise/design-review
+    permission: execute
+governance:
+  - design-system/README.md
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - check_accessibility: true
+  - output_path: applications/<miniapp>/docs/<feature-id>/reviews/design-review-report.md

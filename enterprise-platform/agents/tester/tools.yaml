@@ -1,0 +1,10 @@
+agent: tester
+skills:
+  - skill: skills/enterprise/testing
+    permission: execute
+governance:
+  - governance/quality/testing-standard.md
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - min_coverage: 80
+  - output_path: applications/<miniapp>/tests/<feature-id>/

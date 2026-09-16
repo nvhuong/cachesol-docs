@@ -1,0 +1,54 @@
+FEATURE_ID: employee-profile
+MINIAPP: hrm
+TITLE: Quản lý hồ sơ nhân viên
+OWNER: HR Tech Team
+PRIORITY: High
+STATUS: draft
+
+## Mục tiêu
+Cho phép HR Officer xem danh sách, xem chi tiết và cập nhật hồ sơ nhân viên (thông tin cá nhân, phòng ban, trạng thái làm việc) trên miniapp HRM.
+
+## Người dùng
+- HR Officer: quản lý và cập nhật hồ sơ
+- Line Manager: xem hồ sơ nhân viên trong team (read-only)
+- Employee: xem hồ sơ của chính mình (read-only)
+
+## Luồng chính (Happy path)
+1. HR Officer đăng nhập và mở menu "Hồ sơ nhân viên".
+2. Hệ thống hiển thị danh sách có phân trang, tìm kiếm theo tên/mã NV.
+3. HR Officer chọn một nhân viên → xem chi tiết.
+4. HR Officer chỉnh sửa thông tin được phép → Lưu.
+5. Hệ thống validate, lưu thành công, phát event cập nhật (nếu có thay đổi tổ chức/trạng thái).
+
+## Luồng phụ / Lỗi
+- Không có quyền: trả 403, ẩn nút Sửa.
+- Validation fail (email sai, ngày không hợp lệ): hiển thị lỗi trên form.
+- Nhân viên đã nghỉ việc: chỉ cho xem, không sửa (trừ HR Admin).
+
+## Màn hình / Ảnh tham chiếu
+- images/01-list.png — Danh sách hồ sơ + filter
+- images/02-detail.png — Chi tiết hồ sơ
+- images/03-edit-form.png — Form chỉnh sửa
+
+(Chưa có ảnh thật: thêm file PNG vào thư mục images/ theo tên trên trước khi UX Designer làm ui-spec.)
+
+## Quy tắc nghiệp vụ
+- BR-01: Mã nhân viên (employee_code) là duy nhất trong tenant.
+- BR-02: Chỉ HR Officer / HR Admin được tạo hoặc sửa hồ sơ.
+- BR-03: Thay đổi phòng ban phải đồng bộ với Organization service (qua API hoặc event).
+- BR-04: Mọi thay đổi hồ sơ phải ghi audit log.
+
+## Ngoài phạm vi (Out of scope)
+- Tính lương / payroll
+- Chấm công
+- Onboarding workflow đầy đủ (sẽ là feature riêng)
+
+## NFR gợi ý
+- Performance: danh sách P95 < 200ms với 10k nhân viên (có index + pagination).
+- Security: RBAC qua IAM; không log PII nhạy cảm (CMND đầy đủ, lương).
+- Accessibility: form đạt WCAG 2.1 AA cơ bản.
+
+## Ghi chú cho BA / Architect
+- Platform services liên quan: iam, organization, employee, audit, notification.
+- Bounded context chính: employee-service (xem governance/architecture/services.yaml).
+- Câu hỏi còn mở: Employee có được tự sửa số điện thoại / địa chỉ không?

@@ -1,0 +1,11 @@
+name: AI Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Trigger AI Code Reviewer
+        run: echo "Review code bằng AI..."

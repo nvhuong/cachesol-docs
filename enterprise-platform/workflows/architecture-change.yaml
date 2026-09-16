@@ -1,0 +1,39 @@
+name: 'Architecture Change Workflow'
+version: '2.0'
+description: 'Thay đổi kiến trúc và tạo ADR'
+trigger:
+  type: manual
+  input:
+    - name: change-proposal
+      type: document
+      required: true
+    - name: adr-id
+      type: string
+      required: true
+      description: 'VD: ADR-004-caching-strategy'
+steps:
+  - id: step-01
+    name: 'Impact Analysis'
+    agent: solution-architect
+    skill: skills/enterprise/solution-design
+    input:
+      - change-proposal
+    output:
+      - 'governance/architecture/ADR/${adr-id}.md'
+    validation:
+      - 'Phải có phần alternatives considered'
+      - 'Có Decision và Consequences'
+    on_failure: escalate
+    next: step-02
+  - id: step-02
+    name: 'Architecture Review'
+    agent: architecture-reviewer
+    skill: skills/enterprise/architecture-review
+    input:
+      - 'governance/architecture/ADR/${adr-id}.md'
+    output:
+      - 'governance/architecture/ADR/${adr-id}-review.md'
+    validation:
+      - 'Đạt chuẩn enterprise / architecture-rules'
+    on_failure: escalate
+    next: done

@@ -1,0 +1,11 @@
+agent: frontend-developer
+skills:
+  - skill: skills/enterprise/react-development
+    permission: execute
+governance:
+  - governance/architecture/standards/frontend.md
+  - design-system/README.md
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - framework: React 18
+  - output_path: applications/<miniapp>/frontend/

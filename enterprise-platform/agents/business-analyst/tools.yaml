@@ -1,0 +1,13 @@
+agent: business-analyst
+skills:
+  - skill: skills/enterprise/requirement-analysis
+    permission: execute
+  - skill: skills/enterprise/business-analysis
+    permission: execute
+governance:
+  - governance/requirements-guideline.md
+  - governance/architecture/principles.md
+  - FEATURE-LIFECYCLE.md
+constraints:
+  - requirement_limit: 100 pages
+  - output_path: applications/<miniapp>/requirement/<feature-id>/requirement-doc.md

@@ -1,0 +1,8 @@
+# cachesol-docs root .gitignore
+
+# Ignore untracked folders at root level
+backbase/
+backbase-code/
+
+# Ignore editor/IDE
+.kilo/

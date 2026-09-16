@@ -1,0 +1,54 @@
+{
+  "name": "@cachesol/hrm-mini-app",
+  "version": "1.0.0",
+  "description": "HRM Mini App - Quản lý nhân sự",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./manifest": {
+      "types": "./dist/manifest.d.ts",
+      "import": "./dist/manifest.mjs"
+    },
+    "./style": "./dist/style.css"
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "tsc && vite build",
+    "test": "vitest"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "@ant-design/icons": "^5.0.0",
+    "antd": "^5.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.49.0",
+    "@hookform/resolvers": "^3.3.0",
+    "zod": "^3.22.0",
+    "zustand": "^4.5.0"
+  },
+  "dependencies": {
+    "@cachesol/shared-api": "workspace:*",
+    "@cachesol/shared-types": "workspace:*",
+    "@cachesol/shared-ui": "workspace:*",
+    "dayjs": "^1.11.10"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.48",
+    "@vitejs/plugin-react": "^4.2.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-plugin-dts": "^3.7.0",
+    "vitest": "^1.2.2"
+  }
+}

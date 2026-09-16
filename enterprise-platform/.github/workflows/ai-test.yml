@@ -1,0 +1,11 @@
+name: AI Test Generation
+on:
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  ai-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Trigger AI Tester
+        run: echo "Sinh unit test tự động..."

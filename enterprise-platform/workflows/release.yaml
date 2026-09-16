@@ -1,0 +1,47 @@
+name: 'Release Workflow'
+version: '2.0'
+description: 'Regression + security gate trước release'
+trigger:
+  type: schedule
+  input:
+    - name: release-candidate
+      type: tag
+      required: true
+steps:
+  - id: step-01
+    name: 'Regression Testing'
+    agent: tester
+    skill: skills/enterprise/testing
+    input:
+      - release-candidate
+    output:
+      - 'reports/release/test-report.md'
+    validation:
+      - 'Pass 100% critical paths'
+    on_failure: escalate
+    next: step-02
+  - id: step-02
+    name: 'Security Scan'
+    agent: code-reviewer
+    skill: skills/enterprise/security-check
+    input:
+      - release-candidate
+    output:
+      - 'reports/release/security-report.md'
+    validation:
+      - 'Không có CRITICAL'
+    on_failure: escalate
+    next: step-03
+  - id: step-03
+    name: 'Orchestrator Gate'
+    agent: orchestrator
+    skill: skills/enterprise/orchestration
+    input:
+      - 'reports/release/test-report.md'
+      - 'reports/release/security-report.md'
+    output:
+      - 'reports/release/pipeline-progress.md'
+    validation:
+      - 'Ready for production'
+    on_failure: escalate
+    next: done
