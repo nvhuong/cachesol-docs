@@ -152,14 +152,20 @@ services:
   - id: approval-service
     name: 'Approval Service'
     domain: platform
-    description: 'Ticket duyệt gắn với workflow user-tasks, lịch sử duyệt, comment, attachment.'
+    description: 'Phê duyệt tập trung. Hỗ trợ sequential/parallel/mixed (nested). 6 BC: approval_types, approval_type_callbacks, approval_requests, approval_steps, approval_histories, approval_callbacks. Khi request FINAL APPROVED → fire callback config (service-api URL) tới service nghiệp vụ (HMAC-signed, retry với backoff). Approver rule engine: DIRECT_MANAGER, ROLE_X, DYNAMIC_EXPRESSION, ... resolve qua tenant-manager.'
     technology: 'Spring Boot 21'
-    database: PostgreSQL (schema: tenant_<slug>_approval)
+    database: PostgreSQL (schema: public + tenant_<slug>_approval)
     port: 8088
-    api-prefix: '/client-api/v1, /service-api/v1'
-    events-published: ['ApprovalRequested', 'ApprovalApproved', 'ApprovalRejected']
+    api-prefix: '/client-api/v1, /service-api/v1, /public-api/v1'
+    events-published: ['ApprovalRequested', 'ApprovalStepActivated', 'ApprovalStepApproved', 'ApprovalStepRejected', 'ApprovalApproved', 'ApprovalRejected', 'ApprovalCancelled', 'ApprovalExpired', 'ApprovalCallbackRequested', 'ApprovalCallbackSucceeded', 'ApprovalCallbackFailed', 'ApprovalCallbackExhausted']
     events-consumed: ['UserTaskCreated']
-    dependencies: [workflow-service, tenant-manager-service]
+    dependencies: [keycloak, tenant-manager-service, workflow-service, social-integration-service, kafka]
+    notes:
+      - '6 bounded contexts: approval_types, type_callbacks, requests, steps, histories, callbacks.'
+      - 'Steps definition = JSONB tree (single/parallel/sequential nested).'
+      - 'Parallel rule per step: any/all/quorum.'
+      - 'Callback HMAC-SHA256 signed, retry max 5 với backoff [1s,5s,30s,1m,5m].'
+      - 'See src/backend/platform/approval/README.md.'
 
   # ===== APPLICATIONS (nghiệp vụ) =====
   - id: hrm-service

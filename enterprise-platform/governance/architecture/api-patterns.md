@@ -92,7 +92,7 @@ Hạn chế tối đa. Chỉ dùng cho:
 | **master-data** | `/master-data/categories/{code}` | `/master-data/categories/{code}` | — | — |
 | **social-integration** | `/client-api/v1/notifications/templates`, `/client-api/v1/channels`, `/client-api/v1/posts`, `/client-api/v1/pages` | `/service-api/v1/notifications/send` | `/integration-api/v1/webhooks/*` | — |
 | **workflow** | `/workflows/deploy`, `/workflows/start` | `/workflows/start` | — | — |
-| **approval** | `/approvals/requests` | `/approvals/tasks/{id}` | — | — |
+| **approval** | `/client-api/v1/approval-types`, `/client-api/v1/approval-requests`, `/client-api/v1/approval-inbox`, `/client-api/v1/approval-steps/{id}/approve` | `/service-api/v1/approval-types/{code}/resolve-approvers`, `/service-api/v1/approval-requests` | — | `/health` |
 | **HRM** | `/attendance`, `/leaves`, `/payroll`, `/recruitments`, `/performance`, `/training` | `/employees/{id}`, `/organizations/{id}/descendants` | — | — |
 | **Sales** | `/customers`, `/orders` | `/customers/{id}` | — | — |
 | **ERP, Finance, Marketing** | tương tự | tương tự | tương tự | tương tự |
