@@ -88,10 +88,10 @@ Hạn chế tối đa. Chỉ dùng cho:
 | **iam** | — | — | `/webhooks/keycloak` | `/health` |
 | **platform-registry** | `/tenants`, `/tenants/{slug}/mini-apps` | `/tenants`, `/tenants/{slug}/mini-apps` | — | `/mini-apps/catalog` |
 | **tenant-manager** | `/users`, `/roles`, `/permissions` | `/permissions/check`, `/users/{id}` | — | — |
-| **configuration** | `/configs`, `/features` | `/configs/{key}` | — | — |
+| **feature-flag** | `/client-api/v1/feature-flags` + `/ff4j-web-console` (FF4j UI) + `/api/ff4j/*` (native) | `/service-api/v1/feature-flags/{uid}/check`, `/service-api/v1/feature-flags/search` | — | — |
 | **master-data** | `/master-data/categories/{code}` | `/master-data/categories/{code}` | — | — |
 | **social-integration** | `/client-api/v1/notifications/templates`, `/client-api/v1/channels`, `/client-api/v1/posts`, `/client-api/v1/pages` | `/service-api/v1/notifications/send` | `/integration-api/v1/webhooks/*` | — |
-| **workflow** | `/workflows/deploy`, `/workflows/start` | `/workflows/start` | — | — |
+| **workflow** | `/client-api/v1/workflow-templates`, `/client-api/v1/workflow-definitions`, `/client-api/v1/workflow-instances/{id}/diagram` | `/service-api/v1/workflow-instances` (start), `/service-api/v1/workflow-definitions/{key}/active` | — | — |
 | **approval** | `/client-api/v1/approval-types`, `/client-api/v1/approval-requests`, `/client-api/v1/approval-inbox`, `/client-api/v1/approval-steps/{id}/approve` | `/service-api/v1/approval-types/{code}/resolve-approvers`, `/service-api/v1/approval-requests` | — | `/health` |
 | **HRM** | `/attendance`, `/leaves`, `/payroll`, `/recruitments`, `/performance`, `/training` | `/employees/{id}`, `/organizations/{id}/descendants` | — | — |
 | **Sales** | `/customers`, `/orders` | `/customers/{id}` | — | — |

@@ -96,7 +96,7 @@ src/backend/
 │   ├── iam/                   # JWT verify only (Keycloak JWK cache + webhook receiver)
 │   ├── platform-registry/     # Tenants registry, mini-apps catalog, org-root mapping, role template
 │   ├── tenant-manager/        # Users (Keycloak Admin API), roles/permissions, organizations, job_titles, employees
-│   ├── configuration/         # Feature flags + system params
+│   ├── feature-flag/          # FF4j self-host (feature flags)
 │   ├── master-data/           # Danh mục dùng chung (country, currency, unit...)
 │   ├── social-integration/   # Notifications (email/SMS/push/in-app) + social channels + posts + pages + analytics
 │   ├── workflow/              # BPMN-lite engine
@@ -1389,7 +1389,7 @@ src/                                    ★ Source code duy nhất
 │   │   ├── iam/
 │   │   ├── platform-registry/
 │   │   ├── tenant-manager/
-│   │   ├── configuration/
+│   │   ├── feature-flag/
 │   │   ├── master-data/
 │   │   ├── social-integration/
 │   │   ├── workflow/

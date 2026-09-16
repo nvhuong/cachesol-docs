@@ -156,7 +156,7 @@ CREATE TABLE employee_assignments (
 | 1 | **iam** | JWT verify, JWK cache, Keycloak webhook receiver — KHÔNG có user CRUD |
 | 2 | **platform-registry** | Tenants registry, mini-apps catalog, org-root mapping, role/permission template |
 | 3 | **tenant-manager** | Users (CRUD qua Keycloak Admin API), roles/permissions, user_app_roles + org_scope_path — per-tenant schema |
-| 4 | **configuration** | Cross-tenant feature flags + system params, cần API CRUD + cache invalidation |
+| 4 | **feature-flag** | Feature flags only — self-host FF4j từ GitHub (WebConsole + REST API + PostgreSQL store), scope CHỈ feature toggle (system params/tenant config gộp vào tenant-manager hoặc env) |
 | 5 | **master-data** | Cross-tenant lookup (country, currency, unit), nhiều app đọc, cần API CRUD + cache |
 | 6 | **social-integration** | Đa kênh: notifications + social channels + posts + pages + analytics |
 | 7 | **workflow** | BPMN-lite engine, state machine dài hơi, cần DB riêng cho process instances |
@@ -419,7 +419,7 @@ src/backend/
 │   ├── iam/                  (JWT verify only — thin)
 │   ├── platform-registry/    (tenants, mini-apps catalog, org-root mapping, role template)
 │   ├── tenant-manager/       (users, roles, permissions — per-tenant schema)
-│   ├── configuration/        (feature flags, system params)
+│   ├── feature-flag/         (FF4j self-host: ff4j_features, ff4j_properties, ff4j_audit)
 │   ├── master-data/          (danh mục dùng chung)
 │   ├── social-integration/   (notifications, channels, posts, pages, analytics)
 │   ├── workflow/             (BPMN-lite)
@@ -472,7 +472,7 @@ src/backend/
 | 4 | Migrate Sales → gộp customer vào Sales |
 | 5 | Xoá folder `src/backend/platform/{organization,employee,customer,audit,file,search,reporting,scheduler,integration}/` |
 | 6 | Tạo schema-per-tenant migration (Flyway: `flyway.tenant-schemas=tenant_*`) |
-| 7 | Viết 4 service mới: `configuration`, `master-data`, `social-integration`, `workflow` (nếu cần ngay), `approval` |
+| 7 | Viết 4 service mới: `feature-flag` (FF4j), `master-data`, `social-integration`, `workflow` (nếu cần ngay), `approval` |
 
 ---
 

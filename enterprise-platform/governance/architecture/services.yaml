@@ -97,17 +97,23 @@ services:
       - 'Role snapshot clone từ platform-registry khi tenant khởi tạo.'
       - 'See src/backend/platform/tenant-manager/README.md.'
 
-  - id: configuration-service
-    name: 'Configuration Service'
+  - id: feature-flag-service
+    name: 'Feature Flag Service (FF4j self-host)'
     domain: platform
-    description: 'Cross-tenant feature flags + system params + tenant-specific configs.'
-    technology: 'Spring Boot 21'
-    database: PostgreSQL (schema: public) + Redis cache
+    description: 'Centralized feature toggle engine. Dựa trên FF4j (Feature Flipping for Java) open-source — self-host từ GitHub source (KHÔNG dùng Maven Central). Bao gồm FF4j core engine + WebConsole + REST API + PostgreSQL store. Scope CHỈ feature flags (system params / tenant config đã gộp vào tenant-manager hoặc env vars).'
+    technology: 'Spring Boot 21 + FF4j (self-built from github.com/ff4j/ff4j)'
+    database: PostgreSQL (schema: ff4j — FF4j native schema) + Redis cache (optional)
     port: 8084
-    api-prefix: '/client-api/v1, /service-api/v1'
-    events-published: ['ConfigChanged']
+    api-prefix: '/client-api/v1, /service-api/v1, /api/ff4j/* (FF4j native), /ff4j-web-console'
+    events-published: ['FeatureFlagChanged', 'FeatureFlagStrategyChanged', 'FeatureFlagPropertyChanged']
     events-consumed: []
-    dependencies: [postgres]
+    dependencies: [postgres, redis, keycloak]
+    notes:
+      - '4 bounded contexts: features, properties, flipping strategies, audit.'
+      - 'Schema FF4j gốc (KHÔNG custom): ff4j_features, ff4j_properties, ff4j_roles, ff4j_groups, ff4j_audit.'
+      - 'Naming convention: <GLOBAL|TENANT_<slug>>.<module>.<feature_name>.'
+      - 'WebConsole auth: role=PLATFORM_ADMIN, internal network only.'
+      - 'See src/backend/platform/feature-flag/README.md.'
 
   - id: master-data-service
     name: 'Master Data Service'
@@ -140,14 +146,20 @@ services:
   - id: workflow-service
     name: 'Workflow Service (BPMN-lite)'
     domain: platform
-    description: 'Engine xử lý quy trình nghiệp vụ dài hơi (BPMN-lite, state machine).'
-    technology: 'Spring Boot 21'
-    database: PostgreSQL (schema: tenant_<slug>_workflow)
+    description: 'BPMN-lite engine cho orchestrate quy trình nghiệp vụ. Hỗ trợ BPMN 2.0 cơ bản (start/end/task/gateway/timer) + 5 platform-specific items: Approval Task (gọi approval-service), Notification Task (gọi social-integration), Feature Flag Gate (gọi feature-flag), Entity CRUD Task, Webhook Task. 5 template mặc định seed qua Liquibase: LEAVE_REQUEST, ORDER_DISCOUNT, ONBOARDING, REIMBURSEMENT, RESIGNATION. Custom engine (không Camunda/Flowable) cho nhẹ + tích hợp sâu với platform.'
+    technology: 'Spring Boot 21 + Custom BPMN-lite engine'
+    database: PostgreSQL (schema: public + tenant_<slug>_workflow)
     port: 8087
     api-prefix: '/client-api/v1, /service-api/v1'
-    events-published: ['ProcessStarted', 'ProcessCompleted', 'UserTaskCreated']
-    events-consumed: []
-    dependencies: [postgres]
+    events-published: ['ProcessStarted', 'ProcessActivityStarted', 'ProcessActivityCompleted', 'ProcessActivityFailed', 'ProcessCompleted', 'ProcessFailed', 'ProcessSuspended', 'ProcessResumed', 'ProcessTerminated', 'UserTaskCreated', 'TimerScheduled', 'TimerFired']
+    events-consumed: ['ApprovalApproved', 'ApprovalRejected', 'ApprovalCancelled', 'FeatureFlagChanged']
+    dependencies: [postgres, redis, kafka, approval-service, social-integration-service, feature-flag-service, tenant-manager-service]
+    notes:
+      - '7 bounded contexts: definitions (templates + per-tenant), instances, execution_logs, user_tasks, service_tasks, timers.'
+      - '5 templates mặc định (Liquibase seed ở schema public).'
+      - 'BPMN XML namespace cachesol dùng: ##cachesol-platform:{approvalRequest, notification, featureFlagCheck, entityCRUD, webhook}.'
+      - 'User Task LUÔN delegate sang approval-service.'
+      - 'See src/backend/platform/workflow/README.md.'
 
   - id: approval-service
     name: 'Approval Service'

@@ -202,7 +202,7 @@ platform/
 ├── reporting/               # Reporting Service
 │   └── README.md
 │
-└── configuration/          # Configuration Service
+└── feature-flag/            # Feature Flag Service (FF4j self-host)
     └── README.md
 ```
 
