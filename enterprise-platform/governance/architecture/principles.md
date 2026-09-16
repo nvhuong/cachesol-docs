@@ -71,9 +71,9 @@ Tài liệu này định nghĩa các nguyên tắc cốt lõi để xây dựng 
 - **Chi tiết:** Xem `multi-tenant.md`.
 
 ## 17. Identity từ Keycloak (không tự build)
-- **Mô tả:** Mọi tính năng liên quan identity (login/register/LDAP/SSO/OAuth2/MFA) **delegate** cho Keycloak. IAM service chỉ là thin bridge lưu app-specific data.
-- **Lý do:** Identity cực kỳ phức tạp và rủi ro bảo mật cao — không nên tự build khi đã có giải pháp open-source trưởng thành.
-- **Chi tiết:** Xem `keycloak.md`.
+- **Mô tả:** Mọi tính năng liên quan identity (login/register/LDAP/SSO/OAuth2/MFA) **delegate** cho Keycloak. `iam-service` chỉ làm JWT verify (JWK cache) + nhận webhook events. User/role/permission CRUD thuộc `tenant-config-service`.
+- **Lý do:** Identity cực kỳ phức tạp và rủi ro bảo mật cao — không nên tự build khi đã có giải pháp open-source trưởng thành. Tách user CRUD sang `tenant-config` để IAM service giữ vai trò siêu mỏng (chỉ verify JWT), dễ scale, dễ audit.
+- **Chi tiết:** Xem `keycloak.md`, [`../src/backend/platform/iam/README.md`](../src/backend/platform/iam/README.md), [`../src/backend/platform/tenant-config/README.md`](../src/backend/platform/tenant-config/README.md).
 
 ## 18. Platform Service Tối Giản
 - **Mô tả:** Chỉ giữ lại platform service khi nó thật sự cần HTTP API riêng + DB riêng. Mọi thứ có thể là library (shared-common) hoặc gộp vào application → đều KHÔNG làm service riêng.

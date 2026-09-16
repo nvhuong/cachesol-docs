@@ -96,43 +96,49 @@ services:
       - "8081:8080"
 ```
 
-## Tạo Realm đầu tiên (manual, 1 lần)
+## Tạo Realm khi có tenant mới
 
-### Option A: 1 Realm duy nhất `cachesol` (khuyến nghị ban đầu)
+### Strategy: 1 Realm per tenant
 
-```
-Keycloak Admin UI → Create Realm
-  Realm name: cachesol
-  Enabled: ON
+Mỗi tenant = 1 Keycloak realm (`tenant-acme`, `tenant-globex`, ...). **Realm URL**: `https://kc.platform.com/realms/tenant-acme`.
 
-→ Create Client "web-shell" (public, PKCE)
-→ Create Client "iam-service" (confidential, service account)
-→ Create Client "hrm-service" (confidential, service account)
-→ ... (1 client / microservice)
-```
+**Lý do:**
+- User pool cô lập giữa các công ty (user ACME không thấy user Globex).
+- LDAP Federation per-tenant (mỗi công ty có 1 LDAP server riêng).
+- Theme riêng (logo, màu sắc) nếu cần.
+- Custom login flow per-tenant (sau này từng công ty customize).
 
-### Option B: 1 Realm per tenant (khi scale > 50 tenants)
+**Trade-off:** Nặng Keycloak hơn (~50MB RAM / realm). Chấp nhận được.
 
-Có thể viết Terraform/Ansible để tạo realm tự động khi tạo tenant mới:
+### Realm bootstrap (qua tenant-config service)
 
-```hcl
-resource "keycloak_realm" "tenant" {
-  realm   = "tenant-${var.tenant_slug}"
-  enabled = true
+Khi `tenant-config` tạo tenant mới → tự gọi Keycloak Admin API:
 
-  login_theme = "cachesol"
-  account_theme = "cachesol"
-
-  # LDAP Federation
-  ldap_user_federation {
-    name        = "ldap-${var.tenant_slug}"
-    enabled     = true
-    ldap_url    = var.tenant_ldap_url
-    user_dn     = var.tenant_bind_dn
-    password    = var.tenant_bind_password
-  }
+```java
+// tenant-config service gọi sang Keycloak
+POST /admin/realms
+{
+  "realm": "tenant-acme",
+  "enabled": true,
+  "displayName": "ACME Corporation",
+  "loginTheme": "cachesol",
+  "userFederationProviders": [
+    {
+      "providerName": "ldap",
+      "config": {
+        "connectionUrl": ["ldap://ldap.acme.local:389"],
+        "bindDn": ["cn=admin,dc=acme,dc=local"],
+        "bindCredential": ["***"],
+        "usersDn": ["ou=users,dc=acme,dc=local"],
+        "usernameLDAPAttribute": ["sAMAccountName"]
+      }
+    }
+  ],
+  "browserFlow": "acme-flow"
 }
 ```
+
+→ Khi tạo tenant xong → đã có realm tương ứng, có LDAP sync, có user pool riêng.
 
 ## Protocol Mapper: inject `tenant_id` claim
 

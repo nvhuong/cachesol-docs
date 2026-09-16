@@ -92,8 +92,9 @@ src/backend/
 │   ├── finance/
 │   └── marketing/
 │
-├── platform/                  ← Microservices nền tảng (CHỈ 6 — xem ARCHITECTURE.md §4)
-│   ├── iam/                   # Identity & Access Management (Keycloak-backed thin bridge)
+├── platform/                  ← Microservices nền tảng (CHỈ 7 — xem ARCHITECTURE.md §4)
+│   ├── iam/                   # JWT verify only (Keycloak JWK cache + webhook receiver)
+│   ├── tenant-config/         # ★ Tenants, users (qua Keycloak Admin API), roles/permissions, mini-apps registry
 │   ├── configuration/         # Feature flags + system params
 │   ├── master-data/           # Danh mục dùng chung (country, currency, unit...)
 │   ├── notification/          # Đa kênh: email, SMS, push, in-app
@@ -106,8 +107,8 @@ src/backend/
     └── shared-security/       # KeycloakJwtDecoder, TenantContextFilter, @PreAuthorize
 ```
 
-> **So với v2:** Từ 15 platform services đã giảm xuống **6** (xoá `organization`, `employee`, `customer`, `audit`, `file`, `search`, `reporting`, `scheduler`, `integration`, `master-data` ban đầu... master-data giữ lại vì cross-tenant).
-> `organization/employee/job_title` gộp vào HRM; `customer` gộp vào Sales; `audit/file/search/reporting/scheduler/integration` chuyển thành library hoặc xoá.
+> **So với v2:** Từ 15 platform services đã giảm xuống **7** (xoá `organization`, `employee`, `customer`, `audit`, `file`, `search`, `reporting`, `scheduler`, `integration`).
+> Tách thêm `tenant-config` (user/role/mini-app management) để giữ IAM service siêu gọn (chỉ JWT verify).
 
 ### 1.2 Cấu trúc từng Application
 

@@ -5,7 +5,7 @@ Enterprise Platform là hệ sinh thái microservice phục vụ **multi-tenant 
 
 - **Mỗi khách hàng (tenant) = 1 công ty / tập đoàn**, có thể có nhiều công ty con, chi nhánh, trung tâm, phòng ban, chức danh tự khai báo.
 - **Multi-tenant schema-per-tenant**: mỗi tenant 1 PostgreSQL schema riêng → cô lập dữ liệu tuyệt đối.
-- **Backend tối giản**: 6 platform services (IAM/Config/Master-data/Notification/Workflow/Approval) + 6+ applications nghiệp vụ.
+- **Backend tối giản**: 7 platform services (iam/tenant-config/configuration/master-data/notification/workflow/approval) + 6+ applications nghiệp vụ.
 - **IAM dùng Keycloak**: login/register/LDAP/SSO/OAuth2/MFA qua Keycloak, IAM service chỉ là thin bridge.
 
 Xem chi tiết: [`ARCHITECTURE.md`](ARCHITECTURE.md).
@@ -64,8 +64,9 @@ enterprise-platform/
 │   │   ├── applications/     # Microservices nghiệp vụ (HRM, ERP, Sales, Finance, Marketing, ...)
 │   │   │                     # HRM chứa organizations, employees, job_titles, attendance, ...
 │   │   │                     # Sales chứa customers
-│   │   ├── platform/         # Microservices nền tảng (CHỈ 6 — xem ARCHITECTURE.md)
-│   │   │                     # iam, configuration, master-data, notification, workflow, approval
+│   │   ├── platform/         # Microservices nền tảng (CHỈ 7 — xem ARCHITECTURE.md)
+│   │   │                     # iam (JWT verify), tenant-config, configuration,
+│   │   │                     # master-data, notification, workflow, approval
 │   │   └── shared/           # Backend shared libs
 │   │       ├── shared-common  # audit publisher, file wrapper, tenant util
 │   │       ├── shared-messaging  # Kafka producer/consumer
@@ -98,7 +99,7 @@ enterprise-platform/
   - `design-system/` ở root: **DOCS** (markdown) — components, patterns, tokens, templates.
   - `src/frontend/design-system/`: **CODE LIBRARY** — package `@cachesol/design-system` (tokens TS, base React components).
 - **Multi-tenant**: mỗi tenant 1 PostgreSQL schema riêng (`tenant_<slug>`), tenant registry ở schema `public`.
-- **Platform services tối giản** — CHỈ 6 services: iam, configuration, master-data, notification, workflow, approval.
+- **Platform services tối giản** — CHỈ 7 services: iam (JWT verify only), tenant-config, configuration, master-data, notification, workflow, approval.
 - **IAM dùng Keycloak** cho mọi thứ liên quan identity (login/register/LDAP/SSO/OAuth2/MFA). IAM service chỉ là thin bridge.
 - Mọi microservice backend **bắt buộc** có logging đầy đủ (access, audit, performance, error) — xem `SOURCE-CODE-STRUCTURE.md` §1.6.
 

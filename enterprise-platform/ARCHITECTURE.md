@@ -149,16 +149,17 @@ CREATE TABLE employee_assignments (
 
 > **Nguyên tắc:** ít platform service nhất có thể. Mọi thứ có thể là library hoặc gộp vào application → đều KHÔNG làm service riêng.
 
-### 4.1 Danh sách 6 platform services
+### 4.1 Danh sách 7 platform services
 
 | # | Service | Lý do GIỮ riêng |
 |---|---------|-----------------|
-| 1 | **iam** | Cần DB riêng (users_extra, app_roles), bridge tới Keycloak, expose API cho tất cả app |
-| 2 | **configuration** | Cross-tenant feature flags + system params, cần API CRUD + cache invalidation |
-| 3 | **master-data** | Cross-tenant lookup (country, currency, unit), nhiều app đọc, cần API CRUD + cache |
-| 4 | **notification** | Đa kênh (email/SMS/push/in-app), cần retry queue, template engine, log lịch sử |
-| 5 | **workflow** | BPMN-lite engine, state machine dài hơi, cần DB riêng cho process instances |
-| 6 | **approval** | Ticket duyệt gắn với workflow user-tasks, lịch sử duyệt dài |
+| 1 | **iam** | JWT verify, JWK cache, Keycloak webhook receiver — KHÔNG có user CRUD (delegate Keycloak) |
+| 2 | **tenant-config** | Tenant metadata, user CRUD (qua Keycloak Admin API), role/permission, mini-apps registry, org-root mapping |
+| 3 | **configuration** | Cross-tenant feature flags + system params, cần API CRUD + cache invalidation |
+| 4 | **master-data** | Cross-tenant lookup (country, currency, unit), nhiều app đọc, cần API CRUD + cache |
+| 5 | **notification** | Đa kênh (email/SMS/push/in-app), cần retry queue, template engine, log lịch sử |
+| 6 | **workflow** | BPMN-lite engine, state machine dài hơi, cần DB riêng cho process instances |
+| 7 | **approval** | Ticket duyệt gắn với workflow user-tasks, lịch sử duyệt dài |
 
 ### 4.2 Các service ĐÃ XOÁ khỏi platform → gộp vào đâu
 
@@ -177,25 +178,36 @@ CREATE TABLE employee_assignments (
 ### 4.3 Sơ đồ kiến trúc
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                     API Gateway (per tenant subdomain)            │
-└──────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┘
-       │         │         │         │         │         │
-       ▼         ▼         ▼         ▼         ▼         ▼
-   ┌───────┐ ┌─────────┐ ┌────────┐ ┌─────────┐ ┌────────┐ ┌──────────┐
-   │  IAM  │ │ Config  │ │ Master │ │ Notif   │ │Workflow│ │ Approval │
-   │(Keycl)│ │ Flags   │ │ Data   │ │         │ │ Engine │ │          │
-   └───┬───┘ └────┬────┘ └───┬────┘ └────┬────┘ └────┬───┘ └────┬─────┘
-       │          │          │           │           │          │
-       └──────────┴──────────┴───────────┴───────────┴──────────┘
-                                  │       │
-                                  ▼       ▼
-                            ┌──────────────────┐
-                            │   Applications   │
-                            │ HRM/ERP/Sales/... │
-                            └────────┬─────────┘
-                                     │
-                                     ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│            API Gateway (per-tenant subdomain, JWT verify)                  │
+└──────┬───────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────┘
+       │           │         │         │         │         │         │
+       ▼           ▼         ▼         ▼         ▼         ▼         ▼
+   ┌────────┐ ┌──────────┐ ┌───────┐ ┌─────────┐ ┌────────┐ ┌────────┐ ┌──────────┐
+   │  IAM   │ │ Tenant   │ │ Config│ │ Master  │ │ Notif  │ │Workflow│ │ Approval │
+   │(verify)│ │ Config   │ │ Flags │ │ Data    │ │        │ │ Engine │ │          │
+   │ JWK    │ │ user/role│ │       │ │         │ │        │ │        │ │          │
+   │ cache  │ │ /miniapps│ │       │ │         │ │        │ │        │ │          │
+   └────┬───┘ └────┬─────┘ └───┬───┘ └────┬────┘ └───┬────┘ └───┬────┘ └────┬─────┘
+        │          │           │          │           │          │           │
+        │      Keycloak API   │          │           │          │           │
+        ▼          ▼           ▼          ▼           ▼          ▼           ▼
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │                     Keycloak (1 realm / tenant)                        │
+   │      users · credentials · roles · LDAP sync · SSO · MFA              │
+   └────────────────────────────────────────────────────────────────────────┘
+        │
+        └─────────────────────────────────────────────────────────┐
+                                                                  ▼
+                                                       ┌──────────────────┐
+                                                       │   Applications   │
+                                                       │ HRM/ERP/Sales/... │
+                                                       └────────┬─────────┘
+                                                                │
+                                                                ▼
+                                                       ┌──────────────────┐
+                                                       │  Kafka (events)  │
+                                                       └──────────────────┘
                             ┌──────────────────┐
                             │  Kafka (events)  │
                             └──────────────────┘
@@ -214,13 +226,13 @@ CREATE TABLE employee_assignments (
 
 → Không phải tự build lại những thứ này.
 
-### 5.2 IAM Service — thin bridge
+### 5.2 IAM Service — thin bridge (JWT verify only)
 
-IAM service KHÔNG quản lý credential/identity. Nó chỉ:
+IAM service CHỈ verify JWT. Mọi user/role CRUD do **tenant-config service** đảm nhiệm (qua Keycloak Admin API).
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│  Keycloak (container)                                          │
+│  Keycloak (1 container, 1 realm per tenant)                   │
 │  - users, credentials, roles, groups                          │
 │  - login flows, MFA, LDAP sync                                │
 │  - OAuth2/OIDC token issuer                                   │
@@ -231,75 +243,128 @@ IAM service KHÔNG quản lý credential/identity. Nó chỉ:
 ┌───────────────────────────────────────────────────────────────┐
 │  IAM Service (Spring Boot)                                     │
 │                                                                │
-│  DB: schema `public` (cross-tenant metadata)                  │
-│  ├── users_extra                                              │
-│  │     (keycloak_user_id, tenant_id, default_language,        │
-│  │      avatar_url, status, last_login_at, ...)               │
-│  ├── user_app_roles                                           │
-│  │     (keycloak_user_id, tenant_id, role_code,               │
-│  │      org_scope_path, valid_from, valid_to)                 │
-│  ├── ldap_sync_log                                            │
-│  └── keycloak_webhook_events (audit)                          │
+│  DB: schema `public` — chỉ lưu:                               │
+│  ├── keycloak_webhook_events (audit log cho events nhận)      │
+│                                                                │
+│  JWK Cache: Caffeine TTL 1h                                   │
 │                                                                │
 │  API:                                                          │
-│  ├── GET  /api/v1/users/me                                    │
-│  ├── GET  /api/v1/users/{id}                                  │
-│  ├── GET  /api/v1/users (tenant-scoped)                       │
-│  ├── GET  /api/v1/permissions (current user's effective roles)│
-│  ├── POST /api/v1/users (admin create → call Keycloak API)   │
-│  ├── POST /api/v1/users/{id}/roles                            │
-│  ├── POST /webhooks/keycloak  (nhận event từ Keycloak SPI)   │
-│  └── GET  /api/v1/tenants/{slug}/users (cross-tenant admin)   │
+│  ├── GET  /api/v1/keys/jwks.json  (mirror Keycloak JWKS)      │
+│  ├── POST /webhooks/keycloak      (nhận event từ Keycloak SPI)│
+│  └── GET  /health/live, /health/ready                          │
 └───────────────────────────────────────────────────────────────┘
 ```
 
-### 5.3 JWT verification (shared-security)
+### 5.3 Tenant Config Service — quản lý user, role, mini-app
+
+`tenant-config` là service riêng, dùng schema `public` (cross-tenant metadata). 5 bounded contexts:
+
+| # | Bounded Context | Vai trò |
+|---|-----------------|---------|
+| 1 | **Tenants** | Metadata công ty khách hàng + schema + keycloak_realm |
+| 2 | **Org Units Mapping** | Lookup root-level: tenant ↔ root org (chi tiết cây ở HRM) |
+| 3 | **Users** | CRUD user qua Keycloak Admin API + users_extra + link employee |
+| 4 | **Roles / Permissions** | roles per-tenant + user_app_roles + org_scope_path (ltree) |
+| 5 | **Mini-apps Registry** | catalog mini-app + per-tenant enable/disable + config |
+
+Xem chi tiết: [`src/backend/platform/tenant-config/README.md`](src/backend/platform/tenant-config/README.md).
+
+### 5.4 Login flow (1 realm per tenant + custom SSO + LDAP)
+
+```
+acme.platform.com  →  Keycloak realm "tenant-acme"   (LDAP: ldap.acme.local)
+globex.platform.com → Keycloak realm "tenant-globex" (LDAP: ldap.globex.com)
+initech.platform.com → Keycloak realm "tenant-initech"
+```
+
+**Tại sao 1 realm / tenant:**
+- Cô lập user pool (user ACME không thấy user Globex).
+- LDAP Federation per-tenant (mỗi công ty có 1 LDAP server riêng).
+- Custom theme riêng (logo, màu sắc).
+- Custom login flow per-tenant (xem §5.5).
+
+**SSO qua email công ty (Keycloak Conditional Authenticator):**
+- User có email `@acme.com` → tự redirect sang SAML SSO của ACME (Okta/Azure-AD).
+- User email khác → login username/password bình thường trong realm `acme`.
+
+**LDAP Sync (Keycloak User Federation):**
+- Mỗi realm có 1 LDAP provider config.
+- Periodic full sync mỗi ngày 2h sáng + changed-sync mỗi 60s.
+- Cache policy: NO_CACHE (luôn query LDAP khi login).
+
+### 5.5 Custom Login Flow per tenant
+
+Keycloak hỗ trợ custom Authentication Flow qua Admin API. Ví dụ:
+
+```
+Flow "acme-strict":    username → password → email-otp → success
+Flow "globex-simple":  username → password → success
+Flow "initech-sso":    saml-redirect (Okta) → success
+```
+
+→ `tenant-config` lưu `login_flow_alias` của mỗi tenant → bind với realm qua Keycloak API.
+
+Sau này có thể customize theo nhiều flow của từng công ty:
+- Email-only (magic link)
+- SMS OTP
+- WebAuthn (passkey)
+- Certificate (smartcard)
+
+### 5.6 JWT verification (shared-security)
+
+JWT verify chạy ở **API Gateway** (KHÔNG ở IAM service mỗi request). IAM chỉ cung cấp JWK cache.
 
 ```java
+// shared-security/src/main/java/.../KeycloakJwtDecoder.java (dùng chung)
 @Component
 public class KeycloakJwtDecoder {
-    private final RSAPublicKey publicKey;  // load từ Keycloak JWKS endpoint
+    private final JWKSource<SecurityContext> jwkSource;
+    private final String expectedIssuer;
+    private final String expectedAudience;
 
-    public Jwt verify(String token) {
-        // 1. Verify signature với publicKey
-        // 2. Verify issuer (iss == keycloak realm URL)
-        // 3. Verify audience (aud == this-app-client-id)
-        // 4. Extract claims: sub (keycloak user id), tenant_id, realm_access.roles
-        return decoded;
+    public DecodedJwt decode(String token) {
+        // 1. Verify signature với Keycloak JWK
+        // 2. Verify iss == keycloak realm URL
+        // 3. Verify aud == this-app-client-id
+        // 4. Verify exp
+        // 5. Extract claims: sub, tenant_id, realm_access.roles
+        return new DecodedJwt(...);
     }
 }
 ```
 
-### 5.4 Tenant claim trong JWT
+### 5.7 Tenant claim trong JWT
 
-Keycloak hỗ trợ **custom protocol mapper** — inject `tenant_id` vào JWT khi user login từ tenant subdomain.
+Keycloak Protocol Mapper inject `tenant_id` vào JWT khi user login:
 
 ```
-Host: acme.platform.com → Keycloak login → JWT claim: { "tenant_id": "acme", ... }
+Host: acme.platform.com  → Keycloak realm tenant-acme → JWT claim: { "tenant_id": "acme", ... }
 Host: globex.platform.com → JWT claim: { "tenant_id": "globex", ... }
 ```
 
-→ Frontend không cần truyền `X-Tenant-Id`; tenant tự xác định từ host. Cờ `X-Tenant-Id` chỉ dùng cho internal API/CLI.
+→ `shared-security.TenantContextFilter` đọc claim `tenant_id` → set schema cho connection.
 
-### 5.5 RBAC + Org-scope
+### 5.8 RBAC + Org-scope
+
+`user_app_roles` ở `tenant-config` (public schema), có `org_scope_path` ltree:
 
 ```sql
--- user_app_roles (per-tenant)
 CREATE TABLE user_app_roles (
-    id          UUID PRIMARY KEY,
-    tenant_id   UUID NOT NULL,
-    keycloak_user_id UUID NOT NULL,
-    role_code   VARCHAR(100) NOT NULL,          -- HRM_MANAGER, SALES_ADMIN, ...
-    org_scope_path LTREE NULL,                  -- áp dụng trong cây tổ chức nào (NULL = toàn tenant)
-    valid_from  TIMESTAMPTZ NOT NULL,
-    valid_to    TIMESTAMPTZ NULL,
-    granted_by  UUID NOT NULL,
-    created_at  TIMESTAMPTZ NOT NULL
+    id                UUID PRIMARY KEY,
+    tenant_id         UUID NOT NULL,
+    keycloak_user_id  UUID NOT NULL,
+    application       VARCHAR(50) NOT NULL,       -- 'HRM', 'SALES'
+    role_id           UUID NOT NULL,
+    org_scope_path    LTREE NULL,                  -- áp dụng trong cây tổ chức nào
+    valid_from        TIMESTAMPTZ NOT NULL,
+    valid_to          TIMESTAMPTZ NULL,
+    granted_by        UUID NOT NULL,
+    created_at        TIMESTAMPTZ NOT NULL
 );
-CREATE INDEX idx_uar_tenant_user ON user_app_roles(tenant_id, keycloak_user_id);
+CREATE INDEX idx_uar_org_scope ON user_app_roles USING GIST (org_scope_path);
 ```
 
-→ 1 user có thể là `HRM_MANAGER` ở chi nhánh HCM và `SALES_ADMIN` ở chi nhánh HN cùng lúc.
+→ 1 user có thể là `HRM_MANAGER` ở `tenant_acme.sales.team_a` và `SALES_ADMIN` ở `tenant_acme.sales.team_b` cùng lúc.
 
 ## 6. Backend — Applications (nghiệp vụ)
 
@@ -325,13 +390,14 @@ src/backend/
 │   ├── finance/
 │   └── marketing/
 │
-├── platform/                            ← nền tảng (6 services — GIẢM từ 15)
-│   ├── iam/             (Keycloak-backed, thin bridge)
-│   ├── configuration/   (feature flags, system params)
-│   ├── master-data/     (danh mục dùng chung)
-│   ├── notification/    (đa kênh, async)
-│   ├── workflow/        (BPMN-lite)
-│   └── approval/        (duyệt ticket)
+├── platform/                            ← nền tảng (7 services — GIẢM từ 15)
+│   ├── iam/                  (JWT verify only — thin)
+│   ├── tenant-config/        (tenants, users, roles, mini-apps registry)
+│   ├── configuration/        (feature flags, system params)
+│   ├── master-data/          (danh mục dùng chung)
+│   ├── notification/         (đa kênh, async)
+│   ├── workflow/             (BPMN-lite)
+│   └── approval/             (duyệt ticket)
 │
 └── shared/                              ← libraries (Java, không có HTTP API)
     ├── shared-common/         (audit publisher, file wrapper, tenant util, util chung)
