@@ -166,7 +166,7 @@ platform/
 ├── iam/                        # Identity & Access Management
 │   └── README.md
 │
-├── notification/               # Notification Service
+├── social-integration/        # Social Integration (notifications + channels + posts + pages + analytics)
 │   └── README.md
 │
 ├── workflow/                  # Workflow Engine
@@ -514,7 +514,7 @@ workflows/
 | Application | kebab-case | `hrm`, `employee-profile` |
 | Feature | kebab-case | `employee-profile`, `leave-request` |
 | Module | kebab-case | `requirement`, `backend`, `frontend` |
-| Platform | kebab-case | `iam`, `notification`, `workflow` |
+| Platform | kebab-case | `iam`, `social-integration`, `workflow` |
 | Governance | kebab-case | `api`, `architecture`, `security` |
 
 ### 8.2 Tên File

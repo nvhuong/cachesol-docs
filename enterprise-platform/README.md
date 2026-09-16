@@ -18,7 +18,7 @@ Xem chi tiết: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 ## Mục tiêu
 - Chuẩn hoá phát triển phần cứng doanh nghiệp **multi-tenant**.
 - Tối giản platform services (8 thay vì 15) → giảm overhead vận hành.
-- Tái sử dụng module nền (Keycloak cho identity, shared libs cho audit/file/notification).
+- Tái sử dụng module nền (Keycloak cho identity, shared libs cho audit/file, social-integration cho notifications + channels).
 - Squad tự chủ triển khai từng miniapp/feature trong tenant của họ.
 
 ## Tech Stack

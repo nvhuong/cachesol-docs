@@ -27,7 +27,7 @@ Enterprise Platform là hệ sinh thái microservice phục vụ **multi-tenant 
 │   │   ├── tenant_<slug>_iam             ← IAM data per tenant       │
 │   │   ├── tenant_<slug>_config          ← config per tenant         │
 │   │   ├── tenant_<slug>_master_data     ← danh mục per tenant       │
-│   │   └── tenant_<slug>_notif           ← notification log per tenant│
+│   │   └── tenant_<slug>_socialintegration ← notifications + posts + pages per tenant │
 │   │                                                                    │
 │   └── database: cachesol_<tenant_slug>   ← (OPTIONAL, large tenants)│
 │                                                                       │
@@ -472,7 +472,7 @@ src/backend/
 | 4 | Migrate Sales → gộp customer vào Sales |
 | 5 | Xoá folder `src/backend/platform/{organization,employee,customer,audit,file,search,reporting,scheduler,integration}/` |
 | 6 | Tạo schema-per-tenant migration (Flyway: `flyway.tenant-schemas=tenant_*`) |
-| 7 | Viết 4 service mới: `configuration`, `master-data`, `notification`, `workflow` (nếu cần ngay), `approval` |
+| 7 | Viết 4 service mới: `configuration`, `master-data`, `social-integration`, `workflow` (nếu cần ngay), `approval` |
 
 ---
 

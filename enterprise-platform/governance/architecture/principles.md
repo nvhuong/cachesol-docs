@@ -87,5 +87,5 @@ Tài liệu này định nghĩa các nguyên tắc cốt lõi để xây dựng 
 ## 18. Platform Service Tối Giản
 - **Mô tả:** Chỉ giữ lại platform service khi nó thật sự cần HTTP API riêng + DB riêng. Mọi thứ có thể là library (shared-common) hoặc gộp vào application → đều KHÔNG làm service riêng.
 - **Lý do:** Microservice càng ít càng tốt → giảm overhead vận hành, networking, distributed tracing, deployment.
-- **Quy tắc cụ thể:** Audit/file/notification → library. Scheduler/reporting → in-app. Organization/employee/customer → gộp vào nghiệp vụ chính. Workflow/approval → service riêng nếu có state machine dài hơi.
-- **Hiện tại: 6 platform services** (iam, configuration, master-data, notification, workflow, approval).
+- **Quy tắc cụ thể:** Audit/file/notification → library hoặc social-integration. Scheduler/reporting → in-app. Organization/employee/customer → gộp vào nghiệp vụ chính. Workflow/approval → service riêng nếu có state machine dài hơi.
+- **Hiện tại: 8 platform services** (iam, platform-registry, tenant-manager, configuration, master-data, social-integration, workflow, approval).

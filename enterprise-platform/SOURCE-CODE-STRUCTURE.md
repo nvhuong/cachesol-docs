@@ -60,7 +60,7 @@ enterprise-platform/
 | `applications/erp/backend/` | `src/backend/applications/erp/` |
 | `applications/sales/backend/` | `src/backend/applications/sales/` |
 | `platform/iam/` | `src/backend/platform/iam/` |
-| `platform/notification/` | `src/backend/platform/notification/` |
+| `platform/social-integration/` | `src/backend/platform/social-integration/` |
 | `platform/workflow/` | `src/backend/platform/workflow/` |
 | `platform/file/` | `src/backend/platform/file/` |
 | `platform/search/` | `src/backend/platform/search/` |
@@ -98,7 +98,7 @@ src/backend/
 │   ├── tenant-manager/        # Users (Keycloak Admin API), roles/permissions, organizations, job_titles, employees
 │   ├── configuration/         # Feature flags + system params
 │   ├── master-data/           # Danh mục dùng chung (country, currency, unit...)
-│   ├── notification/          # ★ Notifications (email/SMS/push/in-app) + social channels + posts + pages + analytics
+│   ├── social-integration/   # Notifications (email/SMS/push/in-app) + social channels + posts + pages + analytics
 │   ├── workflow/              # BPMN-lite engine
 │   └── approval/              # Ticket duyệt (gắn với workflow user-tasks)
 │
@@ -1253,7 +1253,7 @@ src/backend/platform/
 │       ├── infrastructure/
 │       │   └── logging/       # ★ Tuân thủ §1.6 Logging
 │       └── config/
-├── notification/              # Notification Service
+├── social-integration/        # Social Integration Service (notifications + social channels + posts + pages + analytics)
 ├── workflow/                  # Workflow Engine
 ├── file/                      # File Management
 └── search/                    # Search Service
@@ -1385,12 +1385,15 @@ src/                                    ★ Source code duy nhất
 │   │   ├── erp/
 │   │   ├── sales/
 │   │   └── finance/
-│   ├── platform/                       ← Microservices nền tảng
+│   ├── platform/                       ← Microservices nền tảng (CHỈ 8)
 │   │   ├── iam/
-│   │   ├── notification/
+│   │   ├── platform-registry/
+│   │   ├── tenant-manager/
+│   │   ├── configuration/
+│   │   ├── master-data/
+│   │   ├── social-integration/
 │   │   ├── workflow/
-│   │   ├── file/
-│   │   └── search/
+│   │   └── approval/
 │   └── shared/                         ← Backend shared libs
 │       ├── shared-common/
 │       ├── shared-messaging/

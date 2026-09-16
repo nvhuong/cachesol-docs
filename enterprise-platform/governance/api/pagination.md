@@ -42,7 +42,7 @@ Client truyền các query parameters:
 - `limit`: Số bản ghi cần lấy.
 
 **Ví dụ:**
-`GET /api/v1/notifications?limit=20&cursor=eyJpZCI6MTIzLCJ0aW1lc3RhbXAiOjE2OTczNDU2MDB9`
+`GET /client-api/v1/notifications/history?limit=20&cursor=eyJpZCI6MTIzLCJ0aW1lc3RhbXAiOjE2OTczNDU2MDB9`
 
 ### Response Format
 ```json
