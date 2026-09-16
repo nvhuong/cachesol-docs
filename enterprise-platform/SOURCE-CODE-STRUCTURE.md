@@ -94,11 +94,11 @@ src/backend/
 │
 ├── platform/                  ← Microservices nền tảng (CHỈ 8 — xem ARCHITECTURE.md §4)
 │   ├── iam/                   # JWT verify only (Keycloak JWK cache + webhook receiver)
-│   ├── platform-registry/     # ★ Tenants registry, mini-apps catalog, org-root mapping (cross-tenant + per-tenant)
-│   ├── tenant-manager/        # ★ Users (qua Keycloak Admin API), roles/permissions (per-tenant schema)
+│   ├── platform-registry/     # Tenants registry, mini-apps catalog, org-root mapping, role template
+│   ├── tenant-manager/        # Users (Keycloak Admin API), roles/permissions, organizations, job_titles, employees
 │   ├── configuration/         # Feature flags + system params
 │   ├── master-data/           # Danh mục dùng chung (country, currency, unit...)
-│   ├── notification/          # Đa kênh: email, SMS, push, in-app
+│   ├── notification/          # ★ Notifications (email/SMS/push/in-app) + social channels + posts + pages + analytics
 │   ├── workflow/              # BPMN-lite engine
 │   └── approval/              # Ticket duyệt (gắn với workflow user-tasks)
 │
@@ -109,7 +109,7 @@ src/backend/
 ```
 
 > **So với v2:** Từ 15 platform services đã giảm xuống **8** (xoá `organization`, `employee`, `customer`, `audit`, `file`, `search`, `reporting`, `scheduler`, `integration`).
-> Tách `iam` (JWT verify only), `platform-registry` (tenants + mini-apps + org-root), `tenant-manager` (users + roles per-tenant) — mỗi service có schema riêng phù hợp.
+> Tách `iam` (JWT verify only), `platform-registry` (tenants + mini-apps + org-root + role template), `tenant-manager` (users + roles + org tree + employees per-tenant), `social-integration` (notifications + social channels + posts + pages).
 
 ### 1.2 Cấu trúc từng Application
 

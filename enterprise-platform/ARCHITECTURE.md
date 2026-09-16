@@ -154,11 +154,11 @@ CREATE TABLE employee_assignments (
 | # | Service | Lý do GIỮ riêng |
 |---|---------|-----------------|
 | 1 | **iam** | JWT verify, JWK cache, Keycloak webhook receiver — KHÔNG có user CRUD |
-| 2 | **platform-registry** | Tenants registry, mini-apps catalog, org-root mapping (cross-tenant metadata + per-tenant enable data) |
+| 2 | **platform-registry** | Tenants registry, mini-apps catalog, org-root mapping, role/permission template |
 | 3 | **tenant-manager** | Users (CRUD qua Keycloak Admin API), roles/permissions, user_app_roles + org_scope_path — per-tenant schema |
 | 4 | **configuration** | Cross-tenant feature flags + system params, cần API CRUD + cache invalidation |
 | 5 | **master-data** | Cross-tenant lookup (country, currency, unit), nhiều app đọc, cần API CRUD + cache |
-| 6 | **notification** | Đa kênh (email/SMS/push/in-app), cần retry queue, template engine, log lịch sử |
+| 6 | **social-integration** | Đa kênh: notifications + social channels + posts + pages + analytics |
 | 7 | **workflow** | BPMN-lite engine, state machine dài hơi, cần DB riêng cho process instances |
 | 8 | **approval** | Ticket duyệt gắn với workflow user-tasks, lịch sử duyệt dài |
 
@@ -166,8 +166,8 @@ CREATE TABLE employee_assignments (
 
 | Cũ (platform) | Mới | Cách gộp |
 |---------------|-----|----------|
-| `organization` | → HRM application | Bảng `organizations`, `job_titles` thuộc HRM service (mỗi tenant schema) |
-| `employee` | → HRM application | Bảng `employees`, `employee_assignments` thuộc HRM |
+| `organization` | → `tenant-manager` | Bảng `organizations`, `job_titles` thuộc schema `tenant_<slug>_tenantmanager` |
+| `employee` | → `tenant-manager` | Bảng `employees`, `employee_assignments`, `employee_contracts` thuộc schema `tenant_<slug>_tenantmanager` |
 | `customer` | → Sales application | Bảng `customers` thuộc Sales |
 | `audit` | → `shared-common` library | Ghi audit event ra Kafka topic `audit.<tenant>.events` — không cần service |
 | `file` | → `shared-common` library | S3/MinIO wrapper, không cần service |
@@ -417,11 +417,11 @@ src/backend/
 │
 ├── platform/                            ← nền tảng (8 services — GIẢM từ 15)
 │   ├── iam/                  (JWT verify only — thin)
-│   ├── platform-registry/    (tenants, mini-apps catalog, org-root mapping)
+│   ├── platform-registry/    (tenants, mini-apps catalog, org-root mapping, role template)
 │   ├── tenant-manager/       (users, roles, permissions — per-tenant schema)
 │   ├── configuration/        (feature flags, system params)
 │   ├── master-data/          (danh mục dùng chung)
-│   ├── notification/         (đa kênh, async)
+│   ├── social-integration/   (notifications, channels, posts, pages, analytics)
 │   ├── workflow/             (BPMN-lite)
 │   └── approval/             (duyệt ticket)
 │

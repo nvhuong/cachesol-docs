@@ -90,10 +90,10 @@ Hạn chế tối đa. Chỉ dùng cho:
 | **tenant-manager** | `/users`, `/roles`, `/permissions` | `/permissions/check`, `/users/{id}` | — | — |
 | **configuration** | `/configs`, `/features` | `/configs/{key}` | — | — |
 | **master-data** | `/master-data/categories/{code}` | `/master-data/categories/{code}` | — | — |
-| **notification** | `/notifications/templates` | `/notifications/send` | `/webhooks/email-bounce` | — |
+| **social-integration** | `/client-api/v1/notifications/templates`, `/client-api/v1/channels`, `/client-api/v1/posts`, `/client-api/v1/pages` | `/service-api/v1/notifications/send` | `/integration-api/v1/webhooks/*` | — |
 | **workflow** | `/workflows/deploy`, `/workflows/start` | `/workflows/start` | — | — |
 | **approval** | `/approvals/requests` | `/approvals/tasks/{id}` | — | — |
-| **HRM** | `/employees`, `/organizations`, `/job-titles` | `/employees/{id}`, `/organizations/{id}/descendants` | — | — |
+| **HRM** | `/attendance`, `/leaves`, `/payroll`, `/recruitments`, `/performance`, `/training` | `/employees/{id}`, `/organizations/{id}/descendants` | — | — |
 | **Sales** | `/customers`, `/orders` | `/customers/{id}` | — | — |
 | **ERP, Finance, Marketing** | tương tự | tương tự | tương tự | tương tự |
 
