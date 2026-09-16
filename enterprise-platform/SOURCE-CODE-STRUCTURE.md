@@ -168,6 +168,18 @@ src/backend/applications/hrm/
             └── V1__create_audit_logs.sql
 ```
 
+> **★ Phân biệt 2 folder `applications/`:**
+>
+> | Vị trí | Vai trò | Chứa gì |
+> |--------|---------|---------|
+> | `src/backend/applications/{name}/` | **Source code** microservice | `pom.xml`, `src/main/java/...`, `src/main/resources/...`, `README.md` |
+> | `applications/{name}/` (ở root) | **Chỉ là domain folder** cho requirement/docs/tests | `docs/`, `requirement/`, `tests/`, `README.md` — **KHÔNG CÓ CODE** |
+>
+> Quy tắc:
+> - **Code service chỉ tồn tại ở `src/backend/applications/{name}/`.**
+> - **`applications/{name}/` ở root chỉ chứa `docs/`, `requirement/`, `tests/`, `README.md`.** Tên folder phải trùng với `{name}` trong `src/backend/applications/`.
+> - Ví dụ: `applications/hrm/` (root) ↔ `src/backend/applications/hrm/` (code) ↔ `applications/hrm/README.md` mô tả domain HRM và link tới code ở `src/backend/applications/hrm/`.
+
 ### 1.3 Package Naming Convention (chung cho mọi microservice)
 
 **Mọi package con đều bắt đầu bằng `com.cachesol.platform.{layer}.{name}`.**
