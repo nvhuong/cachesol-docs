@@ -114,8 +114,8 @@ enterprise-platform/
 │       │   └── shared-config/       ← ESLint, TSConfig, Vite config
 │       │       └── package.json
 │
-│       ├── design-system/           ← Design tokens, base components
-│       │   └── package.json         ← @cachesol/design-system
+│       ├── design-system/           ← Design System CODE library (@cachesol/design-system: tokens TS + base components)
+│       │   └── package.json         // DOCS markdown tương ứng ở /design-system/ ở root repo
 │
 │       └── package.json
 │

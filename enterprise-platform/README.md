@@ -65,7 +65,7 @@ enterprise-platform/
 │       ├── apps/web-shell/
 │       ├── mini-apps/
 │       ├── shared/
-│       └── design-system/
+│       └── design-system/       # ★ Design System code library (@cachesol/design-system)
 │
 ├── applications/             # CHỈ CHỨA docs / requirement / tests (KHÔNG có code)
 │   ├── _templates/
@@ -74,6 +74,7 @@ enterprise-platform/
 │   ├── sales/{docs, requirement, tests}
 │
 ├── governance/               # Principles, ADR, standards, API, security, quality
+├── design-system/            # ★ Design System docs (markdown): components, patterns, tokens, templates
 ├── agents/                   # 11 AI agents + PIPELINE-PROMPTS
 ├── skills/                   # Skills + enterprise aliases
 └── workflows/                # YAML pipelines (feature, bugfix, release, ...)
@@ -84,6 +85,9 @@ enterprise-platform/
 - Backend code: `src/backend/{applications,platform,shared}/`. Java package gốc `com.cachesol.platform.*`.
 - Frontend code: `src/frontend/{apps,mini-apps,shared,design-system}/`. Frontend package `@cachesol/*`.
 - `applications/{name}/` ở root **chỉ** chứa `docs/`, `requirement/`, `tests/`.
+- **Design System có 2 vị trí**:
+  - `design-system/` ở root: **DOCS** (markdown) — components, patterns, tokens, templates.
+  - `src/frontend/design-system/`: **CODE LIBRARY** — package `@cachesol/design-system` (tokens TS, base React components).
 - Mọi microservice backend **bắt buộc** có logging đầy đủ (access, audit, performance, error) — xem `SOURCE-CODE-STRUCTURE.md` §1.6.
 
 ## Luồng làm việc Feature (tóm tắt)

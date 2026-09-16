@@ -52,10 +52,9 @@ src/frontend/**/*.tsbuildinfo
 **/docker-compose*.yml
 **/.docker/
 
-# --- Docs (non-code) at root level ---
-# src/frontend/design-system/ VẪN GIỮ trong git (code)
-# design-system/ ở root = docs markdown only → gitignore
-design-system/
+# --- Docs ở root level ---
+# LƯU Ý: design-system/ ở root là MARKDOWN DOCS (components, patterns, tokens, templates) — VẪN TRACK trong git.
+# Code library @cachesol/design-system nằm ở src/frontend/design-system/ (dist/ đã ignore ở trên).
 
 # --- Temporary & Generated ---
 *.tmp

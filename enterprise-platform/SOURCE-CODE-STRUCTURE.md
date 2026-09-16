@@ -22,8 +22,8 @@ enterprise-platform/
 │   └── frontend/             ★ Frontend mono-repo (host shell + mini-apps dạng library)
 │       ├── apps/web-shell/
 │       ├── mini-apps/
-│       ├── shared/
-│       └── design-system/
+│       ├── shared/                       (shared-ui, shared-types, shared-api)
+│       └── design-system/                ★ Design System CODE library (@cachesol/design-system)
 │
 ├── applications/             ★ CHỈ CHỨA DOCS / REQUIREMENT / TESTS
 │   ├── hrm/{docs,requirement,tests}/
@@ -34,7 +34,7 @@ enterprise-platform/
 ├── agents/                   ← AI agents definitions + PIPELINE-PROMPTS
 ├── skills/                   ← Skills + enterprise aliases
 ├── workflows/                ← YAML pipelines (feature, bugfix, release, ...)
-└── design-system/            ← Design tokens (non-code, chỉ JSON/Markdown)
+└── design-system/            ★ Design System DOCS (markdown only: components, patterns, templates, tokens)
 ```
 
 **Nguyên tắc quan trọng:**
@@ -44,6 +44,9 @@ enterprise-platform/
 - ✅ **Shared libraries** (web-shell, shared-ui, shared-types, shared-api) chỉ tồn tại 1 lần trong `src/frontend/`.
 - ✅ **`applications/{name}/`** ở root **CHỈ** chứa `docs/`, `requirement/`, `tests/` — KHÔNG có `backend/`.
 - ✅ **KHÔNG** tạo `frontend/` riêng trong từng `applications/{name}/`.
+- ✅ **Design System** có 2 vị trí KHÁC NHAU, đừng nhầm:
+  - `design-system/` ở **root** = **DOCS** (markdown) — components, patterns, tokens, templates
+  - `src/frontend/design-system/` = **CODE library** — package `@cachesol/design-system`, tokens TypeScript, base React components
 
 ---
 
@@ -931,7 +934,8 @@ src/frontend/                     ★ Frontend mono-repo nằm trong src/
 │   ├── shared-types/
 │   └── shared-api/
 │
-└── design-system/                ← Design tokens, base components
+└── design-system/                ← ★ Design System CODE library (@cachesol/design-system)
+                                    // DOCS markdown tương ứng ở /design-system/ ở root
 ```
 
 ### 2.3 Phân biệt Web App vs Mini App
@@ -1396,7 +1400,7 @@ src/                                    ★ Source code duy nhất
     │   ├── shared-ui/
     │   ├── shared-types/
     │   └── shared-api/
-    └── design-system/
+    └── design-system/                        # @cachesol/design-system (code); DOCS ở /design-system/ root
 ```
 
 **Mọi microservice backend đều phải tuân thủ [§1.6 Logging](#16-logging--quan-trọng).**

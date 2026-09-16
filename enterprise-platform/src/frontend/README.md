@@ -23,7 +23,8 @@ src/frontend/                           ← Workspace này (trong src/)
 │   ├── shared-api/                  # @cachesol/shared-api
 │   └── shared-config/               # Shared build configs
 │
-└── design-system/                   # Design System
+└── design-system/                   # ★ @cachesol/design-system (code library: tokens TS + base components)
+                                    # DOCS markdown tương ứng ở /design-system/ ở root repo
 ```
 
 ## Quan hệ với `applications/`

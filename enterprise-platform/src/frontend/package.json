@@ -20,7 +20,7 @@
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint . --ext ts,tsx --max-warnings 0",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
-    "clean": "rm -rf node_modules apps/*/node_modules mini-apps/*/node_modules shared/*/node_modules design-system/node_modules"
+    "clean": "rm -rf node_modules apps/*/node_modules mini-apps/*/node_modules shared/*/node_modules design-system/node_modules design-system/*/node_modules"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
