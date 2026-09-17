@@ -1,0 +1,67 @@
+version: "3.9"
+
+# Chạy thử 3 platform services MVP + dependencies (postgres + keycloak).
+# Production sẽ dùng Kubernetes manifests (khác file).
+#
+# Usage:
+#   docker compose -f docker-compose.mvp.yml up -d
+#   curl http://localhost:8082/public-api/v1/health
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cachesol_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    command: ["start-dev"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+
+  iam-service:
+    build:
+      context: .
+      dockerfile: platform/iam/Dockerfile
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      DB_URL: jdbc:postgresql://postgres:5432/cachesol_platform
+    ports:
+      - "8082:8082"
+    depends_on: [postgres, keycloak]
+
+  platform-registry-service:
+    build:
+      context: .
+      dockerfile: platform/platform-registry/Dockerfile
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      DB_URL: jdbc:postgresql://postgres:5432/cachesol_platform
+      TENANT_SLUG: acme
+    ports:
+      - "8081:8081"
+    depends_on: [postgres, keycloak]
+
+  tenant-manager-service:
+    build:
+      context: .
+      dockerfile: platform/tenant-manager/Dockerfile
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      DB_URL: jdbc:postgresql://postgres:5432/cachesol_platform
+      TENANT_SLUG: acme
+    ports:
+      - "8083:8083"
+    depends_on: [postgres, keycloak]
+
+volumes:
+  pgdata:

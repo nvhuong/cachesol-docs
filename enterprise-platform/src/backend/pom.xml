@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.cachesol.platform</groupId>
+  <artifactId>cachesol-backend</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>cachesol-backend</name>
+  <description>cachesol Enterprise Platform — backend multi-module (parent)</description>
+
+  <!--
+    ┌──────────────────────────────────────────────────────────┐
+    │  cachesol Enterprise Platform — Backend                 │
+    │  Spring Boot 3.5.x + Java 21 (services.yaml chốt 8083)  │
+    │  Multi-module Maven (parent POM)                        │
+    └──────────────────────────────────────────────────────────┘
+  -->
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.0</version>
+    <relativePath/>
+  </parent>
+
+  <properties>
+    <java.version>21</java.version>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <cachesol.version>1.0.0-SNAPSHOT</cachesol.version>
+    <keycloak-spring-boot-starter.version>3.5.0</keycloak-spring-boot-starter.version>
+    <testcontainers.version>1.20.4</testcontainers.version>
+    <flyway.version>10.20.1</flyway.version>
+    <liquibase.version>4.30.0</liquibase.version>
+    <ff4j.version>3.1.1</ff4j.version>
+    <flowable.version>7.0.1</flowable.version>
+  </properties>
+
+  <modules>
+    <!-- ============================================ -->
+    <!--  Shared libs (base infrastructure)          -->
+    <!-- ============================================ -->
+    <module>shared/shared-common</module>
+    <module>shared/shared-security</module>
+    <module>shared/shared-messaging</module>
+
+    <!-- ============================================ -->
+    <!--  Platform services MVP                      -->
+    <!-- ============================================ -->
+    <module>platform/iam</module>
+    <module>platform/platform-registry</module>
+    <module>platform/tenant-manager</module>
+
+    <!-- ============================================ -->
+    <!--  Platform services (Future)                  -->
+    <!-- ============================================ -->
+    <!--
+    <module>platform/feature-flag</module>
+    <module>platform/master-data</module>
+    <module>platform/social-integration</module>
+    <module>platform/workflow</module>
+    <module>platform/approval</module>
+    -->
+  </modules>
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- cachesol internal libs -->
+      <dependency>
+        <groupId>io.cachesol.platform</groupId>
+        <artifactId>shared-common</artifactId>
+        <version>${cachesol.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.cachesol.platform</groupId>
+        <artifactId>shared-security</artifactId>
+        <version>${cachesol.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.cachesol.platform</groupId>
+        <artifactId>shared-messaging</artifactId>
+        <version>${cachesol.version}</version>
+      </dependency>
+
+      <!-- 3rd party -->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-maven-plugin</artifactId>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>central</id>
+      <url>https://repo.maven.apache.org/maven2</url>
+    </repository>
+  </repositories>
+</project>

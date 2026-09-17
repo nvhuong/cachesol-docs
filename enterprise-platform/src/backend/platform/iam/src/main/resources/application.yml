@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: iam-service
+  port: 8082
+
+server:
+  port: 8082
+  forward-headers-strategy: framework
+
+keycloak:
+  realm: cachesol
+  auth-server-url: ${KEYCLOAK_URL:http://keycloak:8080}
+  resource: iam-service
+  ssl-required: external
+
+# OpenAPI
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+info:
+  app:
+    name: "IAM Service"
+    description: "JWT verify, public JWKS endpoint, OAuth2 client helpers"
+    version: "1.0.0"
+
+logging:
+  level:
+    root: INFO
+    io.cachesol: DEBUG
