@@ -7,26 +7,30 @@ server:
   port: 8082
   forward-headers-strategy: framework
 
+# IAM — Keycloak JWT verifier config
 keycloak:
-  realm: cachesol
-  auth-server-url: ${KEYCLOAK_URL:http://keycloak:8080}
-  resource: iam-service
-  ssl-required: external
+  server-url: ${KEYCLOAK_URL:http://keycloak:8080}
+  realm: ${KEYCLOAK_REALM:master}
+  default-realm: ${KEYCLOAK_REALM:master}
+  admin-client-id: ${KEYCLOAK_ADMIN_CLIENT:admin-cli}
+  admin-username: ${KEYCLOAK_ADMIN_USER:admin}
+  admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
 
-# OpenAPI
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
+iam:
+  jwks-cache-ttl: 3600000
+  webhook:
+    hmac-secret: ${KC_WEBHOOK_HMAC_SECRET:changeme-in-prod}
+    forward-to-kafka-topic: keycloak.events
+    max-retries: 3
 
 info:
   app:
     name: "IAM Service"
-    description: "JWT verify, public JWKS endpoint, OAuth2 client helpers"
+    description: "JWT verify Keycloak + webhook forwarding"
     version: "1.0.0"
 
 logging:
   level:
     root: INFO
-    io.cachesol: DEBUG
+    com.cachesol: DEBUG
+    org.springframework.security: INFO

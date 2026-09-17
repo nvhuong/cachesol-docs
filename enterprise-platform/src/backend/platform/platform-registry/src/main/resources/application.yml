@@ -2,38 +2,35 @@ spring:
   application:
     name: platform-registry-service
   port: 8081
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/cachesol_platform}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
 
 server:
   port: 8081
   forward-headers-strategy: framework
 
-datasource:
-  url: ${DB_URL:jdbc:postgresql://postgres:5432/cachesol_platform}
-  username: ${DB_USER:postgres}
-  password: ${DB_PASSWORD:postgres}
-  driver-class-name: org.postgresql.Driver
-
 jpa:
   open-in-view: false
   hibernate:
-    ddl-auto: validate
-  properties:
-    hibernate.default_schema: tenant_${tenant.placeholder}_platformregistry
+    ddl-auto: none            # Flyway là owner
 
 flyway:
   enabled: true
-  schemas: tenant_${tenant.placeholder}_platformregistry
-  placeholders:
-    tenant:
-      placeholder: ${TENANT_SLUG:acme}
-
-# OAuth2 Resource Server
-spring.security.oauth2.resourceserver.jwt:
-  issuer-uri: ${KEYCLOAK_URL:http://keycloak:8080}/realms/cachesol
-  jwk-set-uri: ${KEYCLOAK_URL:http://keycloak:8080}/realms/cachesol/protocol/openid-connect/certs
+  schemas: public
+  default-schema: public
+  baseline-on-migrate: true
 
 info:
   app:
     name: "Platform Registry"
     description: "Tenant catalog, mini-app registry"
     version: "1.0.0"
+
+logging:
+  level:
+    root: INFO
+    com.cachesol: DEBUG
+    org.springframework.security: INFO

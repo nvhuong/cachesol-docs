@@ -2,41 +2,36 @@ spring:
   application:
     name: tenant-manager-service
   port: 8083
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/cachesol_platform}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
 
 server:
   port: 8083
   forward-headers-strategy: framework
 
-datasource:
-  url: ${DB_URL:jdbc:postgresql://postgres:5432/cachesol_platform}
-  username: ${DB_USER:postgres}
-  password: ${DB_PASSWORD:postgres}
-
 jpa:
   open-in-view: false
   hibernate:
-    ddl-auto: validate
+    ddl-auto: none            # Flyway owns schema
   properties:
-    hibernate.default_schema: tenant_${tenant.placeholder}_tenantmanager
+    hibernate:
+      default_schema: tenant_manager
 
 flyway:
   enabled: true
-  schemas: tenant_${tenant.placeholder}_tenantmanager
-  placeholders:
-    tenant:
-      placeholder: ${TENANT_SLUG:acme}
-
-spring.security.oauth2.resourceserver.jwt:
-  issuer-uri: ${KEYCLOAK_URL:http://keycloak:8080}/realms/cachesol
-  jwk-set-uri: ${KEYCLOAK_URL:http://keycloak:8080}/realms/cachesol/protocol/openid-connect/certs
-
-keycloak:
-  realm: cachesol
-  auth-server-url: ${KEYCLOAK_URL:http://keycloak:8080}
-  resource: tenant-manager-service
+  schemas: tenant_manager
+  default-schema: tenant_manager
+  baseline-on-migrate: true
 
 info:
   app:
     name: "Tenant Manager"
     description: "Users, roles, organizations, employees"
     version: "1.0.0"
+
+logging:
+  level:
+    root: INFO
+    com.cachesol: DEBUG

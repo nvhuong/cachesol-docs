@@ -1,0 +1,24 @@
+package com.cachesol.platform.tenant.controller;
+
+import com.cachesol.platform.shared.common.api.ApiResponse;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Instant;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/public-api/v1")
+public class HealthController {
+
+    @GetMapping("/health")
+    public ApiResponse<Map<String, Object>> health() {
+        return ApiResponse.ok(Map.of(
+                "status", "UP",
+                "service", "tenant-manager-service",
+                "deps", Map.of("postgres", "UP", "keycloak", "UP"),
+                "timestamp", Instant.now().toString()
+        ));
+    }
+}

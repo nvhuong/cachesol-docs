@@ -1,11 +1,18 @@
-version: "3.9"
-
-# Chạy thử 3 platform services MVP + dependencies (postgres + keycloak).
-# Production sẽ dùng Kubernetes manifests (khác file).
+# =====================================================================
+# cachesol-platform MVP docker-compose
+#
+# Port map (avoid conflict with local services):
+#   postgres       → host 5433 (internal 5432)
+#   keycloak       → host 8090 (internal 8080)
+#   kafka          → host 9092 (internal 9092)
+#   iam            → host 8088 (internal 8082)
+#   platform-reg   → host 8087 (internal 8081)
+#   tenant-mgr     → host 8089 (internal 8083)
 #
 # Usage:
-#   docker compose -f docker-compose.mvp.yml up -d
-#   curl http://localhost:8082/public-api/v1/health
+#   docker compose -f docker-compose.mvp.yml up -d --build
+#   docker compose -f docker-compose.mvp.yml logs -f [service-name]
+# =====================================================================
 
 services:
   postgres:
@@ -15,53 +22,130 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cachesol_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  postgres-init:
+    image: postgres:16-alpine
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: postgres
+    volumes:
+      - ./init-postgres.sh:/init-postgres.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["sh /init-postgres.sh"]
+    restart: "no"
 
   keycloak:
     image: quay.io/keycloak/keycloak:25.0
-    command: ["start-dev"]
+    command: ["start-dev", "--http-port=8080", "--health-enabled=true", "--hostname-strict=false"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
     ports:
-      - "8080:8080"
+      - "8090:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /realms/master HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q '200 OK' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 60s
+
+  keycloak-init:
+    image: alpine/curl:latest
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_ADMIN_USER: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_REALM: cachesol
+    volumes:
+      - ./init-keycloak.sh:/init-keycloak.sh:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["apk add --no-cache jq bash wget && /init-keycloak.sh"]
+    restart: "no"
+
+  # ── Spring Boot services ────────────────────────────────────────────────
+  # All services wait for postgres to be healthy, plus service-level
+  # ordering: platform-reg → tenant-manager (tenant-manager calls platform-reg).
 
   iam-service:
     build:
       context: .
       dockerfile: platform/iam/Dockerfile
+      args:
+        SERVICE_PATH: platform/iam
     environment:
       KEYCLOAK_URL: http://keycloak:8080
-      DB_URL: jdbc:postgresql://postgres:5432/cachesol_platform
+      KEYCLOAK_REALM: cachesol
+      KEYCLOAK_ADMIN_USER: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN_CLIENT: admin-cli
+      KEYCLOAK_ADMIN_SECRET: admin-cli-secret
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cachesol_platform
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SERVER_PORT: 8082
     ports:
-      - "8082:8082"
-    depends_on: [postgres, keycloak]
+      - "8088:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   platform-registry-service:
     build:
       context: .
       dockerfile: platform/platform-registry/Dockerfile
+      args:
+        SERVICE_PATH: platform/platform-registry
     environment:
-      KEYCLOAK_URL: http://keycloak:8080
-      DB_URL: jdbc:postgresql://postgres:5432/cachesol_platform
-      TENANT_SLUG: acme
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cachesol_platform
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SERVER_PORT: 8081
     ports:
-      - "8081:8081"
-    depends_on: [postgres, keycloak]
+      - "8087:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-init:
+        condition: service_completed_successfully
 
   tenant-manager-service:
     build:
       context: .
       dockerfile: platform/tenant-manager/Dockerfile
+      args:
+        SERVICE_PATH: platform/tenant-manager
     environment:
-      KEYCLOAK_URL: http://keycloak:8080
-      DB_URL: jdbc:postgresql://postgres:5432/cachesol_platform
-      TENANT_SLUG: acme
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cachesol_platform
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SERVER_PORT: 8083
+      # platform-registry service URL for internal init-schema
+      PLATFORM_REGISTRY_URL: http://platform-registry-service:8081
+      PLATFORM_REGISTRY_CALLBACK_URL: http://platform-registry-service:8081
     ports:
-      - "8083:8083"
-    depends_on: [postgres, keycloak]
+      - "8089:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      postgres-init:
+        condition: service_completed_successfully
+      platform-registry-service:
+        condition: service_started
 
 volumes:
   pgdata:
