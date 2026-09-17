@@ -7,7 +7,9 @@ server:
   port: 8082
   forward-headers-strategy: framework
 
-# IAM — Keycloak JWT verifier config
+# IAM — Keycloak Admin REST API wrapper.
+# Tất cả cấu hình IAM/Keycloak nằm dưới prefix `iam.keycloak` (xem IamProperties).
+# `keycloak.*` legacy giữ để tương thích tạm thời.
 keycloak:
   server-url: ${KEYCLOAK_URL:http://keycloak:8080}
   realm: ${KEYCLOAK_REALM:master}
@@ -22,11 +24,27 @@ iam:
     hmac-secret: ${KC_WEBHOOK_HMAC_SECRET:changeme-in-prod}
     forward-to-kafka-topic: keycloak.events
     max-retries: 3
+  # Keycloak Admin REST client — IAM wrapper sử dụng.
+  keycloak:
+    server-url: ${KEYCLOAK_URL:http://keycloak:8080}
+    realm: ${KEYCLOAK_REALM:master}
+    admin-client-id: ${KEYCLOAK_ADMIN_CLIENT:admin-cli}
+    admin-username: ${KEYCLOAK_ADMIN_USER:admin}
+    admin-password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+    admin-client-secret: ${KEYCLOAK_ADMIN_SECRET:admin-cli-secret}
+
+# Shared-security KeycloakJwtVerifier (verify/decode JWT)
+shared-security:
+  keycloak:
+    server-url: ${KEYCLOAK_URL:http://keycloak:8080}
+    realm: ${KEYCLOAK_REALM:master}
+    audience: ${KEYCLOAK_AUDIENCE:admin-cli}
+    jwks-cache-ttl: 3600000
 
 info:
   app:
     name: "IAM Service"
-    description: "JWT verify Keycloak + webhook forwarding"
+    description: "Keycloak Admin wrapper — service-api only"
     version: "1.0.0"
 
 logging:

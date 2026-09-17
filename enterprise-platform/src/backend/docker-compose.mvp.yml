@@ -115,6 +115,9 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SERVER_PORT: 8081
+      # IAM service URL for Keycloak realm provisioning
+      IAM_URL: http://iam-service:8082
+      KEYCLOAK_URL: http://keycloak:8080
     ports:
       - "8087:8081"
     depends_on:
@@ -122,6 +125,10 @@ services:
         condition: service_healthy
       postgres-init:
         condition: service_completed_successfully
+      iam-service:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
 
   tenant-manager-service:
     build:
@@ -137,6 +144,8 @@ services:
       # platform-registry service URL for internal init-schema
       PLATFORM_REGISTRY_URL: http://platform-registry-service:8081
       PLATFORM_REGISTRY_CALLBACK_URL: http://platform-registry-service:8081
+      # IAM service URL for Keycloak user CRUD
+      IAM_URL: http://iam-service:8082
     ports:
       - "8089:8083"
     depends_on:
@@ -146,6 +155,10 @@ services:
         condition: service_completed_successfully
       platform-registry-service:
         condition: service_started
+      iam-service:
+        condition: service_started
+      keycloak:
+        condition: service_healthy
 
 volumes:
   pgdata:

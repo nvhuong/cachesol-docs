@@ -5,7 +5,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {
         "com.cachesol.platform.iam",
-        "com.cachesol.platform.shared.common"
+        "com.cachesol.platform.shared.common",
+        "com.cachesol.platform.shared.security",
+        "com.cachesol.platform.shared.messaging"
 })
 public class IamServiceApplication {
 

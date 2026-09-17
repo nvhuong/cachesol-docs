@@ -18,6 +18,10 @@
     <name>shared-security</name>
     <description>JWT verify (Keycloak), tenant filter, role-based access control, service-to-service auth.</description>
 
+    <properties>
+        <nimbus-jose-jwt.version>9.37.3</nimbus-jose-jwt.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.cachesol.platform</groupId>
@@ -36,6 +40,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <!-- Keycloak JWT decode + verify (RS256) -->
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>${nimbus-jose-jwt.version}</version>
         </dependency>
         <dependency>
             <groupId>jakarta.servlet</groupId>

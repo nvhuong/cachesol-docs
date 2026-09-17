@@ -1,5 +1,6 @@
 package com.cachesol.platform.registry.service;
 
+import com.cachesol.platform.registry.client.IamClient;
 import com.cachesol.platform.registry.dto.*;
 import com.cachesol.platform.registry.entity.Tenant;
 import com.cachesol.platform.registry.entity.TenantRootOrg;
@@ -9,6 +10,7 @@ import com.cachesol.platform.registry.repository.TenantRepository;
 import com.cachesol.platform.registry.repository.TenantRootOrgRepository;
 import com.cachesol.platform.shared.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,13 +19,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TenantService {
 
+    /** Default realm roles mà mọi tenant mới đều có. */
+    private static final List<String> DEFAULT_REALM_ROLES = List.of(
+            "PLATFORM_ADMIN", "TENANT_ADMIN", "HRM_ADMIN", "HRM_USER", "SALES_USER", "BLOG_USER"
+    );
+
     private final TenantRepository       repo;
     private final TenantRootOrgRepository rootOrgRepo;
     private final TenantEventPublisher   eventPublisher;
+    private final IamClient              iamClient;
 
     public List<TenantResponse> list() {
         return repo.findAll().stream().map(TenantResponse::from).toList();
@@ -64,6 +73,23 @@ public class TenantService {
 
         Tenant saved = repo.save(t);
         eventPublisher.publishCreated(saved.getSlug(), saved.getDisplayName());
+
+        // ===== Provision Keycloak realm qua IAM service =====
+        // Nếu IAM tạm thời không khả dụng → log warn nhưng KHÔNG fail transaction.
+        // Background job (chưa có trong MVP) sẽ retry. Tenant đã có trong DB.
+        try {
+            iamClient.provisionRealm(new ProvisionRealmRequestDto(
+                    req.keycloakRealm,
+                    req.displayName,
+                    DEFAULT_REALM_ROLES,
+                    null  // superAdmin sẽ tạo sau khi tenant-manager chạy init-schema
+            ));
+            log.info("Keycloak realm '{}' provisioned for tenant '{}'", req.keycloakRealm, req.slug);
+        } catch (Exception e) {
+            log.warn("IAM provision realm failed for tenant '{}': {}. Realm sẽ được retry sau.",
+                    req.slug, e.getMessage());
+        }
+
         return TenantResponse.from(saved);
     }
 
@@ -112,6 +138,9 @@ public class TenantService {
                 .orElseThrow(() -> new NotFoundException("Tenant", slug));
         t.setStatus("offboarded");
         t.setOffboardedAt(Instant.now());
+        // Xoá realm trong Keycloak (best-effort)
+        try { iamClient.deleteRealm(t.getKeycloakRealm()); }
+        catch (Exception e) { log.warn("deleteRealm failed for {}: {}", t.getKeycloakRealm(), e.getMessage()); }
         return TenantResponse.from(repo.save(t));
     }
 
@@ -136,6 +165,9 @@ public class TenantService {
     @Transactional
     public void delete(UUID id) {
         if (!repo.existsById(id)) throw new NotFoundException("Tenant", id.toString());
+        Tenant t = repo.findById(id).orElseThrow();
+        try { iamClient.deleteRealm(t.getKeycloakRealm()); }
+        catch (Exception e) { log.warn("deleteRealm on tenant delete: {}", e.getMessage()); }
         repo.deleteById(id);
     }
 }

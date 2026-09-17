@@ -23,6 +23,11 @@ public class AppUserController {
         return ApiResponse.ok(service.list());
     }
 
+    /**
+     * Tạo user.
+     * - Nếu body có keycloakUserId → link với Keycloak user có sẵn.
+     * - Nếu body có realm (vd. "tenant-acme") → tự gọi IAM tạo Keycloak user.
+     */
     @PostMapping
     public ResponseEntity<ApiResponse<AppUserResponse>> create(
             @Valid @RequestBody CreateUserRequest req) {
@@ -52,9 +57,15 @@ public class AppUserController {
         return ApiResponse.ok(service.update(id, req));
     }
 
+    /**
+     * Xoá user. Truyền ?realm=tenant-acme để tenant-manager gọi IAM xoá Keycloak user.
+     */
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable UUID id) {
-        service.delete(id);
+    public ApiResponse<Void> delete(
+            @PathVariable UUID id,
+            @RequestParam(value = "realm", required = false) String realm) {
+        if (realm != null) service.delete(id, realm);
+        else service.delete(id);
         return ApiResponse.ok(null);
     }
 
@@ -83,8 +94,12 @@ public class AppUserController {
     }
 
     @DeleteMapping("/{id}/roles/{uarId}")
-    public ApiResponse<Void> revokeRole(@PathVariable UUID id, @PathVariable UUID uarId) {
-        service.revokeRole(id, uarId);
+    public ApiResponse<Void> revokeRole(
+            @PathVariable UUID id,
+            @PathVariable UUID uarId,
+            @RequestParam(value = "realm", required = false) String realm) {
+        if (realm != null) service.revokeRole(id, uarId, realm);
+        else service.revokeRole(id, uarId);
         return ApiResponse.ok(null);
     }
 }

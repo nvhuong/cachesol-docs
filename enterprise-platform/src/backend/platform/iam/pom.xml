@@ -28,8 +28,12 @@
             <groupId>com.cachesol.platform</groupId>
             <artifactId>shared-security</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.cachesol.platform</groupId>
+            <artifactId>shared-messaging</artifactId>
+        </dependency>
 
-        <!-- Spring Boot web -->
+        <!-- Spring Boot web + RestClient -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

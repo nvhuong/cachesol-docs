@@ -7,11 +7,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * IAM service has only two public paths:
- * - /public-api/v1/** — health checks (no auth)
- * - /integration-api/v1/webhooks/keycloak — HMAC-verified webhook (no JWT)
+ * IAM service chỉ phơi ra 3 nhóm endpoint:
  *
- * All other paths (service-api, client-api, etc.) are NOT part of IAM.
+ *  - /public-api/v1/health/**     — health probes (no auth, K8s scrape)
+ *  - /integration-api/v1/webhooks/keycloak — HMAC-verified webhook (Keycloak SPI gọi vào)
+ *  - /service-api/v1/**           — service-to-service (Caller: platform-registry,
+ *                                    tenant-manager; network-isolated qua docker)
+ *
+ * Không có /client-api/** — client không bao giờ gọi IAM trực tiếp. Mọi thứ
+ * đi qua gateway.
  */
 @Configuration
 public class SecurityConfig {
@@ -23,7 +27,8 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/public-api/v1/health/**", "/actuator/**").permitAll()
-                        .requestMatchers("/integration-api/v1/webhooks/keycloak").permitAll()
+                        .requestMatchers("/integration-api/v1/webhooks/**").permitAll()
+                        .requestMatchers("/service-api/v1/**").permitAll()
                         .anyRequest().denyAll()
                 );
         return http.build();
