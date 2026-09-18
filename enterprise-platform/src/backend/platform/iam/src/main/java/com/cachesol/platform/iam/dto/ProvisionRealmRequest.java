@@ -18,6 +18,14 @@ public class ProvisionRealmRequest {
 
     public String displayName;
 
+    /**
+     * Keycloak login theme for this realm (e.g. "acme-theme", "globex-theme").
+     * Must match a directory name under {@code themes/} that Keycloak can find
+     * (mounted at {@code /opt/keycloak/themes} in docker-compose).
+     * Optional — omit to use Keycloak default theme.
+     */
+    public String loginTheme;
+
     /** Initial realm-level roles để tạo cùng realm (vd. COMPANY_ADMIN, HRM_USER). */
     public List<String> initialRoles;
 

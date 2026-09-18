@@ -33,6 +33,11 @@ fi
 echo "✓ Admin token OK"
 
 # Tạo realm nếu chưa có
+# LƯU Ý: Để gán `loginTheme` cho realm (theme login riêng cho từng tenant),
+# thêm field `"loginTheme": "<theme-name>"` vào body dưới đây.
+# Theme phải tồn tại trong Keycloak (mount ./keycloak/themes:/opt/keycloak/themes:ro
+# trong docker-compose.mvp.yml) trước khi realm start.
+# MVP: chưa có custom theme — Keycloak dùng default theme.
 echo "→ Tạo realm '${REALM}' (nếu chưa có)..."
 curl -sf -X POST "${KC_URL}/admin/realms" \
   -H "Authorization: Bearer ${TOKEN}" \

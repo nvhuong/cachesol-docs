@@ -18,6 +18,7 @@ import java.util.Map;
  *
  *   POST   /service-api/v1/users                  → Tạo user trong Keycloak realm
  *   GET    /service-api/v1/users/{id}             → Lấy user theo id
+ *   PATCH  /service-api/v1/users/{id}             → Update user attributes (email, firstName, lastName, enabled, ...)
  *   DELETE /service-api/v1/users/{id}             → Xoá user
  *   PUT    /service-api/v1/users/{id}/password    → Reset password
  *
@@ -59,6 +60,19 @@ public class KeycloakUserServiceController {
             @PathVariable String id) {
         service.deleteUser(realm, id);
         return ApiResponse.ok(null);
+    }
+
+    /**
+     * Update user attributes. Body là JSON object với các field muốn thay đổi
+     * (email, firstName, lastName, enabled, emailVerified, ...).
+     * Gọi tới Keycloak PUT /admin/realms/{realm}/users/{id} (full replacement).
+     */
+    @PatchMapping("/{id}")
+    public ApiResponse<KeycloakUserResponse> update(
+            @RequestHeader("X-Realm") String realm,
+            @PathVariable String id,
+            @RequestBody Map<String, Object> updates) {
+        return ApiResponse.ok(service.updateUser(realm, id, updates));
     }
 
     @PutMapping("/{id}/password")

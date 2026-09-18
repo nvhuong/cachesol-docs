@@ -46,9 +46,9 @@ public class KeycloakProvisioningService {
         if (req.realm == null || req.realm.isBlank()) {
             throw new PlatformException("VALIDATION", "realm name is required");
         }
-        log.info("Provisioning Keycloak realm: {}", req.realm);
+        log.info("Provisioning Keycloak realm: {} with loginTheme: {}", req.realm, req.loginTheme);
 
-        boolean created = keycloak.createRealm(req.realm, req.displayName);
+        boolean created = keycloak.createRealm(req.realm, req.displayName, req.loginTheme);
 
         List<String> rolesCreated = new ArrayList<>();
         List<String> rolesExisted = new ArrayList<>();
@@ -198,6 +198,15 @@ public class KeycloakProvisioningService {
         keycloak.resetPassword(realm, userId, newPassword, temporary);
     }
 
+    /**
+     * Update user attributes (email, firstName, lastName, enabled, etc.).
+     * Uses Keycloak PUT /admin/realms/{realm}/users/{id} for full replacement.
+     */
+    public KeycloakUserResponse updateUser(String realm, String userId, Map<String, Object> updates) {
+        keycloak.updateUser(realm, userId, updates);
+        return toResponse(realm, userId);
+    }
+
     // =========================================================================
     // ===== Role operations ==================================================
     // =========================================================================
@@ -225,25 +234,6 @@ public class KeycloakProvisioningService {
                 .map(m -> m.get("name") == null ? null : m.get("name").toString())
                 .filter(Objects::nonNull)
                 .toList();
-    }
-
-    // =========================================================================
-    // ===== Group operations =================================================
-    // =========================================================================
-
-    public String createGroup(String realm, String name, String path) {
-        return keycloak.createGroup(realm, name, path);
-    }
-
-    public void addUserToGroup(String realm, String userId, String groupId) {
-        keycloak.addUserToGroup(realm, userId, groupId);
-        eventPublisher.publish("keycloak.user.group.added",
-                DomainEventEnvelope.of("KeycloakUserGroupAdded", null,
-                        Map.of("realm", realm, "userId", userId, "groupId", groupId)));
-    }
-
-    public void removeUserFromGroup(String realm, String userId, String groupId) {
-        keycloak.removeUserFromGroup(realm, userId, groupId);
     }
 
     // =========================================================================

@@ -36,14 +36,14 @@ public class KeycloakAdminClient {
     // ====================================================================
 
     /** Tạo realm (idempotent — nếu đã tồn tại return false). */
-    public boolean createRealm(String realmName, String displayName) {
+    public boolean createRealm(String realmName, String displayName, String loginTheme) {
         try {
             ensureMasterToken();
             realmClient(realmName).post()
                     .uri("/admin/realms")
                     .header("Authorization", "Bearer " + cachedMasterToken)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(realmRequest(realmName, displayName))
+                    .body(realmRequest(realmName, displayName, loginTheme))
                     .retrieve()
                     .toBodilessEntity();
             log.info("Keycloak realm created: {}", realmName);
@@ -269,6 +269,24 @@ public class KeycloakAdminClient {
         }
     }
 
+    /** Update user attributes (email, firstName, lastName, enabled, etc.). */
+    public void updateUser(String realm, String userId, Map<String, Object> updates) {
+        ensureMasterToken();
+        try {
+            realmClient(realm).put()
+                    .uri("/admin/realms/{realm}/users/{id}", realm, userId)
+                    .header("Authorization", "Bearer " + cachedMasterToken)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(updates)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (HttpClientErrorException ex) {
+            throw new KeycloakOperationException(
+                    "updateUser", realm + "/" + userId, ex.getStatusCode(),
+                    ex.getResponseBodyAsString(), ex);
+        }
+    }
+
     /** Lấy full user representation theo id. */
     public Map<String, Object> findUserById(String realm, String userId) {
         try {
@@ -282,39 +300,6 @@ public class KeycloakAdminClient {
             if (ex.getStatusCode() == HttpStatus.NOT_FOUND) return null;
             log.warn("findUserById failed realm={} id={}: {}", realm, userId, ex.getMessage());
             return null;
-        }
-    }
-
-    /** Thêm user vào group (Keycloak group = org tree node). */
-    public void addUserToGroup(String realm, String userId, String groupId) {
-        ensureMasterToken();
-        try {
-            realmClient(realm).put()
-                    .uri("/admin/realms/{realm}/users/{userId}/groups/{groupId}", realm, userId, groupId)
-                    .header("Authorization", "Bearer " + cachedMasterToken)
-                    .retrieve()
-                    .toBodilessEntity();
-        } catch (HttpClientErrorException ex) {
-            throw new KeycloakOperationException(
-                    "addUserToGroup", realm + "/" + userId + "→" + groupId, ex.getStatusCode(),
-                    ex.getResponseBodyAsString(), ex);
-        }
-    }
-
-    /** Gỡ user khỏi group. */
-    public void removeUserFromGroup(String realm, String userId, String groupId) {
-        ensureMasterToken();
-        try {
-            realmClient(realm).delete()
-                    .uri("/admin/realms/{realm}/users/{userId}/groups/{groupId}", realm, userId, groupId)
-                    .header("Authorization", "Bearer " + cachedMasterToken)
-                    .retrieve()
-                    .toBodilessEntity();
-        } catch (HttpClientErrorException ex) {
-            if (ex.getStatusCode() == HttpStatus.NOT_FOUND) return;
-            throw new KeycloakOperationException(
-                    "removeUserFromGroup", realm + "/" + userId + "→" + groupId, ex.getStatusCode(),
-                    ex.getResponseBodyAsString(), ex);
         }
     }
 
@@ -400,54 +385,6 @@ public class KeycloakAdminClient {
                     "revokeRealmRole", realm + "/" + userId + "/" + roleName, ex.getStatusCode(),
                     ex.getResponseBodyAsString(), ex);
         }
-    }
-
-    // ====================================================================
-    // ===== GROUP OPERATIONS ==============================================
-    // ====================================================================
-
-    public String createGroup(String realm, String name, String path) {
-        try {
-            ensureMasterToken();
-            GroupRepresentation g = new GroupRepresentation();
-            g.name = name;
-            g.path = path != null ? path : ("/" + name);
-            Map<String, Object> resp = realmClient(realm).post()
-                    .uri("/admin/realms/{realm}/groups", realm)
-                    .header("Authorization", "Bearer " + cachedMasterToken)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(g)
-                    .retrieve()
-                    .body(Map.class);
-            return resp != null && resp.get("id") != null ? resp.get("id").toString() : null;
-        } catch (HttpClientErrorException ex) {
-            if (ex.getStatusCode() == HttpStatus.CONFLICT) {
-                return findGroupIdByPath(realm, "/" + name);
-            }
-            throw new KeycloakOperationException(
-                    "createGroup", realm + "/" + name, ex.getStatusCode(),
-                    ex.getResponseBodyAsString(), ex);
-        }
-    }
-
-    private String findGroupIdByPath(String realm, String path) {
-        try {
-            ensureMasterToken();
-            List<Map<String, Object>> groups = realmClient(realm).get()
-                    .uri(uri -> uri.path("/admin/realms/{realm}/groups")
-                            .queryParam("search", path).build(realm))
-                    .header("Authorization", "Bearer " + cachedMasterToken)
-                    .retrieve()
-                    .body(List.class);
-            if (groups != null) {
-                for (Map<String, Object> g : groups) {
-                    if (path.equals(g.get("path"))) {
-                        return g.get("id").toString();
-                    }
-                }
-            }
-        } catch (HttpClientErrorException ignored) {}
-        return null;
     }
 
     // ====================================================================
@@ -537,7 +474,7 @@ public class KeycloakAdminClient {
                 .build();
     }
 
-    private Map<String, Object> realmRequest(String realm, String displayName) {
+    private Map<String, Object> realmRequest(String realm, String displayName, String loginTheme) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("realm", realm);
         body.put("enabled", true);
@@ -550,6 +487,7 @@ public class KeycloakAdminClient {
         body.put("bruteForceProtected", true);
         body.put("accessTokenLifespan", 1800); // 30 min
         if (displayName != null) body.put("displayName", displayName);
+        if (loginTheme != null && !loginTheme.isBlank()) body.put("loginTheme", loginTheme);
         return body;
     }
 
@@ -595,14 +533,6 @@ public class KeycloakAdminClient {
         public Boolean composite;
         @JsonProperty("clientRole") public Boolean clientRole;
         public String containerId;
-    }
-
-    @Data @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class GroupRepresentation {
-        public String id;
-        public String name;
-        public String path;
-        public Map<String, List<String>> attributes;
     }
 
     public static class KeycloakOperationException extends RuntimeException {
