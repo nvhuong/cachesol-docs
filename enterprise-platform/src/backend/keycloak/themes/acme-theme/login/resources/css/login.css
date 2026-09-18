@@ -1,0 +1,303 @@
+/* =====================================================
+   ACME Corporation — Custom Login Theme
+   Color scheme: Corporate Blue (#2563EB)
+   Applied to: tenant-acme realm
+   ===================================================== */
+
+:root {
+  --acme-primary:     #2563EB;
+  --acme-primary-dk:  #1D4ED8;
+  --acme-primary-lt:  #3B82F6;
+  --acme-accent:      #06B6D4;
+  --acme-bg-start:    #EFF6FF;
+  --acme-bg-end:      #DBEAFE;
+  --acme-card:        #ffffff;
+  --acme-text:        #1E293B;
+  --acme-text-muted:  #64748B;
+  --acme-border:      #CBD5E1;
+  --acme-error:       #DC2626;
+  --acme-success:     #16A34A;
+  --acme-radius:      8px;
+  --acme-shadow:      0 4px 24px rgba(37, 99, 235, 0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  color: var(--acme-text);
+  background: linear-gradient(160deg, var(--acme-bg-start) 0%, var(--acme-bg-end) 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+/* ── Login Container ──────────────────────────── */
+#kc-content {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* ── Hero / Branding ──────────────────────────── */
+.acme-login-hero {
+  background: linear-gradient(135deg, var(--acme-primary) 0%, var(--acme-primary-dk) 100%);
+  border-radius: var(--acme-radius) var(--acme-radius) 0 0;
+  padding: 28px 28px 24px;
+  text-align: left;
+}
+
+.acme-hero-content { display: flex; flex-direction: column; gap: 12px; }
+
+.acme-logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.acme-icon { width: 40px; height: 40px; flex-shrink: 0; }
+
+.acme-logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.acme-company {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+}
+
+.acme-tagline {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.72);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.acme-hero-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  margin: 0;
+}
+
+/* ── Locale Bar ──────────────────────────────── */
+.acme-locale-bar {
+  background: #F8FAFF;
+  border-bottom: 1px solid var(--acme-border);
+  padding: 6px 12px;
+  text-align: right;
+}
+
+.acme-dropdown { display: inline-block; }
+
+#kc-current-locale-link {
+  color: var(--acme-primary);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* ── Card / Form ──────────────────────────────── */
+.login-theme,
+#kc-content-wrapper {
+  background: var(--acme-card);
+  border-radius: 0 0 var(--acme-radius) var(--acme-radius);
+  box-shadow: var(--acme-shadow);
+  border: 1px solid var(--acme-border);
+  border-top: none;
+}
+
+#kc-form-login { padding: 24px 28px; }
+
+/* ── Labels ──────────────────────────────────── */
+label,
+.kcLabelClass {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--acme-text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* ── Inputs ──────────────────────────────────── */
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--acme-border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--acme-text);
+  background: #FAFBFC;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+input::placeholder { color: #94A3B8; }
+
+input:focus {
+  border-color: var(--acme-primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+input.invalid,
+input[aria-invalid="true"] {
+  border-color: var(--acme-error);
+  background: #FEF2F2;
+}
+
+.kcFormGroupClass { margin-bottom: 16px; }
+.kcInputWrapperClass { margin-top: 4px; }
+.kcInputErrorMessageClass {
+  display: block;
+  font-size: 11px;
+  color: var(--acme-error);
+  margin-top: 4px;
+}
+
+/* ── Label row (forgot link) ─────────────────── */
+.acme-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.acme-label-row label {
+  margin-bottom: 0;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.acme-forgot-link {
+  font-size: 12px;
+  color: var(--acme-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.acme-forgot-link:hover {
+  color: var(--acme-primary-dk);
+  text-decoration: underline;
+}
+
+/* ── Options row ──────────────────────────────── */
+.acme-options-row {
+  margin-bottom: 20px;
+}
+
+.acme-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--acme-text-muted);
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.acme-checkbox-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--acme-primary);
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Submit Button ───────────────────────────── */
+#kc-login {
+  width: 100%;
+  padding: 11px;
+  background: linear-gradient(135deg, var(--acme-primary) 0%, var(--acme-primary-dk) 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+#kc-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+  opacity: 0.97;
+}
+
+#kc-login:active {
+  transform: translateY(0);
+  opacity: 0.95;
+}
+
+/* ── Registration ─────────────────────────────── */
+.acme-register-row {
+  text-align: center;
+  padding: 16px 28px 24px;
+  border-top: 1px solid var(--acme-border);
+  font-size: 13px;
+  color: var(--acme-text-muted);
+}
+
+.acme-register-row a {
+  font-weight: 600;
+  color: var(--acme-primary);
+  text-decoration: none;
+}
+
+.acme-register-row a:hover {
+  text-decoration: underline;
+  color: var(--acme-primary-dk);
+}
+
+/* ── Global messages ──────────────────────────── */
+.kc-feedback-text {
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin: 0 28px 16px;
+}
+
+.kc-feedback-error {
+  background: #FEF2F2;
+  color: var(--acme-error);
+  border: 1px solid #FECACA;
+}
+
+.kc-feedback-success {
+  background: #F0FDF4;
+  color: var(--acme-success);
+  border: 1px solid #BBF7D0;
+}
+
+/* ── Password visibility toggle ──────────────── */
+.password-wrapper { position: relative; }
+.password-wrapper input { padding-right: 44px; }
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 440px) {
+  body { padding: 24px 12px; }
+  #kc-form-login { padding: 20px 18px; }
+  .acme-login-hero { padding: 22px 18px 18px; }
+  .acme-register-row { padding: 14px 18px 20px; }
+  .kc-feedback-text { margin: 0 18px 14px; }
+}
