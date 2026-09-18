@@ -1,109 +1,126 @@
-# CacheSol Frontend - Workspace
+# CacheSol Frontend — Workspace
 
 Mono-repo chứa **TẤT CẢ** frontend code của CacheSol Enterprise Platform.
-Workspace này nằm trong `src/frontend/` (cấu trúc `src/` v2).
 
-## Cấu trúc Workspace
+---
 
-```
-src/frontend/                           ← Workspace này (trong src/)
-├── package.json                       ← Root workspace config
-│
-├── apps/                             # HOST APPS (Shell) - toàn cục
-│   └── web-shell/                    # Web container - DUY NHẤT có index.html
-│
-├── mini-apps/                        # MINI APPS (Libraries)
-│   ├── hrm-mini-app/                # HRM Mini App
-│   ├── sales-mini-app/              # Sales Mini App
-│   └── erp-mini-app/               # ERP Mini App
-│
-├── shared/                           # Shared libraries (dùng cho nhiều mini app)
-│   ├── shared-ui/                   # @cachesol/shared-ui
-│   ├── shared-types/                # @cachesol/shared-types
-│   ├── shared-api/                  # @cachesol/shared-api
-│   └── shared-config/               # Shared build configs
-│
-└── design-system/                   # ★ @cachesol/design-system (code library: tokens TS + base components)
-                                    # DOCS markdown tương ứng ở /design-system/ ở root repo
-```
+## Package map
 
-## Quan hệ với `applications/`
+| Package | Type | Chứa gì |
+|--------|------|---------|
+| `@cachesol/design-system` | **Library** | Design tokens (TS + CSS vars), AntD theme, React components, patterns, templates, hooks |
+| `@cachesol/shared-ui` | **Library** | Utilities — formatters, hooks, generic types |
+| `@cachesol/shared-types` | **Library** | API response shapes, auth types, mini-app manifest types |
+| `@cachesol/shared-api` | **Library** | Axios instance, query client, interceptors |
+| `web-shell` | **App** | Host app — duy nhất có `index.html` |
+| `@cachesol/hrm-mini-app` | **Library (mini-app)** | HRM feature module |
+
+---
+
+## Cấu trúc thư mục
 
 ```
-applications/                          # Domain apps (docs, requirements, backend)
-├── hrm/
-│   ├── docs/
-│   ├── requirement/
-│   ├── tests/
-│   └── README.md                    # ← Mô tả HRM app
-
-src/
-└── frontend/
-    ├── mini-apps/hrm-mini-app/      # ← Frontend code của HRM (trong src/)
-    └── ...
+src/frontend/
+├── apps/
+│   └── web-shell/              # Host app (index.html + shell layout)
+│       └── src/
+│           ├── main.tsx       # ConfigProvider → cachesolTheme
+│           └── styles/
+│               └── global.css # @import '@cachesol/design-system/styles.css'
+│
+├── mini-apps/
+│   └── hrm-mini-app/          # HRM mini-app (feature library)
+│
+├── shared/
+│   ├── shared-api/             # @cachesol/shared-api
+│   ├── shared-types/           # @cachesol/shared-types
+│   └── shared-ui/              # @cachesol/shared-ui (utilities only)
+│
+└── design-system/              # @cachesol/design-system (canonical UI library)
 ```
 
-**Nguyên tắc:** Mỗi mini app nằm ở `src/frontend/mini-apps/`, **KHÔNG** nằm trong `applications/{name}/frontend/`. Shared libraries chỉ tồn tại 1 lần, dùng chung cho tất cả mini app.
+---
 
-## Cài đặt
+## Phân biệt design-system vs shared-ui
+
+| | `@cachesol/design-system` | `@cachesol/shared-ui` |
+|---|---|---|
+| **Tokens** | ✅ CSS vars + TS | ❌ |
+| **Theme** | ✅ `cachesolTheme` (AntD) | ❌ |
+| **Components** | ✅ 13 primitives + 12 patterns + 4 templates | ❌ |
+| **Formatters** | ❌ | ✅ `formatCurrency`, `formatDate`, `formatNumber`, ... |
+| **Hooks** | ✅ `useDensity`, `useBreakpoint` | ✅ `useDebounce`, `usePagination` |
+| **Types** | Design token types | Generic `BaseEntity`, `BaseComponentProps` |
+| **CSS** | ✅ `styles.css` | ❌ |
+
+> **Rule:** Mini-apps import UI từ `@cachesol/design-system`, utilities từ `@cachesol/shared-ui`.
+
+---
+
+## Quick start — tạo mini-app mới
 
 ```bash
-# Từ root workspace (src/frontend/)
-cd src/frontend
-npm install
+# 1. Tạo folder
+mkdir -p src/frontend/mini-apps/my-mini-app/src
+
+# 2. package.json
+{
+  "name": "@cachesol/my-mini-app",
+  "dependencies": {
+    "@cachesol/design-system": "workspace:*",
+    "@cachesol/shared-api": "workspace:*",
+    "@cachesol/shared-types": "workspace:*"
+  }
+}
+
+# 3. Register trong web-shell/src/main.tsx
+import myMiniApp from '@cachesol/my-mini-app';
+const MINI_APPS = [hrmMiniApp, myMiniApp];
 ```
 
-## Chạy Development
+---
 
-```bash
-# Chạy shell app (port 3000) - load tất cả mini apps đã register
-npm run dev:web
+## Thiết lập root (ConfigProvider)
 
-# Watch mode cho HRM mini app
-npm run dev:hrm
+```tsx
+// web-shell/src/main.tsx
+import { ConfigProvider } from 'antd';
+import { cachesolTheme } from '@cachesol/design-system';
+import '@cachesol/design-system/styles.css';  // ← required
+
+<ConfigProvider theme={cachesolTheme} locale={viVN}>
+  <App />
+</ConfigProvider>
 ```
+
+---
+
+## Thiết lập CSS trong app / mini-app
+
+```css
+/* app/src/styles/global.css */
+@import '@cachesol/design-system/styles.css';
+```
+
+---
 
 ## Build
 
 ```bash
-# Build tất cả
+# Từ src/frontend/
+npm install
 npm run build
 
-# Build shell
-npm run build:shell
-
-# Build tất cả mini apps
-npm run build:mini-apps
+# Build riêng
+npm run build --workspace=@cachesol/design-system
+npm run build --workspace=@cachesol/shared-ui
+npm run build --workspace=@cachesol/hrm-mini-app
 ```
 
-## Cú pháp Workspace
-
-```typescript
-// Trong mini app
-import { DataTable, PageHeader } from '@cachesol/shared-ui';
-import type { ApiResponse, MiniAppManifest } from '@cachesol/shared-types';
-import { apiClient } from '@cachesol/shared-api';
-```
-
-## Thêm Mini App mới
-
-1. Tạo folder mới trong `src/frontend/mini-apps/`:
-
-```bash
-mkdir -p src/frontend/mini-apps/sales-mini-app/src
-```
-
-2. Tạo `package.json` với name `@cachesol/sales-mini-app`
-3. Implement `src/index.ts` và `src/manifest.ts`
-4. Trong `src/frontend/apps/web-shell/src/main.tsx`:
-
-```typescript
-import salesMiniApp from '@cachesol/sales-mini-app';
-
-const MINI_APPS = [hrmMiniApp, salesMiniApp];
-```
+---
 
 ## Tham khảo
 
-- [`MINI-APP-ARCHITECTURE.md`](../../MINI-APP-ARCHITECTURE.md) - Kiến trúc Mini App
-- [`SOURCE-CODE-STRUCTURE.md`](../../SOURCE-CODE-STRUCTURE.md) - Cấu trúc source code
+- Design system docs: [`/design-system/README.md`](../../design-system/README.md)
+- Mini-app architecture: [`/MINI-APP-ARCHITECTURE.md`](../../MINI-APP-ARCHITECTURE.md)
+- Source code structure: [`/SOURCE-CODE-STRUCTURE.md`](../../SOURCE-CODE-STRUCTURE.md)

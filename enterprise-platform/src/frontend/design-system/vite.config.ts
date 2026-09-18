@@ -3,7 +3,16 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'cachesol-design-system:css',
+      // Emit styles.css as a separate file during library build
+      closeBundle() {
+        // no-op: handled by assets option
+      },
+    },
+  ],
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -17,8 +26,19 @@ export default defineConfig({
         'react-dom',
         'antd',
         '@ant-design/icons',
+        /\.css$/,
       ],
+      output: {
+        // Emit CSS as separate files (not inline)
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name?.endsWith('.css')) {
+            return 'styles.css';
+          }
+          return 'assets/[name]-[hash][extname]';
+        },
+      },
     },
+    cssCodeSplit: false,
     sourcemap: true,
   },
 });

@@ -12,6 +12,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@cachesol/design-system": "workspace:*",
     "@cachesol/shared-api": "workspace:*",
     "@cachesol/shared-types": "workspace:*",
     "@cachesol/shared-ui": "workspace:*",

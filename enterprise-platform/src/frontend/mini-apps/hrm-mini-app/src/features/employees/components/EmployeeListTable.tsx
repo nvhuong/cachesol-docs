@@ -3,7 +3,7 @@ import { Table, Card, Input, Button, Space, Select, App } from 'antd';
 import { PlusOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { PageHeader, ConfirmDialog } from '@cachesol/shared-ui';
+import { PageHeader } from '@cachesol/design-system';
 import { useGetEmployees, useDeleteEmployee } from '../api/employeeApi';
 import { useEmployeeColumns } from './EmployeeTable';
 import { STATUS_LABELS } from '../utils/helpers';
@@ -17,7 +17,6 @@ export const EmployeeListTable = () => {
   const [pageSize, setPageSize] = useState(20);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<string | undefined>();
-  const [deleteTarget, setDeleteTarget] = useState<EmployeeSummary | null>(null);
 
   const { data, isLoading, refetch } = useGetEmployees({
     page,
@@ -30,7 +29,7 @@ export const EmployeeListTable = () => {
 
   const handleView = (employee: EmployeeSummary) => navigate(`/employees/${employee.id}`);
   const handleEdit = (employee: EmployeeSummary) => navigate(`/employees/${employee.id}/edit`);
-  
+
   const handleDelete = (employee: EmployeeSummary) => {
     modal.confirm({
       title: 'Xác nhận xóa',
@@ -62,10 +61,10 @@ export const EmployeeListTable = () => {
     <Card>
       <PageHeader
         title={t('employee.titleList')}
-        subtitle={`Tổng ${total} nhân viên`}
-        extra={
+        description={`Tổng ${total} nhân viên`}
+        actions={
           <Button
-            type="primary"
+            variant="primary"
             icon={<PlusOutlined />}
             onClick={() => navigate('/employees/new')}
           >

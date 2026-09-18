@@ -1,7 +1,7 @@
 import { Form, Input, Row, Col, DatePicker, Select, Button, Divider, Alert, App } from 'antd';
 import { SaveOutlined, CloseOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader } from '@cachesol/shared-ui';
+import { PageHeader } from '@cachesol/design-system';
 import { useEmployeeForm } from '../hooks/useEmployeeForm';
 import { GENDER_LABELS, EMPLOYMENT_TYPE_LABELS } from '../utils/helpers';
 import type { Employee } from '../types/employee.types';
@@ -36,15 +36,23 @@ export const EmployeeForm = ({ employee, onSuccess }: EmployeeFormProps) => {
     <div>
       <PageHeader
         title={isEditMode ? 'Sửa nhân viên' : 'Thêm nhân viên mới'}
-        onBack={handleCancel}
+        breadcrumb={[
+          { label: 'Employees', href: '/employees' },
+          { label: isEditMode ? 'Sửa' : 'Thêm mới' },
+        ]}
+        actions={
+          <Button variant="tertiary" icon={<CloseOutlined />} onClick={handleCancel}>
+            Hủy
+          </Button>
+        }
       />
 
       {error && (
-        <Alert 
-          message="Lỗi" 
-          description={error} 
-          type="error" 
-          showIcon 
+        <Alert
+          message="Lỗi"
+          description={error}
+          type="error"
+          showIcon
           closable
           style={{ marginBottom: 16 }}
         />
@@ -52,7 +60,7 @@ export const EmployeeForm = ({ employee, onSuccess }: EmployeeFormProps) => {
 
       <Form layout="vertical" onFinish={handleSuccess} form={form.control}>
         <Divider orientation="left">Thông tin cơ bản</Divider>
-        
+
         <Row gutter={24}>
           <Col span={12}>
             <Form.Item name="employeeCode" label="Mã nhân viên" rules={[{ required: true }]}>

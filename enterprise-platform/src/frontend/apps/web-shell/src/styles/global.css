@@ -1,20 +1,41 @@
-/* Shell Global Styles */
-:root {
-  --color-primary: #1890ff;
-  --color-bg: #ffffff;
-  --color-bg-secondary: #fafafa;
+/**
+ * Shell Global Styles
+ *
+ * Imports CacheSol Design System tokens as CSS variables.
+ * Individual apps and mini-apps import this file to ensure
+ * consistent design token application across the platform.
+ */
+
+/* Design System Tokens (canonical source of truth) */
+@import '@cachesol/design-system/styles.css';
+
+/* ── App-level overrides (only if absolutely necessary) ─── */
+/* Prefer @cachesol/design-system tokens first. */
+
+/* Typography */
+body {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  margin: 0;
-  padding: 0;
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Remove default margins */
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #262626;
-  background-color: var(--color-bg);
+/* Tabular numbers for data */
+.cs-tabular {
+  font-variant-numeric: tabular-nums;
 }
