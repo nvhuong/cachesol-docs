@@ -131,6 +131,131 @@ keycloak/themes/
 > 💡 MVP: chưa có custom theme. Có thể bật bằng cách uncomment dòng
 > `./keycloak/themes:/opt/keycloak/themes:ro` trong `docker-compose.mvp.yml`.
 
+## Custom Login Themes (per-tenant branding)
+
+Mỗi Keycloak realm có thể dùng **một login theme riêng** — cho phép mỗi tenant có giao diện đăng nhập mang thương hiệu công ty.
+
+### Cách hoạt động
+
+1. `POST /service-api/v1/realms/provision` nhận field `loginTheme`
+2. Keycloak tạo realm với `loginTheme = "acme-theme"`
+3. User vào login page → Keycloak render theme từ `/opt/keycloak/themes/acme-theme/`
+
+### Thêm theme mới cho tenant
+
+**Bước 1:** Copy template và đổi tên
+
+```bash
+# Copy từ cachesol-theme (đã có sẵn)
+cp -r keycloak/themes/cachesol-theme keycloak/themes/globex-theme
+
+# Hoặc copy từ acme-theme (corporate blue)
+cp -r keycloak/themes/acme-theme keycloak/themes/globex-theme
+```
+
+**Bước 2:** Sửa CSS — đổi primary color
+
+```css
+/* keycloak/themes/globex-theme/login/resources/css/login.css */
+
+/* Tìm màu hiện tại, thay bằng màu riêng */
+:root {
+  --your-primary:     #7C3AED;    /* vd. purple */
+  --your-primary-dk:  #6D28D9;
+  --your-bg-start:    #F5F3FF;
+  --your-bg-end:      #EDE9FE;
+}
+```
+
+**Bước 3:** Sửa FTL — đổi logo + company name
+
+```ftl
+/* keycloak/themes/globex-theme/login/login.ftl */
+
+/* Tìm và thay: */
+.acme-company  → Globex Corporation
+.acme-tagline  → Employee Portal
+.acme-hero-desc → Sign in to your Globex workspace
+```
+
+**Bước 4:** Commit theme files
+
+```bash
+git add keycloak/themes/globex-theme
+git commit -m "feat: add globex-theme login theme"
+git push origin main
+```
+
+**Bước 5:** Restart docker (để Keycloak load theme mới)
+
+```bash
+docker compose -f docker-compose.mvp.yml up -d --build keycloak
+```
+
+**Bước 6:** Provision tenant — Keycloak tự dùng theme
+
+```http
+POST /client-api/v1/tenants
+Content-Type: application/json
+
+{
+  "slug": "globex",
+  "keycloakRealm": "tenant-globex",
+  "displayName": "Globex Corporation",
+  "loginTheme": "globex-theme"    ← convention: "{slug}-theme"
+}
+```
+
+### Cấu trúc theme directory
+
+```
+keycloak/themes/
+├── cachesol-theme/          # Platform orchestrator (realm "cachesol")
+│   └── login/
+│       ├── theme.properties     # parent=keycloak, styles=css/login.css
+│       ├── login.ftl           # FreeMarker template (header, form, branding)
+│       └── resources/
+│           └── css/login.css   # All styles
+├── acme-theme/              # Example: corporate blue (#2563EB)
+│   └── login/...
+└── globex-theme/           # Example: tạo mới theo hướng dẫn trên
+    └── login/...
+```
+
+### Các file quan trọng trong theme
+
+| File | Mục đích | Bắt buộc? |
+|---|---|---|
+| `theme.properties` | Metadata: parent theme, CSS files | ✅ |
+| `login.ftl` | FreeMarker template — cấu trúc HTML form | ✅ |
+| `resources/css/login.css` | Styles cho toàn bộ login page | ✅ |
+| `resources/img/logo.png` | Logo công ty (tuỳ chọn) | ❌ |
+
+### Convention
+
+| Tenant slug | Login theme | Realm name |
+|---|---|---|
+| `acme` | `acme-theme` | `tenant-acme` |
+| `globex` | `globex-theme` | `tenant-globex` |
+| `cachesol` | `cachesol-theme` | `cachesol` |
+
+> Convention: `loginTheme = "{slug}-theme"`. Đây là default khi dùng
+> `ProvisionRealmRequestDto.forTenant(realm, displayName, slug, roles)` — tự động set.
+
+### Volume mount
+
+Custom themes được mount vào Keycloak container trong `docker-compose.mvp.yml`:
+
+```yaml
+keycloak:
+  volumes:
+    - ./keycloak/themes:/opt/keycloak/themes:ro
+```
+
+Keycloak scan thư mục này khi start và nhận diện tất cả theme con. Không cần restart Keycloak khi thêm theme mới — chỉ cần restart khi mount đã bị comment.
+
+---
+
 ## Tenant provisioning flow
 
 ```
