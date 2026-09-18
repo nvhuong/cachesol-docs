@@ -1,19 +1,31 @@
 {
   "name": "@cachesol/design-system",
   "version": "1.0.0",
-  "description": "Design System tokens & base components cho CacheSol Enterprise Platform",
+  "description": "Design System tokens, components, patterns & templates cho CacheSol Enterprise Platform",
+  "type": "module",
   "main": "src/index.ts",
+  "module": "src/index.ts",
   "types": "src/index.ts",
-  "private": true,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./tokens.css": "./src/tokens/styles.css",
+    "./styles.css": "./src/styles.css"
+  },
+  "files": ["src", "README.md"],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext ts,tsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "antd": "^5.16.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "antd": "^5.16.0"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
@@ -23,6 +35,9 @@
     "vite": "^5.3.1"
   },
   "peerDependencies": {
-    "react": "^18.0.0"
+    "@ant-design/icons": "^5.0.0",
+    "antd": "^5.16.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   }
 }

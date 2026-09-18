@@ -12,7 +12,12 @@ export default defineConfig({
       formats: ['es', 'cjs'],
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'antd'],
+      external: [
+        'react',
+        'react-dom',
+        'antd',
+        '@ant-design/icons',
+      ],
     },
     sourcemap: true,
   },
