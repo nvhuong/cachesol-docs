@@ -75,16 +75,18 @@ public class TenantService {
         eventPublisher.publishCreated(saved.getSlug(), saved.getDisplayName());
 
         // ===== Provision Keycloak realm qua IAM service =====
+        // Convention: loginTheme = "{slug}-theme" (mỗi tenant 1 theme riêng).
         // Nếu IAM tạm thời không khả dụng → log warn nhưng KHÔNG fail transaction.
         // Background job (chưa có trong MVP) sẽ retry. Tenant đã có trong DB.
         try {
-            iamClient.provisionRealm(new ProvisionRealmRequestDto(
+            iamClient.provisionRealm(ProvisionRealmRequestDto.forTenant(
                     req.keycloakRealm,
                     req.displayName,
-                    DEFAULT_REALM_ROLES,
-                    null  // superAdmin sẽ tạo sau khi tenant-manager chạy init-schema
+                    req.slug,
+                    DEFAULT_REALM_ROLES
             ));
-            log.info("Keycloak realm '{}' provisioned for tenant '{}'", req.keycloakRealm, req.slug);
+            log.info("Keycloak realm '{}' (theme '{}') provisioned for tenant '{}'",
+                    req.keycloakRealm, req.slug + "-theme", req.slug);
         } catch (Exception e) {
             log.warn("IAM provision realm failed for tenant '{}': {}. Realm sẽ được retry sau.",
                     req.slug, e.getMessage());

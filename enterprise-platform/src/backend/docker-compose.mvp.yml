@@ -52,12 +52,11 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
-    # NOTE: Custom Keycloak login themes per tenant (via realm's `loginTheme` field)
-    # can be mounted here. Create directories like ./keycloak/themes/<theme>/login/...
-    # and they will be picked up by Keycloak automatically.
-    # MVP: no custom themes yet — realms use Keycloak default login theme.
-    # volumes:
-    #   - ./keycloak/themes:/opt/keycloak/themes:ro
+    # Custom Keycloak login themes per tenant (via realm's `loginTheme` field).
+    # Each theme directory must contain a `login/` subdirectory with theme files.
+    # Structure: ./keycloak/themes/<theme-name>/login/{theme.properties,login.ftl,resources/...}
+    volumes:
+      - ./keycloak/themes:/opt/keycloak/themes:ro
     ports:
       - "8090:8080"
     healthcheck:

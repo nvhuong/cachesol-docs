@@ -1,0 +1,276 @@
+/* =====================================================
+   CacheSol Enterprise — Custom Login Theme
+   Applied to: All tenants (realm-level override possible)
+   ===================================================== */
+
+:root {
+  --kc-brand-primary:    #1a5f7a;
+  --kc-brand-secondary:  #086e7d;
+  --kc-accent:           #00b4d8;
+  --kc-bg-gradient-start: #0d2137;
+  --kc-bg-gradient-end:   #1a3a5c;
+  --kc-card-bg:          #ffffff;
+  --kc-text-primary:     #1a1a2e;
+  --kc-text-secondary:   #6b7280;
+  --kc-border:           #e5e7eb;
+  --kc-error:            #dc2626;
+  --kc-success:          #16a34a;
+  --kc-radius:           12px;
+  --kc-shadow:           0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  color: var(--kc-text-primary);
+  background: linear-gradient(135deg, var(--kc-bg-gradient-start) 0%, var(--kc-bg-gradient-end) 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ── Login Card ─────────────────────────────────── */
+#kc-content {
+  width: 100%;
+  max-width: 440px;
+}
+
+.login-theme,
+#kc-content-wrapper {
+  background: var(--kc-card-bg);
+  border-radius: var(--kc-radius);
+  box-shadow: var(--kc-shadow);
+  overflow: hidden;
+}
+
+/* ── Header / Branding ─────────────────────────── */
+.kc-login-theme-branding {
+  background: linear-gradient(135deg, var(--kc-brand-primary) 0%, var(--kc-brand-secondary) 100%);
+  padding: 36px 32px;
+  text-align: center;
+}
+
+.kc-logo-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.kc-logo-main {
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.kc-logo-sub {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* ── Form ─────────────────────────────────────── */
+#kc-form-login {
+  padding: 32px;
+}
+
+/* Input labels */
+.kcLabelClass,
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kc-text-primary);
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* Text / password inputs */
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--kc-border);
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--kc-text-primary);
+  background: #fafafa;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+input:focus {
+  border-color: var(--kc-brand-primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(26, 95, 122, 0.12);
+}
+
+input.invalid,
+input[aria-invalid="true"] {
+  border-color: var(--kc-error);
+  background: #fff5f5;
+}
+
+/* Input groups */
+.kcFormGroupClass {
+  margin-bottom: 20px;
+}
+
+.kcInputWrapperClass {
+  margin-top: 6px;
+}
+
+/* Error messages */
+.kcInputErrorMessageClass {
+  display: block;
+  font-size: 12px;
+  color: var(--kc-error);
+  margin-top: 5px;
+}
+
+/* ── Submit Button ─────────────────────────────── */
+#kc-login {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, var(--kc-brand-primary) 0%, var(--kc-brand-secondary) 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(26, 95, 122, 0.35);
+  margin-top: 8px;
+}
+
+#kc-login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(26, 95, 122, 0.45);
+  opacity: 0.97;
+}
+
+#kc-login:active {
+  transform: translateY(0);
+  opacity: 0.95;
+}
+
+/* ── Remember Me + Forgot Password ─────────────── */
+#kc-form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#kc-form-options input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--kc-brand-primary);
+  cursor: pointer;
+}
+
+#kc-form-options label {
+  display: inline;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--kc-text-secondary);
+  cursor: pointer;
+}
+
+a {
+  color: var(--kc-brand-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 13px;
+  transition: color 0.15s;
+}
+
+a:hover {
+  color: var(--kc-accent);
+  text-decoration: underline;
+}
+
+/* ── Registration link ─────────────────────────── */
+#kc-registration {
+  text-align: center;
+  padding: 20px 32px 28px;
+  border-top: 1px solid var(--kc-border);
+  font-size: 13px;
+  color: var(--kc-text-secondary);
+}
+
+#kc-registration a {
+  font-weight: 600;
+}
+
+/* ── Locale switcher ───────────────────────────── */
+.kc-locale-wrapper {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+#kc-locale-dropdown {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#kc-locale-dropdown:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+#kc-current-locale-link {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Password toggle ─────────────────────────── */
+#password {
+  padding-right: 44px;
+}
+
+/* ── Messages (global error/success) ──────────── */
+.kc-feedback-text {
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.kc-feedback-error {
+  background: #fef2f2;
+  color: var(--kc-error);
+  border: 1px solid #fecaca;
+}
+
+.kc-feedback-success {
+  background: #f0fdf4;
+  color: var(--kc-success);
+  border: 1px solid #bbf7d0;
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 480px) {
+  body { padding: 12px; }
+  #kc-form-login { padding: 24px 20px; }
+  .kc-login-theme-branding { padding: 28px 20px; }
+  .kc-logo-main { font-size: 22px; }
+}

@@ -33,12 +33,10 @@ fi
 echo "✓ Admin token OK"
 
 # Tạo realm nếu chưa có
-# LƯU Ý: Để gán `loginTheme` cho realm (theme login riêng cho từng tenant),
-# thêm field `"loginTheme": "<theme-name>"` vào body dưới đây.
-# Theme phải tồn tại trong Keycloak (mount ./keycloak/themes:/opt/keycloak/themes:ro
-# trong docker-compose.mvp.yml) trước khi realm start.
-# MVP: chưa có custom theme — Keycloak dùng default theme.
-echo "→ Tạo realm '${REALM}' (nếu chưa có)..."
+# NOTE: `loginTheme` bật custom login theme cho realm này.
+# Theme 'cachesol-theme' phải tồn tại trong Keycloak themes dir
+# (mount ./keycloak/themes:/opt/keycloak/themes:ro trong docker-compose).
+echo "→ Tạo realm '${REALM}' với loginTheme 'cachesol-theme'..."
 curl -sf -X POST "${KC_URL}/admin/realms" \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \
@@ -51,8 +49,9 @@ curl -sf -X POST "${KC_URL}/admin/realms" \
     "verifyEmail": false,
     "resetPasswordAllowed": true,
     "editUsernameAllowed": true,
-    "bruteForceProtected": true
-  }' && echo "✓ Realm created" || echo "ℹ Realm exists"
+    "bruteForceProtected": true,
+    "loginTheme": "cachesol-theme"
+  }' && echo "✓ Realm created with cachesol-theme" || echo "ℹ Realm exists (may not update loginTheme)"
 
 # Tạo admin-cli client trong realm
 echo "→ Tạo client 'admin-cli'..."
