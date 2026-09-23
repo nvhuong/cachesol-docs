@@ -8,7 +8,7 @@
 
 // ── Formatters ───────────────────────────────────
 export { formatCurrency } from './utils/formatters/formatCurrency';
-export { formatDate, formatRelative } from './utils/formatters/formatDate';
+export { formatDate, formatDateTime, formatRelative } from './utils/formatters/formatDate';
 export { formatNumber, formatCompact, formatPercent } from './utils/formatters/formatNumber';
 
 // ── Hooks ─────────────────────────────────────────

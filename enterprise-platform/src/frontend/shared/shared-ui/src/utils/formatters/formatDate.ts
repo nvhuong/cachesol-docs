@@ -13,7 +13,7 @@ export function formatDate(
   if (isNaN(d.getTime())) return '—';
 
   const pad = (n: number) => String(n).padStart(2, '0');
-  const MONTHS_SHORT: Record<string, string> = {
+  const MONTHS_SHORT: Record<string, string[]> = {
     en: 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' '),
     vi: 'Thg1 Thg2 Thg3 Thg4 Thg5 Thg6 Thg7 Thg8 Thg9 Thg10 Thg11 Thg12'.split(' '),
   };
@@ -32,6 +32,17 @@ export function formatDate(
     .replace('DD', pad(day))
     .replace('HH', h)
     .replace('mm', min);
+}
+
+/**
+ * Format a datetime with seconds precision. Auto-defaults to 'DD/MM/YYYY HH:mm:ss'.
+ */
+export function formatDateTime(
+  date: Date | string | number | null | undefined,
+  format: string = 'DD/MM/YYYY HH:mm:ss',
+  locale: string = 'en-GB',
+): string {
+  return formatDate(date, format, locale);
 }
 
 /**

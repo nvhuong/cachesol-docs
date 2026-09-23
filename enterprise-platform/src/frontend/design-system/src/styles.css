@@ -547,3 +547,314 @@
     --color-border-default: var(--color-neutral-400);
   }
 }
+
+/* ============================================================
+   AppHeader — topbar shell cho admin webs
+   ============================================================ */
+.cs-app-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky, 100);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-4);
+  height: var(--layout-header-height, 56px);
+  padding: 0 var(--spacing-6);
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border-default);
+  font-size: var(--font-size-body-sm);
+}
+
+.cs-app-header__left,
+.cs-app-header__right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  min-width: 0;
+}
+
+.cs-app-header__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  text-decoration: none;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-body-md);
+  flex-shrink: 0;
+}
+.cs-app-header__logo img,
+.cs-app-header__logo svg {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+.cs-app-header__app-name {
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* App switcher (inline tiles) */
+.cs-app-switcher {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle, var(--color-bg-app));
+}
+
+.cs-app-tile {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background var(--motion-duration-fast) var(--motion-easing-standard),
+              color var(--motion-duration-fast) var(--motion-easing-standard);
+  white-space: nowrap;
+}
+.cs-app-tile:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+.cs-app-tile--active {
+  background: var(--color-bg-brand-subtle);
+  color: var(--color-status-info-text);
+}
+.cs-app-tile__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  font-size: 16px;
+}
+.cs-app-tile__icon img,
+.cs-app-tile__icon svg {
+  max-width: 100%;
+  max-height: 100%;
+}
+.cs-app-tile__check {
+  color: var(--color-status-info-text);
+  font-size: 12px;
+}
+
+.cs-app-switcher__more,
+.cs-app-switcher__grid {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.cs-app-switcher__more:hover,
+.cs-app-switcher__grid:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+.cs-app-switcher__more-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--spacing-1);
+  background: var(--color-bg-brand-subtle);
+  color: var(--color-status-info-text);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Right cluster buttons */
+.cs-app-header__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background var(--motion-duration-fast) var(--motion-easing-standard);
+}
+.cs-app-header__btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.cs-app-header__account {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-primary);
+}
+.cs-app-header__account:hover {
+  background: var(--color-bg-hover);
+}
+.cs-app-header__account-name {
+  font-weight: var(--font-weight-medium);
+  max-width: 160px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Notifications popover */
+.cs-notifications {
+  width: 360px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+}
+.cs-notifications__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-2) var(--spacing-1);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+.cs-notifications__title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-body-md);
+}
+.cs-notifications__empty {
+  padding: var(--spacing-6);
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-body-sm);
+}
+.cs-notifications__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+.cs-notifications__item {
+  padding: var(--spacing-3);
+  border-bottom: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  transition: background var(--motion-duration-fast) var(--motion-easing-standard);
+}
+.cs-notifications__item:last-child { border-bottom: 0; }
+.cs-notifications__item:hover {
+  background: var(--color-bg-hover);
+}
+.cs-notifications__item--unread {
+  background: var(--color-bg-brand-subtle);
+}
+.cs-notifications__item-title {
+  font-size: var(--font-size-body-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+.cs-notifications__item-body {
+  font-size: var(--font-size-body-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-1);
+}
+.cs-notifications__item-time {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
+  margin-top: var(--spacing-1);
+}
+.cs-notifications__footer {
+  border-top: 1px solid var(--color-border-subtle);
+  padding: var(--spacing-2);
+}
+
+/* Account menu */
+.cs-account-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2);
+  min-width: 220px;
+}
+.cs-account-info__name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-body-md);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-body-md);
+}
+.cs-account-info__email {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
+}
+.cs-account-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+.cs-account-menu-hint {
+  margin-left: auto;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
+}
+.cs-account-density {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) 0;
+}
+
+/* App grid modal — auto-fill via grid-template-columns on inline style */
+.cs-app-grid {
+  display: grid;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4) 0;
+}
+.cs-app-grid .cs-app-tile {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-4) var(--spacing-2);
+  background: var(--color-bg-subtle, var(--color-bg-app));
+  border-radius: var(--radius-md);
+  text-align: center;
+  min-height: 96px;
+}
+.cs-app-grid .cs-app-tile__icon {
+  width: 36px;
+  height: 36px;
+  font-size: 28px;
+}
+.cs-app-grid .cs-app-tile__check {
+  position: absolute;
+  top: var(--spacing-2);
+  right: var(--spacing-2);
+}
+
+/* Responsive: hide app-name + account-name on small screens */
+@media (max-width: 768px) {
+  .cs-app-header { padding: 0 var(--spacing-3); gap: var(--spacing-2); }
+  .cs-app-header__app-name,
+  .cs-app-header__account-name { display: none; }
+  .cs-app-switcher { overflow-x: auto; }
+}

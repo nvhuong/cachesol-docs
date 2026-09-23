@@ -8,16 +8,26 @@ import App from './App';
 import { cachesolTheme } from '@cachesol/design-system';
 import { createQueryClient, apiClient } from '@cachesol/shared-api';
 import hrmMiniApp from '@cachesol/hrm-mini-app';
+import landingMiniApp from '@cachesol/landing-mini-app';
+import registryAdmin from '@cachesol/registry-admin';
+import tenantManagerAdmin from '@cachesol/tenant-manager-admin';
 import { useAuthStore } from '@/stores/authStore';
 import './i18n';
 import './styles/global.css';
 
 const queryClient = createQueryClient();
 
-// Danh sách mini apps - có thể load dynamically từ config server
-const MINI_APPS = [hrmMiniApp];
+/**
+ * Đăng ký mini-apps.
+ *
+ * Landing mini-app là public (no auth), mounted ở top-level path '/_/landing/*'.
+ * HRM, registry-admin, tenant-manager-admin đều cần auth và thường vào subdomain riêng.
+ *
+ * Trong dev (single-port), tất cả cùng mount ở '/_/...'.
+ * Trong prod, mỗi admin sẽ chạy ở subdomain riêng (registry.cachesol.io, acme.cachesol.io).
+ */
+const MINI_APPS = [landingMiniApp, hrmMiniApp, registryAdmin, tenantManagerAdmin];
 
-// Khởi tạo API client với auth store
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
   if (token) {

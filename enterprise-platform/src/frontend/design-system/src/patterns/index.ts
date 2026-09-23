@@ -1,4 +1,6 @@
 export { PageHeader, type PageHeaderProps, type BreadcrumbItem } from './PageHeader';
+export { AppHeader, useAppSwitcherSplit, type AppHeaderProps, type AppSwitcherItem, type NotificationItem } from './AppHeader';
+export { AdminShell, type AdminShellProps } from './AdminShell';
 export { EmptyState, type EmptyStateProps, type EmptyStateType } from './EmptyState';
 export { StatusBadge, type StatusBadgeProps, type Status } from './StatusBadge';
 export { KPI, type KPIProps, type TrendDirection } from './KPI';
