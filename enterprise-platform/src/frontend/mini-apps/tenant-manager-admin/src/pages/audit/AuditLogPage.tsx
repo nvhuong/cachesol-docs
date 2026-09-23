@@ -6,12 +6,12 @@ import { formatDateTime } from '@cachesol/shared-ui';
 import { fetchMockAudit } from '../../api/mock-data';
 import type { AuditEntry } from '../../types/provisioning.types';
 
-const ACTION_COLOR: Record<string, string> = {
-  'employee.create': 'green',
-  'employee.update': 'blue',
-  'employee.delete': 'red',
-  'keycloak.sync': 'cyan',
-  'role.assign': 'purple',
+const ACTION_COLOR: Record<string, 'success' | 'info' | 'warning' | 'error' | 'neutral' | 'default'> = {
+  'employee.create': 'success',
+  'employee.update': 'info',
+  'employee.delete': 'error',
+  'keycloak.sync': 'info',
+  'role.assign': 'warning',
 };
 
 export function AuditLogPage() {
@@ -70,7 +70,7 @@ export function AuditLogPage() {
               {
                 title: 'Action',
                 dataIndex: 'action',
-                render: (a: string) => <Tag color={ACTION_COLOR[a] ?? 'default'}>{a}</Tag>,
+                render: (a: string) => <Tag variant={ACTION_COLOR[a] ?? 'default'}>{a}</Tag>,
               },
               { title: 'Entity', dataIndex: 'entityType', render: (t: string, r) => <span>{t} <code style={{ fontSize: 12 }}>{r.entityId}</code></span> },
               { title: 'Description', dataIndex: 'description' },

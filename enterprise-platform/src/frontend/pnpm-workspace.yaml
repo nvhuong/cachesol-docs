@@ -1,0 +1,5 @@
+packages:
+  - 'apps/*'
+  - 'mini-apps/*'
+  - 'shared/*'
+  - 'design-system'

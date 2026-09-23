@@ -4,14 +4,12 @@ import { Card, Descriptions, App, Space } from 'antd';
 import { Button, StatusBadge, LoadingState, EmptyState, PageHeader, DetailField, Tag, Timeline } from '@cachesol/design-system';
 import { formatCurrency, formatDate } from '@cachesol/shared-ui';
 import { fetchMockTenant } from '../../api/mock-data';
-import { usePlatformRegistryContext } from '../../layout/PlatformRegistryContext';
 import type { Tenant } from '../../types/tenant.types';
 
 export function TenantDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { message } = App.useApp();
-  const ctx = usePlatformRegistryContext();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -133,16 +131,16 @@ export function TenantDetailPage() {
         <Timeline
           items={[
             {
-              id: '1',
+              key: '1',
               actor: tenant.contactEmail,
-              time: tenant.updatedAt,
+              timestamp: tenant.updatedAt,
               action: 'updated',
               subject: 'tenant info',
             },
             {
-              id: '2',
+              key: '2',
               actor: 'system',
-              time: tenant.createdAt,
+              timestamp: tenant.createdAt,
               action: 'created',
               subject: 'tenant',
             },

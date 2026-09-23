@@ -87,5 +87,8 @@ export interface MiniAppLifecycle {
 
 export interface MiniAppPackage {
   manifest: MiniAppManifest;
+  /** Optional lifecycle hooks fired by web-shell khi mount/unmount. */
+  lifecycle?: MiniAppLifecycle;
+  /** Default export — toàn bộ module của mini-app (router, store, ...). */
   default?: unknown;
 }

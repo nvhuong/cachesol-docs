@@ -2,9 +2,8 @@
  * Tabs — page / local tabs.
  * Source: /design-system/components/tabs.md
  */
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, type ReactNode, type ComponentProps } from 'react';
 import { Tabs as AntTabs } from 'antd';
-import type { TabsProps as AntTabsProps, Tab } from 'antd';
 
 export type TabsVariant = 'line' | 'pill' | 'card';
 
@@ -17,8 +16,12 @@ export interface TabsItem {
   content?: ReactNode;
 }
 
-export interface TabsProps
-  extends Omit<AntTabsProps, 'type' | 'tabPosition' | 'items'> {
+type AntTabsLike = Omit<
+  ComponentProps<typeof AntTabs>,
+  'type' | 'tabPosition' | 'items' | 'size'
+>;
+
+export interface TabsProps extends AntTabsLike {
   variant?: TabsVariant;
   size?: 'sm' | 'md' | 'lg';
   items?: TabsItem[];
@@ -27,16 +30,16 @@ export interface TabsProps
   onChange?: (key: string) => void;
 }
 
-function resolveType(variant: TabsVariant): AntTabsProps['type'] {
+function resolveType(variant: TabsVariant): ComponentProps<typeof AntTabs>['type'] {
   if (variant === 'card') return 'card';
-  return 'line'; // antd has no built-in "pill"; handle via CSS class
+  return 'line';
 }
 
 export const Tabs = forwardRef<HTMLElement, TabsProps>(function Tabs(
   { variant = 'line', size = 'md', items = [], className, ...rest },
   _ref,
 ) {
-  const antItems: Tab[] = items.map((it) => ({
+  const antItems = items.map((it) => ({
     key: it.key,
     label: it.icon ? (
       <span className="cs-tab-label">
@@ -56,10 +59,12 @@ export const Tabs = forwardRef<HTMLElement, TabsProps>(function Tabs(
     children: it.content,
   }));
 
+  const antSize = size === 'md' ? 'middle' : size === 'sm' ? 'small' : 'large';
+
   return (
     <AntTabs
       type={resolveType(variant)}
-      size={size === 'md' ? 'middle' : size}
+      size={antSize}
       items={antItems}
       className={['cs-tabs', `cs-tabs--${variant}`, className].filter(Boolean).join(' ')}
       {...rest}

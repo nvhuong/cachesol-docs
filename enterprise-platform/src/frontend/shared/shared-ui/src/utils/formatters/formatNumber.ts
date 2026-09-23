@@ -20,7 +20,7 @@ export function formatNumber(
  */
 export function formatCompact(
   value: number | string | undefined | null,
-  locale: string = 'en-US',
+  _locale: string = 'en-US',
 ): string {
   if (value === null || value === undefined || value === '') return '—';
   const num = typeof value === 'string' ? parseFloat(value) : value;

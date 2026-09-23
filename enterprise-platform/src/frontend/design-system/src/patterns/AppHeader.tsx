@@ -16,12 +16,11 @@ import {
   Badge,
   Popover,
   Avatar,
-  Switch,
-  Space,
   Button,
   Modal,
   Segmented,
 } from 'antd';
+import type { MenuProps } from 'antd';
 import {
   BellOutlined,
   EyeOutlined,
@@ -175,7 +174,7 @@ export function AppHeader({
     </button>
   );
 
-  const moreMenu = overflowApps.length > 0
+  const moreMenu: MenuProps | null = overflowApps.length > 0
     ? {
         items: overflowApps.map((a) => ({
           key: a.id,
@@ -186,7 +185,7 @@ export function AppHeader({
       }
     : null;
 
-  const configMenu = configItems && configItems.length > 0
+  const configMenu: MenuProps | undefined = configItems && configItems.length > 0
     ? {
         items: configItems.map((c) => ({
           key: c.key,
@@ -235,7 +234,7 @@ export function AppHeader({
     </div>
   );
 
-  const accountMenu = {
+  const accountMenu: MenuProps = {
     items: [
       user && {
         key: 'user-info',
@@ -313,7 +312,7 @@ export function AppHeader({
           });
         },
       },
-    ].filter(Boolean) as { key: string; label: ReactNode; icon?: ReactNode; onClick?: () => void; danger?: boolean; type?: string }[],
+    ].filter(Boolean) as MenuProps['items'],
   };
 
   return (

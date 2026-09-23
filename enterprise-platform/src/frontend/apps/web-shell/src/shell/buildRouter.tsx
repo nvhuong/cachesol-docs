@@ -1,5 +1,4 @@
-import { lazy } from 'react';
-import { createBrowserRouter, type RouteObject } from 'react-router-dom';
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom';
 import { MainLayout } from '@/layouts/MainLayout';
 import { RequireAuth } from '@/routes/RequireAuth';
 import { LoginPage } from '@/pages/LoginPage';

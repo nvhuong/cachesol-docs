@@ -6,15 +6,15 @@ import { formatDateTime } from '@cachesol/shared-ui';
 import { fetchMockAudit } from '../../api/mock-data';
 import type { AuditEntry } from '../../types/admin.types';
 
-const CATEGORY_COLOR: Record<string, string> = {
-  'tenant.create': 'green',
-  'tenant.update': 'blue',
-  'tenant.delete': 'red',
-  'tenant.suspend': 'orange',
-  'mini-app.publish': 'cyan',
-  'mini-app.unpublish': 'red',
-  'provider.update': 'blue',
-  'settings.update': 'purple',
+const CATEGORY_COLOR: Record<string, 'success' | 'info' | 'warning' | 'error' | 'default' | 'neutral'> = {
+  'tenant.create': 'success',
+  'tenant.update': 'info',
+  'tenant.delete': 'error',
+  'tenant.suspend': 'warning',
+  'mini-app.publish': 'success',
+  'mini-app.unpublish': 'error',
+  'provider.update': 'info',
+  'settings.update': 'neutral',
   'auth.login': 'default',
   'auth.logout': 'default',
 };
@@ -87,7 +87,7 @@ export function AuditLogPage() {
               {
                 title: 'Category',
                 dataIndex: 'category',
-                render: (c: string) => <Tag color={CATEGORY_COLOR[c] ?? 'default'}>{c}</Tag>,
+                render: (c: string) => <Tag variant={CATEGORY_COLOR[c] ?? 'default'}>{c}</Tag>,
               },
               {
                 title: 'Subject',

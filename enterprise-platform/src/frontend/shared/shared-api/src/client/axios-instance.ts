@@ -44,6 +44,7 @@ export function createApiClient(config: ApiClientConfig): AxiosInstance {
 }
 
 // Default instance (có thể override trong shell)
+const viteEnv = (import.meta as ImportMeta & { env?: Record<string, string> }).env;
 export const apiClient = createApiClient({
-  baseURL: import.meta.env?.VITE_API_BASE_URL || '/api/v1',
+  baseURL: viteEnv?.VITE_API_BASE_URL || '/api/v1',
 });

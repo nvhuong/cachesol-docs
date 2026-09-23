@@ -21,12 +21,7 @@ import {
 import { fetchMockCatalog } from '../api/mock-catalog';
 import { submitMockRegistration } from '../api/mock-registration';
 import type { PublicMiniApp } from '../types/miniapp-catalog.types';
-import type {
-  RegistrationRequest,
-  RegistrationCompanyInfo,
-  RegistrationContactInfo,
-  RegistrationSubscriptionInfo,
-} from '../types/registration.types';
+import type { RegistrationRequest } from '../types/registration.types';
 
 const { Title, Paragraph } = Typography;
 
@@ -121,7 +116,7 @@ export function RegistrationPage() {
             <FormSection title="Thông tin công ty" description="Dùng cho hóa đơn và hợp đồng">
               <Row gutter={16}>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationCompanyInfo>
+                  <Form.Item
                     name={['company', 'companyName']}
                     label="Tên công ty"
                     rules={[{ required: true, message: 'Vui lòng nhập tên công ty' }]}
@@ -130,7 +125,7 @@ export function RegistrationPage() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationCompanyInfo>
+                  <Form.Item
                     name={['company', 'taxCode']}
                     label="Mã số thuế"
                     rules={[{ required: true, message: 'Vui lòng nhập MST' }]}
@@ -139,7 +134,7 @@ export function RegistrationPage() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationCompanyInfo>
+                  <Form.Item
                     name={['company', 'companySize']}
                     label="Quy mô"
                   >
@@ -147,7 +142,7 @@ export function RegistrationPage() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationCompanyInfo>
+                  <Form.Item
                     name={['company', 'country']}
                     label="Quốc gia"
                     rules={[{ required: true }]}
@@ -163,7 +158,7 @@ export function RegistrationPage() {
             <FormSection title="Người liên hệ" description="Sẽ là admin tenant đầu tiên">
               <Row gutter={16}>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationContactInfo>
+                  <Form.Item
                     name={['contact', 'fullName']}
                     label="Họ và tên"
                     rules={[{ required: true }]}
@@ -172,7 +167,7 @@ export function RegistrationPage() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationContactInfo>
+                  <Form.Item
                     name={['contact', 'jobTitle']}
                     label="Chức danh"
                   >
@@ -180,7 +175,7 @@ export function RegistrationPage() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationContactInfo>
+                  <Form.Item
                     name={['contact', 'email']}
                     label="Email"
                     rules={[
@@ -192,7 +187,7 @@ export function RegistrationPage() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationContactInfo>
+                  <Form.Item
                     name={['contact', 'phone']}
                     label="Số điện thoại"
                   >
@@ -205,7 +200,7 @@ export function RegistrationPage() {
             <Divider />
 
             <FormSection title="Mini-app bạn muốn dùng" description="Có thể bật thêm sau">
-              <Form.Item<RegistrationSubscriptionInfo>
+              <Form.Item
                 name={['subscription', 'selectedMiniAppIds']}
                 label="Chọn mini-app"
                 rules={[{ required: true, message: 'Vui lòng chọn ít nhất 1 mini-app' }]}
@@ -218,7 +213,7 @@ export function RegistrationPage() {
               </Form.Item>
               <Row gutter={16}>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationSubscriptionInfo>
+                  <Form.Item
                     name={['subscription', 'estimatedSeats']}
                     label="Số lượng người dùng ước tính"
                     rules={[{ required: true }]}
@@ -227,7 +222,7 @@ export function RegistrationPage() {
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item<RegistrationSubscriptionInfo>
+                  <Form.Item
                     name={['subscription', 'billingCurrency']}
                     label="Tiền tệ thanh toán"
                     rules={[{ required: true }]}

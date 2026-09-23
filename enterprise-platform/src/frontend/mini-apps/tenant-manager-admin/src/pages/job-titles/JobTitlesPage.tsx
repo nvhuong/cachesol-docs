@@ -40,7 +40,7 @@ export function JobTitlesPage() {
           pagination={false}
           columns={[
             { title: 'Code', dataIndex: 'code', render: (v: string) => <code>{v}</code> },
-            { title: 'Title', dataIndex: 'name', render: (v: string, r) => <strong>{v}</strong> },
+            { title: 'Title', dataIndex: 'name', render: (v: string) => <strong>{v}</strong> },
             { title: 'Level', dataIndex: 'level', render: (v: string) => <Tag color="blue">{v}</Tag> },
             { title: 'Employees', dataIndex: 'employees', align: 'right' },
             {

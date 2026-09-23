@@ -23,7 +23,9 @@ export type Status =
   | 'success'
   | 'error'
   | 'warning'
-  | 'info';
+  | 'info'
+  | 'provisioning'
+  | 'deleted';
 
 interface StatusConfig {
   label: string;
@@ -47,6 +49,8 @@ const STATUS_MAP: Record<Status, StatusConfig> = {
   error:       { label: 'Error',       variant: 'error' },
   warning:     { label: 'Warning',     variant: 'warning' },
   info:        { label: 'Info',        variant: 'info' },
+  provisioning: { label: 'Provisioning', variant: 'processing' },
+  deleted:     { label: 'Deleted',     variant: 'default' },
 };
 
 export interface StatusBadgeProps {

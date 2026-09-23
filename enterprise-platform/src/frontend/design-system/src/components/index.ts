@@ -4,10 +4,11 @@ export { Select, type SelectProps, type SelectOption, type SelectVariant } from 
 export { Modal, type ModalProps, type ModalSize, type ModalVariant } from './Modal';
 export { Drawer, type DrawerProps, type DrawerSize, type DrawerSide } from './Drawer';
 export { Table, columnAlign, tabularCell, type TableProps } from './Table';
-export { DatePicker, DateRangePicker, type DatePickerProps, type DateRangePickerProps, type DatePickerVariant } from './DatePicker';
+export { DatePicker, DateRangePicker, type DatePickerProps, type DatePickerVariant } from './DatePicker';
 export { Tabs, type TabsProps, type TabsItem, type TabsVariant } from './Tabs';
 export { Tree, type TreeProps, type TreeNodeData, type TreeVariant } from './Tree';
 export { Form, FormItem, FormErrorList, type FormProps, type FormLayout } from './Form';
 export { Tag, type TagProps, type TagVariant } from './Tag';
 export { Avatar, type AvatarProps, type AvatarSize } from './Avatar';
 export { Alert, type AlertProps, type AlertType } from './Alert';
+export { Title, Paragraph, Text, Link, default as Typography } from './Typography';

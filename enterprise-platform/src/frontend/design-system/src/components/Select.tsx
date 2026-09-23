@@ -2,9 +2,9 @@
  * Select — single/multi select wrapper around Ant Design Select.
  * Source: /design-system/components/select.md
  */
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, type ReactNode, type ComponentProps } from 'react';
 import { Select as AntSelect } from 'antd';
-import type { SelectProps as AntSelectProps, RefSelectProps } from 'antd';
+import type { RefSelectProps } from 'antd';
 
 export type SelectVariant = 'single' | 'multi' | 'searchable';
 
@@ -15,7 +15,16 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
-export interface SelectProps extends Omit<AntSelectProps, 'size' | 'mode' | 'options'> {
+/**
+ * CacheSol's SelectProps — wraps AntD's SelectProps to add label/error/variant.
+ * Uses `Pick<ComponentProps>` to avoid name collision.
+ */
+type AntSelectLike = Omit<
+  ComponentProps<typeof AntSelect>,
+  'size' | 'mode' | 'options' | 'variant'
+>;
+
+export interface SelectProps extends AntSelectLike {
   label?: ReactNode;
   required?: boolean;
   helperText?: ReactNode;
@@ -26,9 +35,9 @@ export interface SelectProps extends Omit<AntSelectProps, 'size' | 'mode' | 'opt
   options?: SelectOption[];
 }
 
-function resolveMode(variant: SelectVariant): AntSelectProps['mode'] {
+function resolveMode(variant: SelectVariant): ComponentProps<typeof AntSelect>['mode'] {
   if (variant === 'multi') return 'multiple';
-  return undefined; // single uses default (combobox auto when showSearch)
+  return undefined;
 }
 
 export const Select = forwardRef<RefSelectProps, SelectProps>(function Select(
@@ -48,9 +57,9 @@ export const Select = forwardRef<RefSelectProps, SelectProps>(function Select(
   },
   ref,
 ) {
-  const inputId = id ?? `cs-select-${rest.name ?? Math.random().toString(36).slice(2, 8)}`;
+  const inputId = id ?? `cs-select-${Math.random().toString(36).slice(2, 8)}`;
   const helperId = `${inputId}-helper`;
-  const antSize = inputSize === 'md' ? 'middle' : inputSize;
+  const antSize = inputSize === 'md' ? 'middle' : inputSize === 'sm' ? 'small' : 'large';
   const mode = resolveMode(variant);
   const showSearch = variant === 'searchable';
 

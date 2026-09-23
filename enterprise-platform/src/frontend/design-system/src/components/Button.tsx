@@ -25,8 +25,13 @@ export type ButtonVariant =
 
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-export interface ButtonProps
-  extends Omit<AntButtonProps, 'type' | 'size' | 'variant'> {
+/** Allow native HTML form submission. `type` field trên AntD Button bị omit vì conflict với variant. */
+type AntButtonWithoutType = Omit<AntButtonProps, 'type' | 'size' | 'variant'> & {
+  /** HTML button type — submit / button / reset. */
+  htmlType?: 'submit' | 'button' | 'reset';
+};
+
+export interface ButtonProps extends AntButtonWithoutType {
   variant?: ButtonVariant;
   size?: ButtonSize;
   iconLeading?: ReactNode;
@@ -67,6 +72,7 @@ export const Button = forwardRef<HTMLElement, ButtonProps>(function Button(
     fullWidth,
     loading,
     disabled,
+    htmlType,
     children,
     onClick,
     className,
@@ -75,7 +81,7 @@ export const Button = forwardRef<HTMLElement, ButtonProps>(function Button(
   ref,
 ) {
   const { type, danger, ghost } = resolveAntType(variant);
-  const antSize = size === 'md' ? 'middle' : size;
+  const antSize = size === 'md' ? 'middle' : size === 'sm' ? 'small' : 'large';
   const isIconOnly = !children && (iconLeading || iconTrailing);
 
   return (
@@ -89,6 +95,7 @@ export const Button = forwardRef<HTMLElement, ButtonProps>(function Button(
       disabled={disabled}
       block={fullWidth}
       onClick={onClick}
+      htmlType={htmlType}
       className={['cs-btn', `cs-btn--${variant}`, isIconOnly && 'cs-btn--icon-only', className]
         .filter(Boolean)
         .join(' ')}

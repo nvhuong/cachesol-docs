@@ -15,19 +15,32 @@
  * Auth: Keycloak role `tenant_admin`
  */
 import type { MiniAppManifest } from '@cachesol/shared-types';
-import { lazy } from 'react';
+import type { ComponentType } from 'react';
+import { LoginPage } from '../pages/LoginPage';
+import { DashboardPage } from '../pages/dashboard/DashboardPage';
+import { OrganizationsListPage } from '../pages/organizations/OrganizationsListPage';
+import { EmployeesListPage } from '../pages/employees/EmployeesListPage';
+import { JobTitlesPage } from '../pages/job-titles/JobTitlesPage';
+import { RolesPage } from '../pages/roles/RolesPage';
+import { UsersPage } from '../pages/users/UsersPage';
+import { KeycloakSyncPage } from '../pages/keycloak/KeycloakSyncPage';
+import { ProvisioningPage } from '../pages/provisioning/ProvisioningPage';
+import { AuditLogPage } from '../pages/audit/AuditLogPage';
+import { SettingsPage } from '../pages/settings/SettingsPage';
 
-const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })));
-const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })));
-const OrganizationsListPage = lazy(() => import('./pages/organizations/OrganizationsListPage').then((m) => ({ default: m.OrganizationsListPage })));
-const EmployeesListPage = lazy(() => import('./pages/employees/EmployeesListPage').then((m) => ({ default: m.EmployeesListPage })));
-const JobTitlesPage = lazy(() => import('./pages/job-titles/JobTitlesPage').then((m) => ({ default: m.JobTitlesPage })));
-const RolesPage = lazy(() => import('./pages/roles/RolesPage').then((m) => ({ default: m.RolesPage })));
-const UsersPage = lazy(() => import('./pages/users/UsersPage').then((m) => ({ default: m.UsersPage })));
-const KeycloakSyncPage = lazy(() => import('./pages/keycloak/KeycloakSyncPage').then((m) => ({ default: m.KeycloakSyncPage })));
-const ProvisioningPage = lazy(() => import('./pages/provisioning/ProvisioningPage').then((m) => ({ default: m.ProvisioningPage })));
-const AuditLogPage = lazy(() => import('./pages/audit/AuditLogPage').then((m) => ({ default: m.AuditLogPage })));
-const SettingsPage = lazy(() => import('./pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const eager = <T,>(c: T) => async () => ({ default: c as unknown as ComponentType });
+
+const LoginPageLazy = eager(LoginPage);
+const DashboardPageLazy = eager(DashboardPage);
+const OrganizationsListPageLazy = eager(OrganizationsListPage);
+const EmployeesListPageLazy = eager(EmployeesListPage);
+const JobTitlesPageLazy = eager(JobTitlesPage);
+const RolesPageLazy = eager(RolesPage);
+const UsersPageLazy = eager(UsersPage);
+const KeycloakSyncPageLazy = eager(KeycloakSyncPage);
+const ProvisioningPageLazy = eager(ProvisioningPage);
+const AuditLogPageLazy = eager(AuditLogPage);
+const SettingsPageLazy = eager(SettingsPage);
 
 export const manifest: MiniAppManifest = {
   id: 'tenant-manager-admin',
@@ -38,17 +51,17 @@ export const manifest: MiniAppManifest = {
   author: 'CacheSol',
 
   routes: [
-    { path: '/login', title: 'Sign in', component: LoginPage, layout: 'blank', showInMenu: false, permissions: ['tenant_admin'] },
-    { path: '/', title: 'Dashboard', component: DashboardPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
-    { path: '/organizations', title: 'Organizations', component: OrganizationsListPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
-    { path: '/employees', title: 'Employees', component: EmployeesListPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
-    { path: '/job-titles', title: 'Job titles', component: JobTitlesPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
-    { path: '/roles', title: 'Roles & permissions', component: RolesPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
-    { path: '/users', title: 'App users', component: UsersPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
-    { path: '/keycloak', title: 'Keycloak sync', component: KeycloakSyncPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
-    { path: '/provisioning', title: 'Provisioning', component: ProvisioningPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
-    { path: '/audit', title: 'Audit log', component: AuditLogPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
-    { path: '/settings', title: 'Settings', component: SettingsPage, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/login', title: 'Sign in', component: LoginPageLazy, layout: 'blank', showInMenu: false, permissions: ['tenant_admin'] },
+    { path: '/', title: 'Dashboard', component: DashboardPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/organizations', title: 'Organizations', component: OrganizationsListPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/employees', title: 'Employees', component: EmployeesListPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/job-titles', title: 'Job titles', component: JobTitlesPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/roles', title: 'Roles & permissions', component: RolesPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/users', title: 'App users', component: UsersPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/keycloak', title: 'Keycloak sync', component: KeycloakSyncPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/provisioning', title: 'Provisioning', component: ProvisioningPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/audit', title: 'Audit log', component: AuditLogPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
+    { path: '/settings', title: 'Settings', component: SettingsPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
   ],
 
   permissions: ['tenant_admin'],

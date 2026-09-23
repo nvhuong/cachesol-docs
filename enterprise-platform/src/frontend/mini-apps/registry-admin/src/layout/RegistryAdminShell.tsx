@@ -11,20 +11,9 @@ import {
   CloudOutlined,
   SettingOutlined,
   HistoryOutlined,
-  LoginOutlined,
-  LogoutOutlined,
 } from '@ant-design/icons';
 import { AdminShell } from '@cachesol/design-system';
 import { PlatformRegistryProvider, usePlatformRegistryContext } from './PlatformRegistryContext';
-
-const ICONS: Record<string, React.ReactNode> = {
-  dashboard: <DashboardOutlined />,
-  team: <TeamOutlined />,
-  appstore: <AppstoreOutlined />,
-  cloud: <CloudOutlined />,
-  setting: <SettingOutlined />,
-  history: <HistoryOutlined />,
-};
 
 const MENU_ITEMS = [
   { key: '/', label: 'Dashboard', icon: <DashboardOutlined /> },

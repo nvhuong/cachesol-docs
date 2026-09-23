@@ -2,14 +2,18 @@
  * Drawer — side panel for inline detail / quick forms.
  * Source: /design-system/components/drawer.md
  */
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, type ReactNode, type ComponentProps } from 'react';
 import { Drawer as AntDrawer } from 'antd';
-import type { DrawerProps as AntDrawerProps } from 'antd';
 
 export type DrawerSize = 'sm' | 'md' | 'lg' | 'xl';
 export type DrawerSide = 'right' | 'left' | 'top' | 'bottom';
 
-export interface DrawerProps extends Omit<AntDrawerProps, 'width' | 'height'> {
+type AntDrawerLike = Omit<
+  ComponentProps<typeof AntDrawer>,
+  'width' | 'height' | 'placement' | 'size'
+>;
+
+export interface DrawerProps extends AntDrawerLike {
   side?: DrawerSide;
   size?: DrawerSize;
   persistent?: boolean;

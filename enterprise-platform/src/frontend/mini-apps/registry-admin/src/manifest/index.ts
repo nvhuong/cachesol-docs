@@ -11,16 +11,26 @@
  * - Settings
  */
 import type { MiniAppManifest } from '@cachesol/shared-types';
-import { lazy } from 'react';
+import type { ComponentType } from 'react';
+import { LoginPage } from '../pages/LoginPage';
+import { DashboardPage } from '../pages/dashboard/DashboardPage';
+import { TenantsListPage } from '../pages/tenants/TenantsListPage';
+import { TenantDetailPage } from '../pages/tenants/TenantDetailPage';
+import { MiniAppsCatalogPage } from '../pages/mini-apps/MiniAppsCatalogPage';
+import { ProvidersPage } from '../pages/providers/ProvidersPage';
+import { SettingsPage } from '../pages/settings/SettingsPage';
+import { AuditLogPage } from '../pages/settings/AuditLogPage';
 
-const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })));
-const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })));
-const TenantsListPage = lazy(() => import('./pages/tenants/TenantsListPage').then((m) => ({ default: m.TenantsListPage })));
-const TenantDetailPage = lazy(() => import('./pages/tenants/TenantDetailPage').then((m) => ({ default: m.TenantDetailPage })));
-const MiniAppsCatalogPage = lazy(() => import('./pages/mini-apps/MiniAppsCatalogPage').then((m) => ({ default: m.MiniAppsCatalogPage })));
-const ProvidersPage = lazy(() => import('./pages/providers/ProvidersPage').then((m) => ({ default: m.ProvidersPage })));
-const SettingsPage = lazy(() => import('./pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })));
-const AuditLogPage = lazy(() => import('./pages/settings/AuditLogPage').then((m) => ({ default: m.AuditLogPage })));
+const eager = <T,>(c: T) => async () => ({ default: c as unknown as ComponentType });
+
+const LoginPageLazy = eager(LoginPage);
+const DashboardPageLazy = eager(DashboardPage);
+const TenantsListPageLazy = eager(TenantsListPage);
+const TenantDetailPageLazy = eager(TenantDetailPage);
+const MiniAppsCatalogPageLazy = eager(MiniAppsCatalogPage);
+const ProvidersPageLazy = eager(ProvidersPage);
+const SettingsPageLazy = eager(SettingsPage);
+const AuditLogPageLazy = eager(AuditLogPage);
 
 export const manifest: MiniAppManifest = {
   id: 'registry-admin',
@@ -31,14 +41,14 @@ export const manifest: MiniAppManifest = {
   author: 'CacheSol',
 
   routes: [
-    { path: '/login', title: 'Sign in', component: LoginPage, layout: 'blank', showInMenu: false, permissions: ['registry_admin'] },
-    { path: '/', title: 'Dashboard', component: DashboardPage, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
-    { path: '/tenants', title: 'Tenants', component: TenantsListPage, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
-    { path: '/tenants/:id', title: 'Tenant detail', component: TenantDetailPage, layout: 'main', showInMenu: false, permissions: ['registry_admin'] },
-    { path: '/mini-apps', title: 'Mini-apps', component: MiniAppsCatalogPage, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
-    { path: '/providers', title: 'Providers', component: ProvidersPage, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
-    { path: '/settings', title: 'Settings', component: SettingsPage, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
-    { path: '/audit', title: 'Audit log', component: AuditLogPage, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
+    { path: '/login', title: 'Sign in', component: LoginPageLazy, layout: 'blank', showInMenu: false, permissions: ['registry_admin'] },
+    { path: '/', title: 'Dashboard', component: DashboardPageLazy, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
+    { path: '/tenants', title: 'Tenants', component: TenantsListPageLazy, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
+    { path: '/tenants/:id', title: 'Tenant detail', component: TenantDetailPageLazy, layout: 'main', showInMenu: false, permissions: ['registry_admin'] },
+    { path: '/mini-apps', title: 'Mini-apps', component: MiniAppsCatalogPageLazy, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
+    { path: '/providers', title: 'Providers', component: ProvidersPageLazy, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
+    { path: '/settings', title: 'Settings', component: SettingsPageLazy, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
+    { path: '/audit', title: 'Audit log', component: AuditLogPageLazy, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
   ],
 
   permissions: ['registry_admin'],

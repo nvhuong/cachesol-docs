@@ -46,9 +46,9 @@ export const Input = forwardRef<InputRef, InputProps>(function Input(
   },
   ref,
 ) {
-  const inputId = id ?? `cs-input-${rest.name ?? Math.random().toString(36).slice(2, 8)}`;
+  const inputId = id ?? `cs-input-${Math.random().toString(36).slice(2, 8)}`;
   const helperId = `${inputId}-helper`;
-  const antSize = inputSize === 'md' ? 'middle' : inputSize;
+  const antSize = inputSize === 'md' ? 'middle' : inputSize === 'sm' ? 'small' : 'large';
 
   const inputEl = (
     <AntInput

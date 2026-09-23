@@ -11,7 +11,6 @@
  */
 import { type ReactNode } from 'react';
 import { Pagination } from 'antd';
-import type { PaginationProps } from 'antd';
 import { PageHeader, type BreadcrumbItem } from '../patterns/PageHeader';
 import { Toolbar, type ToolbarProps } from '../patterns/Toolbar';
 import { LoadingState } from '../patterns/LoadingState';

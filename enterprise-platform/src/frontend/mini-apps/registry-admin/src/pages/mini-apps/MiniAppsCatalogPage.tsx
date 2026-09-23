@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Card, Row, Col, Input } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import { PageHeader, Tag, EmptyState, LoadingState } from '@cachesol/design-system';
-import { fetchMockCatalog } from '../../../landing-mini-app/src/api/mock-catalog';
-import type { PublicMiniApp } from '../../../landing-mini-app/src/types/miniapp-catalog.types';
+import { PageHeader, Tag, EmptyState, LoadingState, StatusBadge } from '@cachesol/design-system';
+import { fetchMockCatalog } from '../../api/mock-catalog';
+import type { RegistryAdminMiniApp } from '../../api/mock-catalog';
 
 export function MiniAppsCatalogPage() {
-  const [apps, setApps] = useState<PublicMiniApp[]>([]);
+  const [apps, setApps] = useState<RegistryAdminMiniApp[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
 
   useEffect(() => {
     fetchMockCatalog().then((res) => {
-      setApps(res.items);
+      setApps(res);
       setLoading(false);
     });
   }, []);
@@ -58,13 +58,17 @@ export function MiniAppsCatalogPage() {
                   <p className="cs-landing-app-card__tagline">{app.tagline}</p>
                   <div
                     style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                       paddingTop: 8,
                       borderTop: '1px solid var(--color-border-subtle)',
                       fontSize: 'var(--font-size-caption)',
                       color: 'var(--color-text-tertiary)',
                     }}
                   >
-                    Published {app.publishedAt} · {app.publisherName}
+                    <StatusBadge status={app.status === 'published' ? 'active' : app.status === 'draft' ? 'draft' : 'inactive'} />
+                    <span>{app.tenantCount} tenants</span>
                   </div>
                 </article>
               </Col>

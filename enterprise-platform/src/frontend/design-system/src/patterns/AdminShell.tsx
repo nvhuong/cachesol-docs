@@ -74,7 +74,7 @@ export function AdminShell({
   headerSlot,
   appHeaderProps,
 }: AdminShellProps) {
-  const { visible: headerVisible, toggle: toggleHeader, set: setHeader } =
+  const { visible: headerVisible, toggle: toggleHeader, setVisible: setHeader } =
     useHeaderVisibility(adminId, defaultHeaderVisible);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 

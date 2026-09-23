@@ -2,15 +2,23 @@
  * DatePicker — date / range / month picker.
  * Source: /design-system/components/date-picker.md
  */
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, type ReactNode, type ComponentProps } from 'react';
 import { DatePicker as AntDatePicker } from 'antd';
-import type { DatePickerProps as AntDatePickerProps, RangePickerProps } from 'antd';
 
 const { RangePicker: AntRangePicker } = AntDatePicker;
 
 export type DatePickerVariant = 'date' | 'range' | 'month' | 'dateTime';
 
-export interface DatePickerProps extends Omit<AntDatePickerProps, 'size' | 'picker'> {
+/**
+ * CacheSol's DatePickerProps — wraps AntD's DatePickerProps to add label/error/variant.
+ * Uses `Pick<ComponentProps>` to avoid name collision with AntD's own DatePickerProps type.
+ */
+type AntDatePickerLike = Omit<
+  ComponentProps<typeof AntDatePicker>,
+  'size' | 'picker' | 'variant'
+>;
+
+export interface DatePickerProps extends AntDatePickerLike {
   variant?: DatePickerVariant;
   inputSize?: 'sm' | 'md' | 'lg';
   label?: ReactNode;
@@ -20,9 +28,9 @@ export interface DatePickerProps extends Omit<AntDatePickerProps, 'size' | 'pick
   errorMessage?: ReactNode;
 }
 
-function resolvePicker(v: DatePickerVariant): AntDatePickerProps['picker'] {
+function resolvePicker(v: DatePickerVariant): ComponentProps<typeof AntDatePicker>['picker'] {
   if (v === 'month') return 'month';
-  if (v === 'dateTime') return 'date'; // full datetime handled by showTime
+  if (v === 'dateTime') return 'date';
   return 'date';
 }
 
@@ -44,7 +52,7 @@ export const DatePicker = forwardRef<HTMLElement, DatePickerProps>(function Date
 ) {
   const inputId = id ?? `cs-date-${Math.random().toString(36).slice(2, 8)}`;
   const helperId = `${inputId}-helper`;
-  const antSize = inputSize === 'md' ? 'middle' : inputSize;
+  const antSize = inputSize === 'md' ? 'middle' : inputSize === 'sm' ? 'small' : 'large';
   const showTimeResolved = variant === 'dateTime' ? true : showTime;
 
   const pickerEl = (
@@ -88,11 +96,13 @@ export const DatePicker = forwardRef<HTMLElement, DatePickerProps>(function Date
   );
 });
 
-export type DateRangePickerProps = Omit<RangePickerProps, 'size'>;
-
-export const DateRangePicker = forwardRef<HTMLElement, DateRangePickerProps>(
-  function DateRangePicker({ size, ...rest }, _ref) {
-    return <AntRangePicker size={size === 'middle' || !size ? 'middle' : size} {...rest} />;
+/**
+ * RangePicker — re-exports AntD's RangePicker with minimal wrapper.
+ */
+export const DateRangePicker = forwardRef<HTMLElement, Record<string, unknown>>(
+  function DateRangePicker(props, _ref) {
+    // Spread AntD RangePicker props directly.
+    return <AntRangePicker {...(props as object)} />;
   },
 );
 

@@ -11,11 +11,11 @@ import type { TableProps as AntTableProps, ColumnType } from 'antd/es/table';
 import { density as densityMap, type Density } from '../tokens/spacing';
 
 export interface TableProps<T = Record<string, unknown>>
-  extends Omit<AntTableProps<T>, 'size' | 'size'> {
+  extends Omit<AntTableProps<T>, 'size'> {
   density?: Density;
 }
 
-function densityToSize(d: Density): AntTableProps<T>['size'] {
+function densityToSize(d: Density): AntTableProps['size'] {
   // antd has 'large' | 'middle' | 'small'. Map CacheSol density → AntD size.
   if (d === 'comfortable') return 'large';
   if (d === 'compact') return 'small';
@@ -29,16 +29,15 @@ export const Table = forwardRef<HTMLElement, TableProps>(function Table(
   const cfg = densityMap[density];
 
   return (
-    <AntTable<T>
+    <AntTable<Record<string, unknown>>
       size={densityToSize(density)}
-      rowClassName={(record, index) =>
-        [
-          'cs-table-row',
-          rowClassName instanceof Function ? rowClassName(record, index) : rowClassName,
-        ]
-          .filter(Boolean)
-          .join(' ')
-      }
+      rowClassName={(record, index, indent) => {
+        const extra =
+          typeof rowClassName === 'function'
+            ? rowClassName(record as never, index, indent)
+            : rowClassName;
+        return ['cs-table-row', extra].filter(Boolean).join(' ');
+      }}
       // Apply CacheSol row height via CSS variable.
       tableLayout="auto"
       {...rest}

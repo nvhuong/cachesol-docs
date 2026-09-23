@@ -1,6 +1,6 @@
 import { Typography, Space } from 'antd';
 import { Button } from '@cachesol/design-system';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Paragraph } = Typography;
 

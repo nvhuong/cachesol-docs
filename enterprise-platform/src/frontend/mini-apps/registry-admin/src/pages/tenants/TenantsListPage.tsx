@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Input, Space, App, Card } from 'antd';
+import { Table, Input, Space, Card } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { StatusBadge, PageHeader, LoadingState, EmptyState } from '@cachesol/design-system';
 import { formatDate, formatNumber } from '@cachesol/shared-ui';
 import { fetchMockTenants } from '../../api/mock-data';
-import type { Tenant, TenantStatus } from '../../types/tenant.types';
+import type { Tenant } from '../../types/tenant.types';
 
 export function TenantsListPage() {
   const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [keyword, setKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState<TenantStatus | undefined>();
 
   useEffect(() => {
     fetchMockTenants().then((res) => {
@@ -25,7 +24,6 @@ export function TenantsListPage() {
     if (keyword && !`${t.name} ${t.slug} ${t.contactEmail}`.toLowerCase().includes(keyword.toLowerCase())) {
       return false;
     }
-    if (statusFilter && t.status !== statusFilter) return false;
     return true;
   });
 
@@ -81,7 +79,7 @@ export function TenantsListPage() {
               {
                 title: 'Status',
                 dataIndex: 'status',
-                render: (s: TenantStatus) => <StatusBadge status={s} />,
+                render: (s: string) => <StatusBadge status={s as never} />,
               },
               { title: 'Plan', dataIndex: 'plan', render: (p) => p.toUpperCase() },
               { title: 'Seats', dataIndex: 'seats', align: 'right' },

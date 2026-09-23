@@ -6,7 +6,14 @@ import { forwardRef, type ReactNode } from 'react';
 import { Tag as AntTag } from 'antd';
 import type { TagProps as AntTagProps } from 'antd';
 
-export type TagVariant = 'default' | 'success' | 'warning' | 'error' | 'info' | 'processing';
+export type TagVariant =
+  | 'default'
+  | 'neutral'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info'
+  | 'processing';
 
 export interface TagProps extends Omit<AntTagProps, 'color'> {
   variant?: TagVariant;
@@ -26,6 +33,7 @@ function resolveColor(variant: TagVariant): string {
     case 'error':      return 'error';
     case 'info':       return 'processing';
     case 'processing': return 'processing';
+    case 'neutral':    return 'default';
     default:           return 'default';
   }
 }

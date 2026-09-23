@@ -96,7 +96,7 @@ export function SettingsPage() {
           </FormSection>
 
           <Form.Item style={{ marginTop: 24, textAlign: 'right' }}>
-            <Button type="submit" variant="primary">
+            <Button htmlType="submit" variant="primary">
               Save
             </Button>
           </Form.Item>

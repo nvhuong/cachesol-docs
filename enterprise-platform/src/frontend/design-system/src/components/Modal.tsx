@@ -30,10 +30,6 @@ function resolveWidth(size: ModalSize): number | string {
   return modalSize[size];
 }
 
-function resolveOkButtonType(variant: ModalVariant) {
-  return variant === 'destructive' ? 'primary' : 'primary';
-}
-
 function resolveOkButtonDanger(variant: ModalVariant) {
   return variant === 'destructive';
 }

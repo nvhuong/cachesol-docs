@@ -77,7 +77,6 @@ export function ConfirmModal({
           value={typed}
           onChange={(e) => setTyped(e.target.value)}
           placeholder={confirmText}
-          fullWidth={false}
         />
       )}
     </Modal>

@@ -1,6 +1,9 @@
 /**
  * Admin-facing types — audit, providers, settings.
  */
+import type { SubscriptionPlan } from './tenant.types';
+export type { SubscriptionPlan } from './tenant.types';
+
 export type AuditCategory =
   | 'tenant.create'
   | 'tenant.update'

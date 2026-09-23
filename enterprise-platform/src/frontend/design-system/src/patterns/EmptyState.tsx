@@ -8,7 +8,8 @@ export type EmptyStateType =
   | 'no-data'        // New / fresh list
   | 'no-results'     // Search returned nothing
   | 'permission'     // User lacks access
-  | 'error';         // System error
+  | 'error'          // System error
+  | 'not-found';     // Resource does not exist
 
 export interface EmptyStateProps {
   type?: EmptyStateType;
@@ -35,13 +36,19 @@ const DEFAULTS: Record<EmptyStateType, { title: string; description: string }> =
     title: 'Something went wrong',
     description: 'Please try again or contact support.',
   },
+  'not-found': {
+    title: 'Not found',
+    description: 'The resource you are looking for does not exist.',
+  },
 };
+
 
 const DEFAULT_ICONS: Record<EmptyStateType, string> = {
   'no-data': '📋',
   'no-results': '🔍',
   'permission': '🔒',
   'error': '⚠',
+  'not-found': '🔎',
 };
 
 export function EmptyState({

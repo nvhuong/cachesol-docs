@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Input, Space, Table, Tag, Avatar, Switch, App } from 'antd';
+import { Card, Input, Space, Table, Tag, Avatar, App } from 'antd';
 import { SearchOutlined, SyncOutlined } from '@ant-design/icons';
 import {
   PageHeader,
@@ -12,12 +12,12 @@ import { formatDate } from '@cachesol/shared-ui';
 import { fetchMockEmployees } from '../../api/mock-data';
 import type { Employee } from '../../types/employee.types';
 
-const STATUS_COLOR: Record<string, string> = {
-  active: 'green',
-  onboarding: 'blue',
-  'on-leave': 'orange',
-  probation: 'gold',
-  terminated: 'red',
+const STATUS_COLOR: Record<string, 'success' | 'info' | 'warning' | 'neutral' | 'error'> = {
+  active: 'success',
+  onboarding: 'info',
+  'on-leave': 'warning',
+  probation: 'warning',
+  terminated: 'error',
 };
 
 function getInitials(name: string): string {
