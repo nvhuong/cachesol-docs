@@ -1,24 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Card, Input, Space, Table, Tag, Avatar, App } from 'antd';
-import { SearchOutlined, SyncOutlined } from '@ant-design/icons';
+import { Table, Tag, Avatar, App } from 'antd';
+import { SyncOutlined } from '@ant-design/icons';
 import {
-  PageHeader,
+  ListPage as DSListPage,
   StatusBadge,
-  LoadingState,
-  EmptyState,
   Button,
 } from '@cachesol/design-system';
 import { formatDate } from '@cachesol/shared-ui';
 import { fetchMockEmployees } from '../../api/mock-data';
 import type { Employee } from '../../types/employee.types';
-
-const STATUS_COLOR: Record<string, 'success' | 'info' | 'warning' | 'neutral' | 'error'> = {
-  active: 'success',
-  onboarding: 'info',
-  'on-leave': 'warning',
-  probation: 'warning',
-  terminated: 'error',
-};
 
 function getInitials(name: string): string {
   return name
@@ -47,8 +37,6 @@ export function EmployeesListPage() {
     `${e.fullName} ${e.email} ${e.employeeCode}`.toLowerCase().includes(keyword.toLowerCase()),
   );
 
-  if (loading) return <LoadingState shape="page" />;
-
   const handleSync = (e: Employee) => {
     message.loading({ content: `Syncing ${e.email} to Keycloak...`, key: 'sync', duration: 0 });
     setTimeout(() => {
@@ -64,96 +52,92 @@ export function EmployeesListPage() {
   };
 
   return (
-    <>
-      <PageHeader
-        title="Employees"
-        description={`${filtered.length}/${employees.length} employees`}
-        breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Employees' }]}
+    <DSListPage
+      title="Employees"
+      description={`${filtered.length}/${employees.length} employees`}
+      breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Employees' }]}
+      toolbar={{
+        searchPlaceholder: 'Tìm theo tên, email, mã NV...',
+        searchValue: keyword,
+        onSearchChange: setKeyword,
+      }}
+      loading={loading}
+      hasData={filtered.length > 0}
+      emptyType="no-results"
+      emptyTitle="Không có employee nào khớp"
+      pagination={{
+        page: 1,
+        pageSize: 20,
+        total: filtered.length,
+        onChange: () => undefined,
+      }}
+    >
+      <Table<Employee>
+        rowKey="id"
+        dataSource={filtered}
+        pagination={{ pageSize: 20, showSizeChanger: true }}
+        columns={[
+          {
+            title: 'Employee',
+            dataIndex: 'fullName',
+            render: (_, r) => (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Avatar style={{ backgroundColor: 'var(--color-brand-600)' }}>
+                  {getInitials(r.fullName)}
+                </Avatar>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{r.fullName}</div>
+                  <code style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                    {r.employeeCode}
+                  </code>
+                </div>
+              </div>
+            ),
+          },
+          { title: 'Email', dataIndex: 'email' },
+          {
+            title: 'Status',
+            dataIndex: 'status',
+            render: (s: string) => <StatusBadge status={s as any} />,
+          },
+          {
+            title: 'Employment',
+            dataIndex: 'employmentType',
+            render: (t: string) => <Tag>{t}</Tag>,
+          },
+          {
+            title: 'Joined',
+            dataIndex: 'dateOfJoining',
+            render: (v: string) => formatDate(v, 'DD/MM/YYYY'),
+          },
+          {
+            title: 'Keycloak',
+            dataIndex: 'keycloakSynced',
+            render: (_, r) =>
+              r.keycloakSynced ? (
+                <Tag color="green">Synced {r.lastSyncedAt ? formatDate(r.lastSyncedAt, 'DD/MM HH:mm') : ''}</Tag>
+              ) : (
+                <Tag color="orange">Not synced</Tag>
+              ),
+          },
+          {
+            title: '',
+            key: 'actions',
+            render: (_, r) =>
+              r.keycloakSynced ? null : (
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  icon={<SyncOutlined />}
+                  onClick={() => handleSync(r)}
+                >
+                  Sync
+                </Button>
+              ),
+          },
+        ]}
       />
-
-      <Card>
-        <Space style={{ marginBottom: 16 }}>
-          <Input
-            prefix={<SearchOutlined />}
-            placeholder="Tìm theo tên, email, mã NV..."
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            allowClear
-            style={{ width: 320 }}
-          />
-        </Space>
-
-        {filtered.length === 0 ? (
-          <EmptyState type="no-results" title="Không có employee nào khớp" />
-        ) : (
-          <Table<Employee>
-            rowKey="id"
-            dataSource={filtered}
-            pagination={{ pageSize: 20, showSizeChanger: true }}
-            columns={[
-              {
-                title: 'Employee',
-                dataIndex: 'fullName',
-                render: (_, r) => (
-                  <Space>
-                    <Avatar style={{ backgroundColor: 'var(--color-brand-600)' }}>
-                      {getInitials(r.fullName)}
-                    </Avatar>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{r.fullName}</div>
-                      <code style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-                        {r.employeeCode}
-                      </code>
-                    </div>
-                  </Space>
-                ),
-              },
-              { title: 'Email', dataIndex: 'email' },
-              {
-                title: 'Status',
-                dataIndex: 'status',
-                render: (s: string) => <StatusBadge status={s as any} />,
-              },
-              {
-                title: 'Employment',
-                dataIndex: 'employmentType',
-                render: (t: string) => <Tag>{t}</Tag>,
-              },
-              {
-                title: 'Joined',
-                dataIndex: 'dateOfJoining',
-                render: (v: string) => formatDate(v, 'DD/MM/YYYY'),
-              },
-              {
-                title: 'Keycloak',
-                dataIndex: 'keycloakSynced',
-                render: (_, r) =>
-                  r.keycloakSynced ? (
-                    <Tag color="green">Synced {r.lastSyncedAt ? formatDate(r.lastSyncedAt, 'DD/MM HH:mm') : ''}</Tag>
-                  ) : (
-                    <Tag color="orange">Not synced</Tag>
-                  ),
-              },
-              {
-                title: '',
-                key: 'actions',
-                render: (_, r) =>
-                  r.keycloakSynced ? null : (
-                    <Button
-                      variant="tertiary"
-                      size="sm"
-                      icon={<SyncOutlined />}
-                      onClick={() => handleSync(r)}
-                    >
-                      Sync
-                    </Button>
-                  ),
-              },
-            ]}
-          />
-        )}
-      </Card>
-    </>
+    </DSListPage>
   );
 }
 

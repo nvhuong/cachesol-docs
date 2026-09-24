@@ -1,6 +1,6 @@
-import { Card, Table, Tag, Space, App } from 'antd';
+import { Table, Tag, Space, App } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { PageHeader, Button } from '@cachesol/design-system';
+import { ListPage as DSListPage, Button } from '@cachesol/design-system';
 
 interface Role {
   id: string;
@@ -23,62 +23,59 @@ export function RolesPage() {
   const { message } = App.useApp();
 
   return (
-    <>
-      <PageHeader
-        title="Roles & permissions"
-        description={`${MOCK_ROLES.length} roles`}
-        breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Roles' }]}
-        actions={
-          <Button
-            variant="primary"
-            icon={<PlusOutlined />}
-            onClick={() => message.info('Open role builder modal (TODO)')}
-          >
-            New role
-          </Button>
-        }
+    <DSListPage
+      title="Roles & permissions"
+      description={`${MOCK_ROLES.length} roles`}
+      breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Roles' }]}
+      primaryAction={
+        <Button
+          variant="primary"
+          icon={<PlusOutlined />}
+          onClick={() => message.info('Open role builder modal (TODO)')}
+        >
+          New role
+        </Button>
+      }
+      hasData
+    >
+      <Table<Role>
+        rowKey="id"
+        dataSource={MOCK_ROLES}
+        pagination={false}
+        columns={[
+          {
+            title: 'Role',
+            dataIndex: 'name',
+            render: (v: string, r) => (
+              <Space direction="vertical" size={0}>
+                <strong><code>{v}</code></strong>
+                <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>{r.description}</span>
+              </Space>
+            ),
+          },
+          {
+            title: 'Scopes',
+            dataIndex: 'scopes',
+            render: (scopes: string[]) => (
+              <Space wrap>
+                {scopes.length > 4 ? (
+                  <>
+                    {scopes.slice(0, 3).map((s) => (<Tag key={s}>{s}</Tag>))}
+                    <Tag>+{scopes.length - 3}</Tag>
+                  </>
+                ) : scopes.map((s) => (<Tag key={s}>{s}</Tag>))}
+              </Space>
+            ),
+          },
+          { title: 'Users', dataIndex: 'userCount', align: 'right' },
+          {
+            title: 'Type',
+            dataIndex: 'builtIn',
+            render: (v: boolean) => v ? <Tag color="blue">Built-in</Tag> : <Tag color="purple">Custom</Tag>,
+          },
+        ]}
       />
-
-      <Card>
-        <Table<Role>
-          rowKey="id"
-          dataSource={MOCK_ROLES}
-          pagination={false}
-          columns={[
-            {
-              title: 'Role',
-              dataIndex: 'name',
-              render: (v: string, r) => (
-                <Space direction="vertical" size={0}>
-                  <strong><code>{v}</code></strong>
-                  <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>{r.description}</span>
-                </Space>
-              ),
-            },
-            {
-              title: 'Scopes',
-              dataIndex: 'scopes',
-              render: (scopes: string[]) => (
-                <Space wrap>
-                  {scopes.length > 4 ? (
-                    <>
-                      {scopes.slice(0, 3).map((s) => (<Tag key={s}>{s}</Tag>))}
-                      <Tag>+{scopes.length - 3}</Tag>
-                    </>
-                  ) : scopes.map((s) => (<Tag key={s}>{s}</Tag>))}
-                </Space>
-              ),
-            },
-            { title: 'Users', dataIndex: 'userCount', align: 'right' },
-            {
-              title: 'Type',
-              dataIndex: 'builtIn',
-              render: (v: boolean) => v ? <Tag color="blue">Built-in</Tag> : <Tag color="purple">Custom</Tag>,
-            },
-          ]}
-        />
-      </Card>
-    </>
+    </DSListPage>
   );
 }
 

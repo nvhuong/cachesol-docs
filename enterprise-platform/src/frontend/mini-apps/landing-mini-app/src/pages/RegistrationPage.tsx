@@ -7,7 +7,6 @@ import {
   Checkbox,
   App as AntApp,
   Steps,
-  Typography,
   Row,
   Col,
   Divider,
@@ -17,6 +16,7 @@ import {
   FormSection,
   DataCard,
   LoadingState,
+  Typography,
 } from '@cachesol/design-system';
 import { fetchMockCatalog } from '../api/mock-catalog';
 import { submitMockRegistration } from '../api/mock-registration';

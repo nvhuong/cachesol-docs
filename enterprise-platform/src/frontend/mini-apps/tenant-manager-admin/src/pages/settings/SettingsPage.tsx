@@ -1,5 +1,5 @@
 import { Card, Form, Input, Switch, Select, App } from 'antd';
-import { PageHeader, FormSection, Button } from '@cachesol/design-system';
+import { FormPage as DSFormPage, FormSection, Button } from '@cachesol/design-system';
 
 interface TenantSettings {
   general: {
@@ -41,13 +41,13 @@ export function SettingsPage() {
   };
 
   return (
-    <>
-      <PageHeader
-        title="Settings"
-        description="Cấu hình tenant"
-        breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Settings' }]}
-      />
-
+    <DSFormPage
+      title="Settings"
+      description="Cấu hình tenant"
+      breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Settings' }]}
+      onSubmit={() => form.submit()}
+      submitLabel="Save"
+    >
       <Card>
         <Form<TenantSettings> form={form} layout="vertical" onFinish={onSave} initialValues={initial}>
           <FormSection title="General">
@@ -102,7 +102,7 @@ export function SettingsPage() {
           </Form.Item>
         </Form>
       </Card>
-    </>
+    </DSFormPage>
   );
 }
 

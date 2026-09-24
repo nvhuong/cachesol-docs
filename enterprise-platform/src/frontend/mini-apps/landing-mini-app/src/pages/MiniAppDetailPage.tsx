@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Typography, Space, Row, Col } from 'antd';
+import { Typography } from '@cachesol/design-system';
+import { Row, Col } from 'antd';
 import { Button, Tag, LoadingState, EmptyState } from '@cachesol/design-system';
 import { formatCurrency, formatDate } from '@cachesol/shared-ui';
 import { fetchMockApp } from '../api/mock-catalog';
@@ -47,7 +48,7 @@ export function MiniAppDetailPage() {
       <div className="cs-landing__container">
         <Row gutter={[40, 40]}>
           <Col xs={24} md={14}>
-            <Space direction="vertical" size={20} style={{ width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, width: '100%' }}>
               <Tag variant="info">{app.category.toUpperCase()}</Tag>
               <Title level={1} style={{ margin: 0 }}>
                 {app.name}
@@ -58,14 +59,16 @@ export function MiniAppDetailPage() {
               <Paragraph>{app.description}</Paragraph>
 
               <div>
-                <Title level={4}>Tính năng nổi bật</Title>
-                <ul style={{ paddingLeft: 20 }}>
+                <Title level={4} style={{ margin: '0 0 var(--spacing-2)' }}>
+                  Tính năng nổi bật
+                </Title>
+                <ul style={{ paddingLeft: 20, margin: 0 }}>
                   {app.features.map((f) => (
                     <li key={f}>{f}</li>
                   ))}
                 </ul>
               </div>
-            </Space>
+            </div>
           </Col>
 
           <Col xs={24} md={10}>
@@ -81,7 +84,14 @@ export function MiniAppDetailPage() {
                 <Paragraph type="secondary">Tối thiểu {app.minSeats} người dùng</Paragraph>
               )}
 
-              <Space direction="vertical" size={12} style={{ width: '100%' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                  width: '100%',
+                }}
+              >
                 <Link to={`/register?apps=${app.id}`}>
                   <Button variant="primary" size="lg" block>
                     Đăng ký dùng {app.name}
@@ -92,7 +102,7 @@ export function MiniAppDetailPage() {
                     Xem các mini-app khác
                   </Button>
                 </Link>
-              </Space>
+              </div>
 
               <div className="cs-landing-detail__meta">
                 <div>

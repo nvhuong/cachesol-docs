@@ -1,26 +1,30 @@
 import { useLocation, Link } from 'react-router-dom';
-import { Result, Typography, Space, Descriptions } from 'antd';
+import { Result, Descriptions } from 'antd';
+import { Typography } from '@cachesol/design-system';
 import { Button, DataCard } from '@cachesol/design-system';
-import type { RegistrationResponse } from '../types/registration.types';
 
 const { Title } = Typography;
 
 export function RegistrationSuccessPage() {
   const location = useLocation();
-  const state = location.state as RegistrationResponse | null;
+  const state = location.state as { tenantId: string; tenantSlug: string; adminUrl: string; contactEmail: string; provisioningEta?: string } | null;
 
   if (!state) {
     return (
-      <Result
-        status="info"
-        title="Đăng ký thành công"
-        subTitle="Bạn đã đăng ký thành công. Vui lòng kiểm tra email để xem thông tin tenant."
-        extra={
-          <Link to="/">
-            <Button variant="primary">Về trang chủ</Button>
-          </Link>
-        }
-      />
+      <main className="cs-landing">
+        <div className="cs-landing__container" style={{ maxWidth: 720, paddingTop: 80 }}>
+          <Result
+            status="info"
+            title="Đăng ký thành công"
+            subTitle="Bạn đã đăng ký thành công. Vui lòng kiểm tra email để xem thông tin tenant."
+            extra={
+              <Link to="/">
+                <Button variant="primary">Về trang chủ</Button>
+              </Link>
+            }
+          />
+        </div>
+      </main>
     );
   }
 
@@ -33,7 +37,7 @@ export function RegistrationSuccessPage() {
             title="Tenant đã được tạo!"
             subTitle={`Thời gian khởi tạo ước tính: ${state.provisioningEta}`}
             extra={
-              <Space>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <Button
                   variant="primary"
                   onClick={() => window.open(state.adminUrl, '_blank')}
@@ -43,7 +47,7 @@ export function RegistrationSuccessPage() {
                 <Link to="/">
                   <Button variant="tertiary">Về trang chủ</Button>
                 </Link>
-              </Space>
+              </div>
             }
           />
 

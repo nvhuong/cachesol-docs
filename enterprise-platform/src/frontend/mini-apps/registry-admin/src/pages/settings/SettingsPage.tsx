@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Card, Form, Input, Switch, Select, App } from 'antd';
-import { PageHeader, FormSection, Button, LoadingState } from '@cachesol/design-system';
+import { FormPage as DSFormPage, FormSection, Button } from '@cachesol/design-system';
 import { fetchMockSettings } from '../../api/mock-data';
 import type { RegistrySettings } from '../../types/admin.types';
 
 export function SettingsPage() {
   const { message } = App.useApp();
   const [form] = Form.useForm<RegistrySettings>();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<RegistrySettings | null>(null);
 
@@ -15,7 +14,6 @@ export function SettingsPage() {
     fetchMockSettings().then((s) => {
       form.setFieldsValue(s);
       setSettings(s);
-      setLoading(false);
     });
   }, [form]);
 
@@ -30,16 +28,17 @@ export function SettingsPage() {
     }
   };
 
-  if (loading || !settings) return <LoadingState shape="page" />;
+  if (!settings) return null;
 
   return (
-    <>
-      <PageHeader
-        title="Settings"
-        description="Cấu hình chung cho Platform Registry"
-        breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Settings' }]}
-      />
-
+    <DSFormPage
+      title="Settings"
+      description="Cấu hình chung cho Platform Registry"
+      breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Settings' }]}
+      onSubmit={() => form.submit()}
+      submitLabel="Save settings"
+      loading={saving}
+    >
       <Card>
         <Form<RegistrySettings> form={form} layout="vertical" onFinish={onSave}>
           <FormSection title="General" description="Thông tin liên hệ và support">
@@ -85,7 +84,7 @@ export function SettingsPage() {
           </Form.Item>
         </Form>
       </Card>
-    </>
+    </DSFormPage>
   );
 }
 

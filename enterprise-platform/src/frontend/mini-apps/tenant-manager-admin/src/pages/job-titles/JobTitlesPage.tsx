@@ -1,6 +1,6 @@
-import { Card, Table, Tag, App } from 'antd';
+import { Table, Tag, App } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { PageHeader, Button } from '@cachesol/design-system';
+import { ListPage as DSListPage, Button } from '@cachesol/design-system';
 import { formatDate } from '@cachesol/shared-ui';
 
 const MOCK_JOB_TITLES = [
@@ -17,46 +17,43 @@ export function JobTitlesPage() {
   const { message } = App.useApp();
 
   return (
-    <>
-      <PageHeader
-        title="Job titles"
-        description={`${MOCK_JOB_TITLES.length} job titles`}
-        breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Job titles' }]}
-        actions={
-          <Button
-            variant="primary"
-            icon={<PlusOutlined />}
-            onClick={() => message.info('Open "New job title" modal (TODO)')}
-          >
-            New job title
-          </Button>
-        }
+    <DSListPage
+      title="Job titles"
+      description={`${MOCK_JOB_TITLES.length} job titles`}
+      breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Job titles' }]}
+      primaryAction={
+        <Button
+          variant="primary"
+          icon={<PlusOutlined />}
+          onClick={() => message.info('Open "New job title" modal (TODO)')}
+        >
+          New job title
+        </Button>
+      }
+      hasData
+    >
+      <Table
+        rowKey="id"
+        dataSource={MOCK_JOB_TITLES}
+        pagination={false}
+        columns={[
+          { title: 'Code', dataIndex: 'code', render: (v: string) => <code>{v}</code> },
+          { title: 'Title', dataIndex: 'name', render: (v: string) => <strong>{v}</strong> },
+          { title: 'Level', dataIndex: 'level', render: (v: string) => <Tag color="blue">{v}</Tag> },
+          { title: 'Employees', dataIndex: 'employees', align: 'right' },
+          {
+            title: 'Active',
+            dataIndex: 'active',
+            render: (v: boolean) => v ? <Tag color="green">Active</Tag> : <Tag>Inactive</Tag>,
+          },
+          {
+            title: 'Created',
+            dataIndex: 'createdAt',
+            render: (v: string) => formatDate(v, 'DD/MM/YYYY'),
+          },
+        ]}
       />
-
-      <Card>
-        <Table
-          rowKey="id"
-          dataSource={MOCK_JOB_TITLES}
-          pagination={false}
-          columns={[
-            { title: 'Code', dataIndex: 'code', render: (v: string) => <code>{v}</code> },
-            { title: 'Title', dataIndex: 'name', render: (v: string) => <strong>{v}</strong> },
-            { title: 'Level', dataIndex: 'level', render: (v: string) => <Tag color="blue">{v}</Tag> },
-            { title: 'Employees', dataIndex: 'employees', align: 'right' },
-            {
-              title: 'Active',
-              dataIndex: 'active',
-              render: (v: boolean) => v ? <Tag color="green">Active</Tag> : <Tag>Inactive</Tag>,
-            },
-            {
-              title: 'Created',
-              dataIndex: 'createdAt',
-              render: (v: string) => formatDate(v, 'DD/MM/YYYY'),
-            },
-          ]}
-        />
-      </Card>
-    </>
+    </DSListPage>
   );
 }
 

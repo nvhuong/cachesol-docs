@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Space, Typography } from 'antd';
+import { Typography } from '@cachesol/design-system';
 import { LoadingState } from '@cachesol/design-system';
 import { fetchMockCatalog } from '../api/mock-catalog';
 import type { PublicMiniApp } from '../types/miniapp-catalog.types';
@@ -7,7 +7,7 @@ import HeroSection from '../sections/HeroSection';
 import MiniAppGrid from '../sections/MiniAppGrid';
 import FeatureHighlights from '../sections/FeatureHighlights';
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 export function LandingPage() {
   const [apps, setApps] = useState<PublicMiniApp[]>([]);
@@ -31,12 +31,19 @@ export function LandingPage() {
       <HeroSection />
 
       <section className="cs-landing__container">
-        <Space direction="vertical" size={48} style={{ width: '100%' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 48,
+            width: '100%',
+          }}
+        >
           <div>
-            <Title level={2} style={{ textAlign: 'center' }}>
+            <Title level={2} style={{ textAlign: 'center', margin: 0 }}>
               Các mini-app có sẵn
             </Title>
-            <p
+            <Paragraph
               style={{
                 textAlign: 'center',
                 color: 'var(--color-text-secondary)',
@@ -44,7 +51,7 @@ export function LandingPage() {
               }}
             >
               Chọn những mini-app bạn cần — kích hoạt theo nhu cầu.
-            </p>
+            </Paragraph>
             {isLoading ? (
               <LoadingState shape="section" label="Đang tải danh sách mini-app..." />
             ) : (
@@ -53,7 +60,7 @@ export function LandingPage() {
           </div>
 
           <FeatureHighlights />
-        </Space>
+        </div>
       </section>
     </main>
   );

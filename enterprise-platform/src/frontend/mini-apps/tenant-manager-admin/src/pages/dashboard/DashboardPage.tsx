@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Row, Col, Card } from 'antd';
-import { KPI, LoadingState, PageHeader, StatusBadge, Timeline } from '@cachesol/design-system';
+import {
+  DashboardPage as DSDashboardPage,
+  KPI,
+  LoadingState,
+  StatusBadge,
+  Timeline,
+} from '@cachesol/design-system';
 import { formatNumber, formatRelative } from '@cachesol/shared-ui';
 import { fetchMockEmployees, fetchMockAudit, fetchMockProvisioning } from '../../api/mock-data';
 
@@ -19,7 +25,16 @@ export function DashboardPage() {
     });
   }, []);
 
-  if (loading) return <LoadingState shape="page" />;
+  if (loading) {
+    return (
+      <DSDashboardPage
+        title="Dashboard"
+        description="Tổng quan Tenant Manager"
+        breadcrumb={[{ label: 'Home' }]}
+        loading
+      />
+    );
+  }
 
   const active = employees.filter((e) => e.status === 'active').length;
   const onboarding = employees.filter((e) => e.status === 'onboarding').length;
@@ -28,85 +43,81 @@ export function DashboardPage() {
   const failedProvisioning = provisioning.filter((p) => p.state === 'failed').length;
   const synced = employees.filter((e) => e.keycloakSynced).length;
 
-  return (
+  const kpis = (
     <>
-      <PageHeader
-        title="Dashboard"
-        description="Tổng quan Tenant Manager"
-        breadcrumb={[{ label: 'Home' }]}
+      <KPI label="Employees" value={formatNumber(employees.length)} comparison="tổng" />
+      <KPI label="Active" value={formatNumber(active)} comparison="đang làm việc" />
+      <KPI label="Keycloak synced" value={`${synced}/${employees.length}`} comparison="tỷ lệ đồng bộ" />
+      <KPI
+        label="Provisioning"
+        value={inProgress}
+        comparison="đang chạy"
+        trend={failedProvisioning > 0 ? `${failedProvisioning} failed` : undefined}
+        trendDirection={failedProvisioning > 0 ? 'down' : 'flat'}
       />
-
-      <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} md={6}>
-          <KPI label="Employees" value={formatNumber(employees.length)} comparison="tổng" />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <KPI label="Active" value={formatNumber(active)} comparison="đang làm việc" />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <KPI label="Keycloak synced" value={`${synced}/${employees.length}`} comparison="tỷ lệ đồng bộ" />
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <KPI
-            label="Provisioning"
-            value={inProgress}
-            comparison="đang chạy"
-            trend={failedProvisioning > 0 ? `${failedProvisioning} failed` : undefined}
-            trendDirection={failedProvisioning > 0 ? 'down' : 'flat'}
-          />
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col xs={24} md={8}>
-          <Card title="Trạng thái employee">
-            <Row gutter={[8, 12]}>
-              <Col span={12}>
-                <StatusBadge status="active" /> {active}
-              </Col>
-              <Col span={12}>
-                <StatusBadge status="pending" /> {onboarding}
-              </Col>
-              <Col span={12}>
-                <StatusBadge status="warning" /> {onLeave}
-              </Col>
-              <Col span={12}>
-                <StatusBadge status="error" /> {employees.length - active - onboarding - onLeave}
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-
-        <Col xs={24} md={8}>
-          <Card title="Provisioning jobs" loading={loading}>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {provisioning.slice(0, 5).map((p) => (
-                <li key={p.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--color-border-subtle)' }}>
-                  <div style={{ fontWeight: 600 }}>{p.miniAppId} · {p.tenantId}</div>
-                  <div style={{ fontSize: 'var(--font-size-caption)', color: 'var(--color-text-tertiary)' }}>
-                    {p.state} · {formatRelative(p.startedAt)}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </Col>
-
-        <Col xs={24} md={8}>
-          <Card title="Hoạt động gần đây" loading={loading}>
-            <Timeline
-              items={audit.slice(0, 5).map((a) => ({
-                id: a.id,
-                actor: a.actor.name ?? a.actor.email,
-                time: a.timestamp,
-                action: a.action,
-                subject: a.description,
-              }))}
-            />
-          </Card>
-        </Col>
-      </Row>
     </>
+  );
+
+  const secondaryContent = (
+    <Row gutter={[16, 16]}>
+      <Col xs={24} md={8}>
+        <Card title="Trạng thái employee">
+          <Row gutter={[8, 12]}>
+            <Col span={12}>
+              <StatusBadge status="active" /> {active}
+            </Col>
+            <Col span={12}>
+              <StatusBadge status="pending" /> {onboarding}
+            </Col>
+            <Col span={12}>
+              <StatusBadge status="warning" /> {onLeave}
+            </Col>
+            <Col span={12}>
+              <StatusBadge status="error" /> {employees.length - active - onboarding - onLeave}
+            </Col>
+          </Row>
+        </Card>
+      </Col>
+
+      <Col xs={24} md={8}>
+        <Card title="Provisioning jobs" loading={loading}>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {provisioning.slice(0, 5).map((p) => (
+              <li key={p.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--color-border-subtle)' }}>
+                <div style={{ fontWeight: 600 }}>{p.miniAppId} · {p.tenantId}</div>
+                <div style={{ fontSize: 'var(--font-size-caption)', color: 'var(--color-text-tertiary)' }}>
+                  {p.state} · {formatRelative(p.startedAt)}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </Col>
+
+      <Col xs={24} md={8}>
+        <Card title="Hoạt động gần đây" loading={loading}>
+          <Timeline
+            items={audit.slice(0, 5).map((a) => ({
+              id: a.id,
+              actor: a.actor.name ?? a.actor.email,
+              time: a.timestamp,
+              action: a.action,
+              subject: a.description,
+            }))}
+          />
+        </Card>
+      </Col>
+    </Row>
+  );
+
+  return (
+    <DSDashboardPage
+      title="Dashboard"
+      description="Tổng quan Tenant Manager"
+      breadcrumb={[{ label: 'Home' }]}
+      kpis={kpis}
+      secondaryContent={secondaryContent}
+    />
   );
 }
 

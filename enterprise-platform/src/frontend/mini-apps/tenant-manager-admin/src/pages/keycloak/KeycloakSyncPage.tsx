@@ -1,6 +1,6 @@
-import { Card, Table, Tag, App } from 'antd';
+import { Table, Tag, Space, App } from 'antd';
 import { CloudSyncOutlined } from '@ant-design/icons';
-import { PageHeader, StatusBadge, KPI, Button } from '@cachesol/design-system';
+import { ListPage as DSListPage, StatusBadge, KPI, Button } from '@cachesol/design-system';
 import { formatDateTime, formatRelative } from '@cachesol/shared-ui';
 
 interface SyncRecord {
@@ -28,55 +28,52 @@ export function KeycloakSyncPage() {
   const failed = MOCK_SYNC.filter((s) => s.state === 'failed').length;
 
   return (
-    <>
-      <PageHeader
-        title="Keycloak sync"
-        description="Quản lý đồng bộ user từ Tenant Manager sang Keycloak realm"
-        breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Keycloak sync' }]}
-        actions={
-          <Button
-            variant="primary"
-            icon={<CloudSyncOutlined />}
-            onClick={() => message.loading({ content: 'Running full sync...', key: 'sync', duration: 0 })}
-          >
-            Run full sync
-          </Button>
-        }
-      />
-
+    <DSListPage
+      title="Keycloak sync"
+      description="Quản lý đồng bộ user từ Tenant Manager sang Keycloak realm"
+      breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Keycloak sync' }]}
+      primaryAction={
+        <Button
+          variant="primary"
+          icon={<CloudSyncOutlined />}
+          onClick={() => message.loading({ content: 'Running full sync...', key: 'sync', duration: 0 })}
+        >
+          Run full sync
+        </Button>
+      }
+      hasData
+    >
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 16 }}>
         <KPI label="Last sync" value={formatRelative(MOCK_SYNC[0].timestamp)} comparison="employees → Keycloak" />
         <KPI label="Success rate" value={`${Math.round((success / MOCK_SYNC.length) * 100)}%`} comparison={`${success} of ${MOCK_SYNC.length}`} />
         <KPI label="Failed" value={failed} comparison="cần retry" />
       </div>
 
-      <Card title="Recent sync operations">
-        <Table<SyncRecord>
-          rowKey="id"
-          dataSource={MOCK_SYNC}
-          pagination={false}
-          columns={[
-            { title: 'Time', dataIndex: 'timestamp', render: (v: string) => formatDateTime(v), width: 180 },
-            { title: 'Employee', dataIndex: 'employeeCode', render: (v: string, r) => <span><strong>{v}</strong> <code style={{ fontSize: 12 }}>{r.email}</code></span> },
-            {
-              title: 'Operation',
-              dataIndex: 'operation',
-              render: (op: string) => <Tag color={op === 'create' ? 'green' : op === 'update' ? 'blue' : op === 'delete' ? 'red' : 'default'}>{op}</Tag>,
-            },
-            {
-              title: 'State',
-              dataIndex: 'state',
-              render: (s: string) => <StatusBadge status={s === 'success' ? 'active' : s === 'pending' ? 'pending' : 'error'} />,
-            },
-            {
-              title: 'Message',
-              dataIndex: 'message',
-              render: (v?: string) => v ? <span style={{ color: 'var(--color-status-error-text)' }}>{v}</span> : <span style={{ color: 'var(--color-text-disabled)' }}>—</span>,
-            },
-          ]}
-        />
-      </Card>
-    </>
+      <Table<SyncRecord>
+        rowKey="id"
+        dataSource={MOCK_SYNC}
+        pagination={false}
+        columns={[
+          { title: 'Time', dataIndex: 'timestamp', render: (v: string) => formatDateTime(v), width: 180 },
+          { title: 'Employee', dataIndex: 'employeeCode', render: (v: string, r) => <span><strong>{v}</strong> <code style={{ fontSize: 12 }}>{r.email}</code></span> },
+          {
+            title: 'Operation',
+            dataIndex: 'operation',
+            render: (op: string) => <Tag color={op === 'create' ? 'green' : op === 'update' ? 'blue' : op === 'delete' ? 'red' : 'default'}>{op}</Tag>,
+          },
+          {
+            title: 'State',
+            dataIndex: 'state',
+            render: (s: string) => <StatusBadge status={s === 'success' ? 'active' : s === 'pending' ? 'pending' : 'error'} />,
+          },
+          {
+            title: 'Message',
+            dataIndex: 'message',
+            render: (v?: string) => v ? <span style={{ color: 'var(--color-status-error-text)' }}>{v}</span> : <span style={{ color: 'var(--color-text-disabled)' }}>—</span>,
+          },
+        ]}
+      />
+    </DSListPage>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Card, Table, Tag, Tree } from 'antd';
+import { Card, Table, Tree } from 'antd';
 import { ClusterOutlined, TeamOutlined, EnvironmentOutlined } from '@ant-design/icons';
-import { PageHeader, LoadingState, EmptyState } from '@cachesol/design-system';
+import { ListPage as DSListPage, EmptyState, Tag } from '@cachesol/design-system';
 import { fetchMockOrgs } from '../../api/mock-data';
 import type { Organization } from '../../types/organization.types';
 
@@ -51,18 +51,18 @@ export function OrganizationsListPage() {
     });
   }, []);
 
-  if (loading) return <LoadingState shape="page" />;
-
   const tree = buildTree(orgs);
 
   return (
-    <>
-      <PageHeader
-        title="Organizations"
-        description={`${orgs.length} org units`}
-        breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Organizations' }]}
-      />
-
+    <DSListPage
+      title="Organizations"
+      description={`${orgs.length} org units`}
+      breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Organizations' }]}
+      loading={loading}
+      hasData={orgs.length > 0}
+      emptyType="no-data"
+      emptyTitle="Chưa có organization nào"
+    >
       <Card title="Org tree">
         {tree.length === 0 ? (
           <EmptyState type="no-data" title="Chưa có organization nào" />
@@ -87,7 +87,7 @@ export function OrganizationsListPage() {
               dataIndex: 'name',
               render: (_, r) => (
                 <span>
-                  <Tag color={r.type === 'company' ? 'blue' : r.type === 'location' ? 'green' : 'default'}>
+                  <Tag variant={r.type === 'company' ? 'info' : r.type === 'location' ? 'success' : 'default'}>
                     {r.type}
                   </Tag>{' '}
                   <strong>{r.name}</strong>{' '}
@@ -99,12 +99,12 @@ export function OrganizationsListPage() {
             {
               title: 'Active',
               dataIndex: 'active',
-              render: (v: boolean) => v ? <Tag color="green">Active</Tag> : <Tag>Inactive</Tag>,
+              render: (v: boolean) => v ? <Tag variant="success">Active</Tag> : <Tag>Inactive</Tag>,
             },
           ]}
         />
       </Card>
-    </>
+    </DSListPage>
   );
 }
 

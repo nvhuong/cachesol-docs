@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, Descriptions, App, Space } from 'antd';
-import { Button, StatusBadge, LoadingState, EmptyState, PageHeader, DetailField, Tag, Timeline } from '@cachesol/design-system';
+import {
+  DetailPage as DSDetailPage,
+  Button,
+  StatusBadge,
+  EmptyState,
+  Tag,
+  Timeline,
+} from '@cachesol/design-system';
 import { formatCurrency, formatDate } from '@cachesol/shared-ui';
 import { fetchMockTenant } from '../../api/mock-data';
 import type { Tenant } from '../../types/tenant.types';
@@ -21,63 +28,69 @@ export function TenantDetailPage() {
     });
   }, [id]);
 
-  if (loading) return <LoadingState shape="page" />;
+  const handleSuspend = () => {
+    if (tenant) {
+      message.warning(`Đã gửi yêu cầu suspend tenant ${tenant.slug} (mock).`);
+    }
+  };
+
   if (!tenant) {
     return (
-      <EmptyState
-        type="not-found"
-        title="Không tìm thấy tenant"
-        action={<Link to="/tenants"><Button variant="primary">Quay lại</Button></Link>}
-      />
+      <div className="cs-page">
+        <EmptyState
+          type="not-found"
+          title="Không tìm thấy tenant"
+          action={<Link to="/tenants"><Button variant="primary">Quay lại</Button></Link>}
+        />
+      </div>
     );
   }
-
-  const handleSuspend = () => {
-    message.warning(`Đã gửi yêu cầu suspend tenant ${tenant.slug} (mock).`);
-  };
 
   const monthlyCost = tenant.enabledMiniApps.reduce(
     (sum, a) => sum + a.monthlyCost * a.seats,
     0,
   );
 
-  return (
-    <>
-      <PageHeader
-        title={tenant.name}
-        description={`Mã: ${tenant.slug} · ${tenant.country}`}
-        breadcrumb={[
-          { label: 'Home', href: '/' },
-          { label: 'Tenants', href: '/tenants' },
-          { label: tenant.slug },
-        ]}
-        actions={
-          <Space>
-            <Button variant="tertiary" onClick={() => navigate('/tenants')}>
-              Back
-            </Button>
-            <Button variant="destructive" onClick={handleSuspend}>
-              Suspend
-            </Button>
-            <Button
-              variant="primary"
-              onClick={() => window.open(`https://${tenant.slug}.cachesol.io/admin`, '_blank')}
-            >
-              Open admin
-            </Button>
-          </Space>
-        }
-        metadata={
-          <Space size={12} wrap>
-            <StatusBadge status={tenant.status} />
-            <Tag variant="info">{tenant.plan.toUpperCase()}</Tag>
-            <span>{tenant.enabledMiniApps.length} mini-apps active</span>
-            <span>·</span>
-            <span>MRR: {formatCurrency(monthlyCost, tenant.enabledMiniApps[0]?.currency ?? 'VND')}</span>
-          </Space>
-        }
-      />
+  const actions = (
+    <Space>
+      <Button variant="tertiary" onClick={() => navigate('/tenants')}>
+        Back
+      </Button>
+      <Button variant="destructive" onClick={handleSuspend}>
+        Suspend
+      </Button>
+      <Button
+        variant="primary"
+        onClick={() => window.open(`https://${tenant.slug}.cachesol.io/admin`, '_blank')}
+      >
+        Open admin
+      </Button>
+    </Space>
+  );
 
+  const metadata = (
+    <Space size={12} wrap>
+      <StatusBadge status={tenant.status} />
+      <Tag variant="info">{tenant.plan.toUpperCase()}</Tag>
+      <span>{tenant.enabledMiniApps.length} mini-apps active</span>
+      <span>·</span>
+      <span>MRR: {formatCurrency(monthlyCost, tenant.enabledMiniApps[0]?.currency ?? 'VND')}</span>
+    </Space>
+  );
+
+  return (
+    <DSDetailPage
+      title={tenant.name}
+      breadcrumb={[
+        { label: 'Home', href: '/' },
+        { label: 'Tenants', href: '/tenants' },
+        { label: tenant.slug },
+      ]}
+      status={tenant.status}
+      metadata={metadata}
+      actions={actions}
+      loading={loading}
+    >
       <Card title="Company info">
         <Descriptions column={2} size="small" bordered>
           <Descriptions.Item label="Legal name">{tenant.name}</Descriptions.Item>
@@ -109,19 +122,19 @@ export function TenantDetailPage() {
         ) : (
           <Space direction="vertical" style={{ width: '100%' }} size={8}>
             {tenant.enabledMiniApps.map((a) => (
-              <DetailField
+              <div
                 key={a.miniAppId}
-                label={a.miniAppId}
-                value={
-                  <Space size={16}>
-                    <span>{a.seats} seats</span>
-                    <span>·</span>
-                    <span>{formatCurrency(a.monthlyCost, a.currency)} / seat / month</span>
-                    <span>·</span>
-                    <span>enabled {formatDate(a.enabledAt, 'DD/MM/YYYY')}</span>
-                  </Space>
-                }
-              />
+                style={{ display: 'flex', gap: 16, padding: '8px 0', borderBottom: '1px solid var(--color-border-subtle)' }}
+              >
+                <div style={{ flex: '0 0 160px', color: 'var(--color-text-tertiary)' }}>{a.miniAppId}</div>
+                <div style={{ flex: 1 }}>
+                  <span>{a.seats} seats</span>
+                  <span>·</span>
+                  <span>{formatCurrency(a.monthlyCost, a.currency)} / seat / month</span>
+                  <span>·</span>
+                  <span>enabled {formatDate(a.enabledAt, 'DD/MM/YYYY')}</span>
+                </div>
+              </div>
             ))}
           </Space>
         )}
@@ -147,7 +160,7 @@ export function TenantDetailPage() {
           ]}
         />
       </Card>
-    </>
+    </DSDetailPage>
   );
 }
 

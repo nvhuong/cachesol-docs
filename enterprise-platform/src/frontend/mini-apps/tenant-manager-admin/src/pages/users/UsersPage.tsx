@@ -1,5 +1,5 @@
-import { Card, Table, Tag, Avatar, Space } from 'antd';
-import { PageHeader } from '@cachesol/design-system';
+import { Table, Tag, Avatar, Space } from 'antd';
+import { ListPage as DSListPage } from '@cachesol/design-system';
 import { formatDateTime, formatRelative } from '@cachesol/shared-ui';
 
 interface AppUser {
@@ -27,63 +27,60 @@ function getInitials(name: string): string {
 
 export function UsersPage() {
   return (
-    <>
-      <PageHeader
-        title="App users"
-        description={`${MOCK_USERS.length} users trong Keycloak realm`}
-        breadcrumb={[{ label: 'Home', href: '/' }, { label: 'App users' }]}
+    <DSListPage
+      title="App users"
+      description={`${MOCK_USERS.length} users trong Keycloak realm`}
+      breadcrumb={[{ label: 'Home', href: '/' }, { label: 'App users' }]}
+      hasData
+    >
+      <Table<AppUser>
+        rowKey="id"
+        dataSource={MOCK_USERS}
+        pagination={false}
+        columns={[
+          {
+            title: 'User',
+            dataIndex: 'email',
+            render: (_, r) => (
+              <Space>
+                <Avatar style={{ backgroundColor: 'var(--color-brand-600)' }}>{getInitials(r.fullName)}</Avatar>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{r.fullName}</div>
+                  <code style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>{r.email}</code>
+                </div>
+              </Space>
+            ),
+          },
+          {
+            title: 'Roles',
+            dataIndex: 'roles',
+            render: (roles: string[]) => (
+              <Space wrap>{roles.map((r) => <Tag color="blue" key={r}>{r}</Tag>)}</Space>
+            ),
+          },
+          {
+            title: 'Status',
+            dataIndex: 'enabled',
+            render: (_, r) =>
+              r.enabled ? (
+                <Tag color="green">Enabled</Tag>
+              ) : (
+                <Tag color="red">Disabled</Tag>
+              ),
+          },
+          {
+            title: 'Email',
+            dataIndex: 'emailVerified',
+            render: (v: boolean) => (v ? <Tag color="green">Verified</Tag> : <Tag color="orange">Unverified</Tag>),
+          },
+          {
+            title: 'Last login',
+            dataIndex: 'lastLoginAt',
+            render: (v?: string) => (v ? <span title={formatDateTime(v)}>{formatRelative(v)}</span> : '—'),
+          },
+        ]}
       />
-
-      <Card>
-        <Table<AppUser>
-          rowKey="id"
-          dataSource={MOCK_USERS}
-          pagination={false}
-          columns={[
-            {
-              title: 'User',
-              dataIndex: 'email',
-              render: (_, r) => (
-                <Space>
-                  <Avatar style={{ backgroundColor: 'var(--color-brand-600)' }}>{getInitials(r.fullName)}</Avatar>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{r.fullName}</div>
-                    <code style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>{r.email}</code>
-                  </div>
-                </Space>
-              ),
-            },
-            {
-              title: 'Roles',
-              dataIndex: 'roles',
-              render: (roles: string[]) => (
-                <Space wrap>{roles.map((r) => <Tag color="blue" key={r}>{r}</Tag>)}</Space>
-              ),
-            },
-            {
-              title: 'Status',
-              dataIndex: 'enabled',
-              render: (_, r) =>
-                r.enabled ? (
-                  <Tag color="green">Enabled</Tag>
-                ) : (
-                  <Tag color="red">Disabled</Tag>
-                ),
-            },
-            {
-              title: 'Email',
-              dataIndex: 'emailVerified',
-              render: (v: boolean) => (v ? <Tag color="green">Verified</Tag> : <Tag color="orange">Unverified</Tag>),
-            },
-            {
-              title: 'Last login',
-              dataIndex: 'lastLoginAt',
-              render: (v?: string) => (v ? <span title={formatDateTime(v)}>{formatRelative(v)}</span> : '—'),
-            },
-          ]}
-        />
-      </Card>
-    </>
+    </DSListPage>
   );
 }
 
