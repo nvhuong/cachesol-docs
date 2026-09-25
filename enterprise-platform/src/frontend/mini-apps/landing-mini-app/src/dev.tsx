@@ -12,6 +12,7 @@ import { RegistrationSuccessPage } from './pages/RegistrationSuccessPage';
 import '@cachesol/design-system/tokens.css';
 import '@cachesol/design-system/styles.css';
 import 'antd/dist/reset.css';
+import './styles/landing.css';
 
 function App() {
   return (

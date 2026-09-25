@@ -1,23 +1,14 @@
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
-import dts from 'vite-plugin-dts';
 
 export default defineConfig({
-  plugins: [
-    dts({
-      insertTypesEntry: true,
-      rollupTypes: true,
-    }),
-  ],
   build: {
+    // Source is consumed directly (main/module/types → src/index.ts).
+    // We don't emit a bundle — vite build is kept only as a future hook
+    // (e.g. for CSS extraction, ESM minification, etc.).
     lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
-      name: 'CacheSolSharedUI',
-      formats: ['es', 'cjs'],
-      fileName: (format) => `index.${format === 'es' ? 'mjs' : 'js'}`,
-    },
-    rollupOptions: {
-      external: [],
+      entry: './src/index.ts',
+      formats: ['es'],
+      fileName: () => 'index.mjs',
     },
     sourcemap: true,
     emptyOutDir: true,

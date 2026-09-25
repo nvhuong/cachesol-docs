@@ -1,16 +1,31 @@
 /**
- * AdminShell — composes AppHeader + main content area + Layout cho admin webs.
+ * AdminShell — composes AppHeader + main content area + optional sidebar.
  *
- * - Hiển thị header global ở top.
- * - Có toggle hide/show header (ẩn → chỉ còn content).
- * - Sidebar (optional).
- * - Modal "All apps" cho app switcher grid view.
+ * Layout structure (NO double-header):
  *
- * Stateless: truyền vào props. Logic (auth, theme, lang, ...) do host quản lý.
+ *   <div className="cs-admin-shell">
+ *     {headerVisible && (
+ *       <div className="cs-admin-shell__header-wrap">     ← sticky, full-width, owns bg + border
+ *         <div className="cs-admin-shell__header-inner">  ← flex row for [toggle] + [AppHeader]
+ *           {sidebar && <MenuOutlinedButton />}
+ *           <AppHeader ... />                            ← <header> element, no Layout.Header
+ *         </div>
+ *       </div>
+ *     )}
+ *
+ *     <div className="cs-admin-shell__body">              ← flex row for [sider] + [content]
+ *       {sidebar && <Sider />}
+ *       <Content>{children}</Content>
+ *     </div>
+ *
+ *     {!headerVisible && <Button>Show header</Button>}
+ *   </div>
+ *
+ * Stateless: all state (auth, theme, lang, ...) is owned by the caller.
  */
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Layout, Button, Drawer } from 'antd';
-import { MenuOutlined } from '@ant-design/icons';
+import { MenuOutlined, EyeOutlined } from '@ant-design/icons';
 import {
   AppHeader,
   type AppHeaderProps,
@@ -18,13 +33,13 @@ import {
 } from './AppHeader';
 import { useHeaderVisibility } from '../hooks/useHeaderVisibility';
 
-const { Sider, Content, Header } = Layout;
+const { Sider, Content } = Layout;
 
 export interface AdminShellProps {
   /** Admin mini-app id (used for persistence keys). */
   adminId: string;
   /** Logo. */
-  logo: React.ReactNode;
+  logo: ReactNode;
   /** Display name (e.g. "Platform Registry"). */
   appName: string;
   /** App switcher list. */
@@ -36,15 +51,15 @@ export interface AdminShellProps {
   /** Notifications. */
   notifications?: AppHeaderProps['notifications'];
   /** Sidebar (optional). */
-  sidebar?: React.ReactNode;
+  sidebar?: ReactNode;
   /** Sidebar width (default 240). */
   sidebarWidth?: number;
   /** Default header visibility (default true). */
   defaultHeaderVisible?: boolean;
   /** Page content. */
-  children: React.ReactNode;
+  children: ReactNode;
   /** Custom header slot (rare use). */
-  headerSlot?: React.ReactNode;
+  headerSlot?: ReactNode;
   /** All other AppHeader props except `logo`, `appName`, etc. */
   appHeaderProps?: Omit<
     AppHeaderProps,
@@ -85,10 +100,10 @@ export function AdminShell({
   }));
 
   return (
-    <Layout className="cs-admin-shell" style={{ minHeight: '100vh' }}>
+    <div className="cs-admin-shell">
       {headerVisible && (
-        <Header className="cs-admin-shell__header" style={{ padding: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+        <div className="cs-admin-shell__header-wrap">
+          <div className="cs-admin-shell__header-inner">
             {sidebar && (
               <Button
                 type="text"
@@ -111,10 +126,10 @@ export function AdminShell({
               {headerSlot}
             </AppHeader>
           </div>
-        </Header>
+        </div>
       )}
 
-      <Layout>
+      <div className="cs-admin-shell__body">
         {sidebar && (
           <>
             <Sider
@@ -135,7 +150,7 @@ export function AdminShell({
               open={mobileSidebarOpen}
               onClose={() => setMobileSidebarOpen(false)}
               placement="left"
-              width={sidebarWidth}
+              width={Math.min(sidebarWidth, 320)}
               title={appName}
               styles={{ body: { padding: 0 } }}
             >
@@ -145,24 +160,21 @@ export function AdminShell({
         )}
 
         <Content className="cs-admin-shell__content">{children}</Content>
-      </Layout>
+      </div>
 
       {!headerVisible && (
         <Button
           type="primary"
           size="small"
+          icon={<EyeOutlined />}
           onClick={toggleHeader}
-          style={{
-            position: 'fixed',
-            top: 12,
-            right: 12,
-            zIndex: 999,
-          }}
+          className="cs-admin-shell__show-header"
+          aria-label="Show header"
         >
           Show header
         </Button>
       )}
-    </Layout>
+    </div>
   );
 }
 

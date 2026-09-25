@@ -1,13 +1,16 @@
+/**
+ * LandingPage — public catalog. Hero → Mini-app grid → Highlights → CTA → Footer.
+ */
 import { useEffect, useState } from 'react';
-import { Typography } from '@cachesol/design-system';
 import { LoadingState } from '@cachesol/design-system';
 import { fetchMockCatalog } from '../api/mock-catalog';
 import type { PublicMiniApp } from '../types/miniapp-catalog.types';
+import { TopNav } from '../components/TopNav';
+import { Footer } from '../components/Footer';
 import HeroSection from '../sections/HeroSection';
 import MiniAppGrid from '../sections/MiniAppGrid';
 import FeatureHighlights from '../sections/FeatureHighlights';
-
-const { Title, Paragraph } = Typography;
+import CtaBanner from '../sections/CtaBanner';
 
 export function LandingPage() {
   const [apps, setApps] = useState<PublicMiniApp[]>([]);
@@ -27,42 +30,46 @@ export function LandingPage() {
   }, []);
 
   return (
-    <main className="cs-landing">
-      <HeroSection />
+    <div className="cs-landing">
+      <TopNav />
 
-      <section className="cs-landing__container">
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 48,
-            width: '100%',
-          }}
-        >
-          <div>
-            <Title level={2} style={{ textAlign: 'center', margin: 0 }}>
-              Các mini-app có sẵn
-            </Title>
-            <Paragraph
-              style={{
-                textAlign: 'center',
-                color: 'var(--color-text-secondary)',
-                marginBottom: 24,
-              }}
-            >
-              Chọn những mini-app bạn cần — kích hoạt theo nhu cầu.
-            </Paragraph>
-            {isLoading ? (
-              <LoadingState shape="section" label="Đang tải danh sách mini-app..." />
-            ) : (
-              <MiniAppGrid apps={apps} />
-            )}
+      <main>
+        <HeroSection />
+
+        <section className="cs-landing-section">
+          <div className="cs-landing-section__head">
+            <span className="cs-landing-section__eyebrow">Catalog</span>
+            <h2 className="cs-landing-section__title">Các mini-app có sẵn</h2>
+            <p className="cs-landing-section__desc">
+              Chọn những mini-app bạn cần — kích hoạt theo nhu cầu. Mỗi mini-app đều có thể
+              dùng thử miễn phí 14 ngày.
+            </p>
+          </div>
+
+          {isLoading ? (
+            <LoadingState shape="section" label="Đang tải danh sách mini-app..." />
+          ) : (
+            <MiniAppGrid apps={apps} />
+          )}
+        </section>
+
+        <section className="cs-landing-section">
+          <div className="cs-landing-section__head">
+            <span className="cs-landing-section__eyebrow">Tại sao chọn CacheSol?</span>
+            <h2 className="cs-landing-section__title">Mọi thứ bạn cần để vận hành doanh nghiệp</h2>
+            <p className="cs-landing-section__desc">
+              Từ triển khai đến tích hợp và audit — tất cả được tích hợp sẵn trong một nền tảng duy nhất.
+            </p>
           </div>
 
           <FeatureHighlights />
-        </div>
-      </section>
-    </main>
+        </section>
+
+        <CtaBanner />
+      </main>
+
+      <Footer />
+    </div>
   );
 }
 

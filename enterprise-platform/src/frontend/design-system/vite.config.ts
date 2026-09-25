@@ -29,6 +29,8 @@ export default defineConfig({
         /\.css$/,
       ],
       output: {
+        // Force named exports only — avoids `CachesolDesignSystem.default` warning.
+        exports: 'named',
         // Emit CSS as separate files (not inline)
         assetFileNames: (assetInfo) => {
           if (assetInfo.name?.endsWith('.css')) {

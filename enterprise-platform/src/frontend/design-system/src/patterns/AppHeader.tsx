@@ -422,7 +422,7 @@ export function AppHeader({
         footer={null}
         title="All apps"
         width={520}
-        destroyOnClose
+        destroyOnHidden
       >
         <div
           className="cs-app-grid"

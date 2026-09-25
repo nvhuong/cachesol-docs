@@ -549,12 +549,123 @@
 }
 
 /* ============================================================
-   AppHeader — topbar shell cho admin webs
+   AdminShell — layout shell cho admin webs (topbar + sidebar + content)
+
+   Design notes:
+   - AppHeader là một thẻ <header> HTML5, có background + border riêng, KHÔNG
+     cần bọc thêm Layout.Header (gây double-header).
+   - AdminShell wrapper: sticky top, full-width, flex row (nếu có sider toggle).
+   - Khi header bị ẩn, hiện floating button ở góc phải để show lại.
+   ============================================================ */
+.cs-admin-shell {
+  background: var(--color-bg-app);
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Top header wrapper: AppHeader đã có bg + border riêng, wrapper chỉ lo
+   position sticky + flex row để toggle sider bên trái. */
+.cs-admin-shell__header-wrap {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky, 1100);
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border-default);
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.cs-admin-shell__header-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  flex: 1 1 0%;
+  min-width: 0;
+  width: 100%;
+}
+
+/* AppHeader phải stretch theo inner, không tự sticky. */
+.cs-admin-shell__header-inner > .cs-app-header {
+  flex: 1 1 0%;
+  min-width: 0;
+  position: static;
+  border-bottom: 0;
+  width: auto;
+}
+
+/* Body: flex row holding [sider] + [content]. */
+.cs-admin-shell__body {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  min-height: calc(100vh - var(--layout-header-height, 56px));
+}
+
+.cs-admin-shell__menu-toggle {
+  flex-shrink: 0;
+  margin-left: var(--spacing-2);
+  align-self: center;
+}
+
+/* Sider (desktop ≥ md) */
+.cs-admin-shell__sider.ant-layout-sider {
+  background: var(--color-bg-surface);
+  border-right: 1px solid var(--color-border-default);
+  height: calc(100vh - var(--layout-header-height, 56px));
+  position: sticky;
+  top: var(--layout-header-height, 56px);
+  overflow: auto;
+}
+.cs-admin-shell__sider.ant-layout-sider-zero-width {
+  height: calc(100vh - var(--layout-header-height, 56px));
+}
+.cs-admin-shell__sider.ant-layout-sider > .ant-layout-sider-children {
+  height: 100%;
+}
+.cs-admin-shell__sider-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+}
+
+.cs-admin-shell__content {
+  background: var(--color-bg-app);
+  min-height: calc(100vh - var(--layout-header-height, 56px));
+  width: 100%;
+  min-width: 0;
+}
+
+/* "Show header" floating action button when header is hidden */
+.cs-admin-shell__show-header {
+  position: fixed !important;
+  top: var(--spacing-3);
+  right: var(--spacing-3);
+  z-index: var(--z-sticky, 1100);
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 768px) {
+  .cs-admin-shell__header-inner { gap: var(--spacing-1); }
+  .cs-admin-shell__content { min-height: calc(100vh - var(--layout-header-height, 56px)); }
+}
+
+/* ============================================================
+   AppHeader — topbar shell cho admin webs.
+
+   Khi nằm trong AdminShell (đã có .cs-admin-shell__header-wrap sticky):
+   .cs-app-header không nên sticky nữa — CSS override ở .cs-admin-shell
+   chuyển về position: static.
+
+   Khi dùng standalone (không có shell wrapper): tự sticky để scroll giữ
+   header cố định trên cùng.
    ============================================================ */
 .cs-app-header {
   position: sticky;
   top: 0;
-  z-index: var(--z-sticky, 100);
+  z-index: var(--z-sticky, 1100);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -564,6 +675,9 @@
   background: var(--color-bg-surface);
   border-bottom: 1px solid var(--color-border-default);
   font-size: var(--font-size-body-sm);
+  width: 100%;
+  min-width: 0;
+  flex-shrink: 0;
 }
 
 .cs-app-header__left,

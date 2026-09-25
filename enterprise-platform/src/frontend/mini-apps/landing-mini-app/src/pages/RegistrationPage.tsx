@@ -1,3 +1,6 @@
+/**
+ * RegistrationPage — public tenant registration form (calls Platform Registry).
+ */
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
@@ -22,6 +25,8 @@ import { fetchMockCatalog } from '../api/mock-catalog';
 import { submitMockRegistration } from '../api/mock-registration';
 import type { PublicMiniApp } from '../types/miniapp-catalog.types';
 import type { RegistrationRequest } from '../types/registration.types';
+import { TopNav } from '../components/TopNav';
+import { Footer } from '../components/Footer';
 
 const { Title, Paragraph } = Typography;
 
@@ -80,28 +85,38 @@ export function RegistrationPage() {
   };
 
   if (catalog.length === 0) {
-    return <LoadingState shape="page" label="Đang tải..." />;
+    return (
+      <div className="cs-landing">
+        <TopNav />
+        <LoadingState shape="page" label="Đang tải..." />
+        <Footer />
+      </div>
+    );
   }
 
   return (
-    <main className="cs-landing cs-landing-form">
-      <div className="cs-landing__container" style={{ maxWidth: 960 }}>
-        <Title level={2}>Đăng ký CacheSol</Title>
-        <Paragraph type="secondary">
-          Khởi tạo tenant của bạn trong vài phút. Không cần thẻ tín dụng.
-        </Paragraph>
+    <div className="cs-landing">
+      <TopNav />
 
-        <Steps
-          current={1}
-          items={[
-            { title: 'Thông tin', description: 'Công ty & liên hệ' },
-            { title: 'Chọn mini-app', description: 'Subscription' },
-            { title: 'Xác nhận', description: 'Review & submit' },
-          ]}
-          style={{ marginBottom: 32 }}
-        />
+      <main className="cs-landing-form">
+        <div className="cs-landing-form__card">
+          <Title level={2} style={{ margin: 0 }}>
+            Đăng ký CacheSol
+          </Title>
+          <Paragraph type="secondary" style={{ marginBottom: 24 }}>
+            Khởi tạo tenant của bạn trong vài phút. Không cần thẻ tín dụng.
+          </Paragraph>
 
-        <DataCard>
+          <Steps
+            current={1}
+            items={[
+              { title: 'Thông tin', description: 'Công ty & liên hệ' },
+              { title: 'Chọn mini-app', description: 'Subscription' },
+              { title: 'Xác nhận', description: 'Review & submit' },
+            ]}
+            style={{ marginBottom: 32 }}
+          />
+
           <Form<RegistrationRequest>
             form={form}
             layout="vertical"
@@ -260,7 +275,7 @@ export function RegistrationPage() {
               <Checkbox>Gửi email cho tôi về cập nhật sản phẩm và tip sử dụng</Checkbox>
             </Form.Item>
 
-            <Form.Item style={{ marginTop: 24 }}>
+            <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>
               <Row justify="end" gutter={8}>
                 <Col>
                   <Link to="/">
@@ -275,9 +290,11 @@ export function RegistrationPage() {
               </Row>
             </Form.Item>
           </Form>
-        </DataCard>
-      </div>
-    </main>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
   );
 }
 

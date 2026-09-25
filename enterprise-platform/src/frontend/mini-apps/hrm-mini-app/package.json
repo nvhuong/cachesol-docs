@@ -4,17 +4,16 @@
   "description": "HRM Mini App - Quản lý nhân sự",
   "type": "module",
   "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "import": "./dist/index.js"
     },
     "./manifest": {
       "types": "./dist/manifest.d.ts",
-      "import": "./dist/manifest.mjs"
+      "import": "./dist/manifest.js"
     },
     "./style": "./dist/style.css"
   },
