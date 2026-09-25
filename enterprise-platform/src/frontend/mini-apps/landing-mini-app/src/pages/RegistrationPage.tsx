@@ -22,7 +22,7 @@ import {
   Typography,
 } from '@cachesol/design-system';
 import { fetchMockCatalog } from '../api/mock-catalog';
-import { submitMockRegistration } from '../api/mock-registration';
+import { submitRegistration } from '../api/registration-api';
 import type { PublicMiniApp } from '../types/miniapp-catalog.types';
 import type { RegistrationRequest } from '../types/registration.types';
 import { TopNav } from '../components/TopNav';
@@ -72,7 +72,7 @@ export function RegistrationPage() {
   const onSubmit = async (values: RegistrationRequest) => {
     setSubmitting(true);
     try {
-      const result = await submitMockRegistration(values);
+      const result = await submitRegistration(values);
       message.success('Đăng ký thành công! Hệ thống đang khởi tạo tenant của bạn.');
       navigate(`/register/success?tenantId=${result.tenantId}&admin=${encodeURIComponent(result.adminUrl)}`, {
         state: result,

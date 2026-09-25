@@ -228,8 +228,12 @@ WHERE
 ### 4.4 API
 
 ```
-# PUBLIC-API (super-admin dùng nội bộ)
-GET    /public-api/v1/mini-apps/catalog
+# PUBLIC-API (không cần auth — landing page dùng)
+GET    /public-api/v1/public/mini-apps                          ← Catalog (marketing shape, 6 mini-apps)
+GET    /public-api/v1/public/mini-apps/{code}                   ← Detail (theo code: hrm, sales, finance, operations, analytics, helpdesk)
+POST   /public-api/v1/tenants/register                         ← Self-service tenant registration (no auth)
+
+GET    /public-api/v1/mini-apps/catalog                        ← Internal catalog (registry shape)
 GET    /public-api/v1/health
 
 # CLIENT-API (super-admin only)
@@ -267,6 +271,85 @@ GET    /service-api/v1/tenants/{slug}/root-org                ← Lookup root or
 POST   /service-api/v1/tenants                                ← Orchestrator tạo tenant
 POST   /service-api/v1/role-templates/{code}/snapshot        ← tenant-manager gọi khi cần clone
 ```
+
+### 4.4.1 Public Catalog & Registration (Landing page — no auth)
+
+Hai endpoint dưới đây **không yêu cầu authentication**, dùng cho Landing page để khách
+hàng khám phá catalog mini-apps và tự đăng ký tenant mới:
+
+#### `GET /public-api/v1/public/mini-apps`
+
+Trả về marketing-shape catalog (6 mini-apps): HRM, Sales, Finance, Operations,
+Analytics, Helpdesk. Marketing data (tagline, features, pricing, currency,
+publisherName, publishedAt) được lưu trong `mini_apps.metadata` JSONB.
+
+Response shape:
+```json
+{
+  "success": true,
+  "data": {
+    "total": 6,
+    "items": [
+      {
+        "id": "hrm",
+        "name": "HRM",
+        "tagline": "Quản lý nhân sự toàn diện",
+        "description": "...",
+        "category": "hr",
+        "pricing": "per-user",
+        "minSeats": 5,
+        "currency": "VND",
+        "pricePerMonth": 25000,
+        "features": ["Hồ sơ nhân viên + lịch sử", "Chấm công GPS / QR / Web", ...],
+        "publisherName": "CacheSol",
+        "publishedAt": "2025-01-15",
+        "iconUrl": null,
+        "installEndpoint": "/api/tenant-manager/v1/mini-apps/hrm/install"
+      }
+    ]
+  }
+}
+```
+
+#### `GET /public-api/v1/public/mini-apps/{code}`
+
+Detail một mini-app theo `code` (slug). Trả 404 nếu không tìm thấy hoặc đã bị `is_active=false`.
+
+#### `POST /public-api/v1/tenants/register`
+
+Self-service tenant registration. Validate `consents.termsAccepted` + `privacyAccepted`,
+derive `slug` từ `companyName`, tạo `Tenant (status=provisioning)`, provision Keycloak
+realm (best-effort), publish `TenantCreatedEvent`. Sau khi `tenant-manager` init xong
+schema per-tenant thì sẽ callback `POST /service-api/v1/internal/tenants/{slug}/initialized`
+→ `Tenant.status → active`.
+
+Request:
+```json
+{
+  "company":     { "companyName": "...", "taxCode": "...", "country": "VN", "companySize": "small" },
+  "contact":     { "fullName": "...", "email": "...", "phone": "...", "jobTitle": "CEO" },
+  "subscription":{ "selectedMiniAppIds": ["hrm","sales"], "estimatedSeats": 10, "billingCurrency": "VND" },
+  "consents":    { "termsAccepted": true, "privacyAccepted": true, "marketingOptIn": false },
+  "referrer":    "google"
+}
+```
+
+Response (201):
+```json
+{
+  "success": true,
+  "data": {
+    "tenantId":       "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+    "tenantSlug":     "cong-ty-acme",
+    "adminUrl":       "https://cong-ty-acme.vn.cachesol.io/admin",
+    "contactEmail":   "ceo@acme.com",
+    "provisioningEta": "5-10 phút"
+  }
+}
+```
+
+Validation codes: `VALIDATION` (400), `CONSENT_REQUIRED` (400), `SLUG_TAKEN` (400),
+`MISSING_COUNTRY` (400), `INTERNAL_ERROR` (500).
 
 ### 4.5 Clone snapshot sang tenant-manager (lúc tạo tenant)
 

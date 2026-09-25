@@ -12,4 +12,6 @@ import java.util.UUID;
 public interface MiniAppRepository extends JpaRepository<MiniApp, UUID> {
     Optional<MiniApp> findByCode(String code);
     List<MiniApp> findByActiveTrue();
+    List<MiniApp> findByActiveTrueOrderByCodeAsc();
+    Optional<MiniApp> findByCodeAndActiveTrue(String code);
 }

@@ -68,10 +68,11 @@ export const manifest: MiniAppManifest = {
   menu: [], // No menu — public page
 
   api: {
-    baseUrl: (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_PLATFORM_REGISTRY_BASE_URL ?? '/api/platform-registry',
+    baseUrl: (import.meta as ImportMeta & { env?: Record<string, string> }).env?.VITE_PLATFORM_REGISTRY_BASE_URL ?? '/public-api/v1',
     endpoints: {
-      tenantRegister: '/v1/tenants/register',
-      miniAppsPublic: '/v1/public/mini-apps',
+      tenantRegister: '/tenants/register',
+      miniAppsPublic: '/public/mini-apps',
+      miniAppDetail: '/public/mini-apps/:code',
     },
   },
 };

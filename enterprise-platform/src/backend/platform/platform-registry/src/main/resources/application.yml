@@ -7,6 +7,14 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
     password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
+  kafka:
+    producer:
+      # Không block lâu khi Kafka không khả dụng — fire-and-forget phải fail nhanh.
+      properties:
+        max.block.ms: 1000
+        delivery.timeout.ms: 2000
+        request.timeout.ms: 1500
+        retries: 0
 
 server:
   port: 8081
@@ -22,6 +30,8 @@ flyway:
   schemas: public
   default-schema: public
   baseline-on-migrate: true
+  baseline-version: 0
+  validate-on-migrate: true
 
 info:
   app:

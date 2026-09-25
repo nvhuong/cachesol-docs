@@ -6,7 +6,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Typography } from '@cachesol/design-system';
 import { Button, Tag, LoadingState, EmptyState } from '@cachesol/design-system';
 import { formatCurrency, formatDate } from '@cachesol/shared-ui';
-import { fetchMockApp } from '../api/mock-catalog';
+import { fetchApp } from '../api/catalog-api';
 import type { PublicMiniApp } from '../types/miniapp-catalog.types';
 import { TopNav } from '../components/TopNav';
 import { Footer } from '../components/Footer';
@@ -20,7 +20,7 @@ export function MiniAppDetailPage() {
 
   useEffect(() => {
     if (!appId) return;
-    fetchMockApp(appId).then((res) => {
+    fetchApp(appId).then((res) => {
       setApp(res);
       setLoading(false);
     });

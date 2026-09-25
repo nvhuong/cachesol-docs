@@ -3,7 +3,7 @@
  */
 import { useEffect, useState } from 'react';
 import { LoadingState } from '@cachesol/design-system';
-import { fetchMockCatalog } from '../api/mock-catalog';
+import { fetchCatalog } from '../api/catalog-api';
 import type { PublicMiniApp } from '../types/miniapp-catalog.types';
 import { TopNav } from '../components/TopNav';
 import { Footer } from '../components/Footer';
@@ -18,7 +18,7 @@ export function LandingPage() {
 
   useEffect(() => {
     let mounted = true;
-    fetchMockCatalog().then((res) => {
+    fetchCatalog().then((res) => {
       if (mounted) {
         setApps(res.items);
         setLoading(false);
