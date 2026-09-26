@@ -46,11 +46,20 @@ services:
     restart: "no"
 
   keycloak:
-    image: quay.io/keycloak/keycloak:25.0
-    command: ["start-dev", "--http-port=8080", "--health-enabled=true", "--hostname-strict=false"]
+    image: quay.io/keycloak/keycloak:24.0
+    # Keycloak 24 có bootstrap admin flow. CẦN set CẢ HAI naming conventions:
+    #   - KC_BOOTSTRAP_ADMIN_USERNAME / KC_BOOTSTRAP_ADMIN_PASSWORD  (env chuẩn)
+    #   - KEYCLOAK_ADMIN / KEYCLOAK_ADMIN_PASSWORD                  (env legacy được honors)
+    # Nếu thiếu 1 trong 2, log "Added user 'admin' to realm 'master'" KHÔNG xuất hiện.
+    command: ["start-dev"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USER_ENABLED: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: 8080
+      KC_HOSTNAME_STRICT: "false"
       KC_HEALTH_ENABLED: "true"
     # Custom Keycloak login themes per tenant (via realm's `loginTheme` field).
     # Each theme directory must contain a `login/` subdirectory with theme files.
@@ -73,6 +82,7 @@ services:
         condition: service_healthy
     environment:
       KEYCLOAK_URL: http://keycloak:8080
+      # Dùng đúng tên env mà init-keycloak.sh đọc (KEYCLOAK_ADMIN_USER, không phải KEYCLOAK_ADMIN)
       KEYCLOAK_ADMIN_USER: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KEYCLOAK_REALM: cachesol
@@ -81,6 +91,36 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command: ["apk add --no-cache jq bash wget && /init-keycloak.sh"]
     restart: "no"
+
+  # ── Kafka (KRaft mode — không cần Zookeeper) ────────────────────────────
+  # Dùng cho event bus giữa platform-registry ↔ tenant-manager.
+  # KRaft mode: 1 process vừa là controller vừa là broker (dev only).
+  kafka:
+    image: apache/kafka:3.8.1
+    environment:
+      # KRaft single-node
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: "controller,broker"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      CLUSTER_ID: "cachesol-mvp-cluster-abcdef1234"
+    ports:
+      - "9092:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
   # ── Spring Boot services ────────────────────────────────────────────────
   # All services wait for postgres to be healthy, plus service-level
@@ -103,10 +143,14 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       SERVER_PORT: 8082
+      # Kafka event bus (IAM publishes keycloak events)
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8088:8082"
     depends_on:
       postgres:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   platform-registry-service:
@@ -123,6 +167,8 @@ services:
       # IAM service URL for Keycloak realm provisioning
       IAM_URL: http://iam-service:8082
       KEYCLOAK_URL: http://keycloak:8080
+      # Kafka event bus
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8087:8081"
     depends_on:
@@ -133,6 +179,8 @@ services:
       iam-service:
         condition: service_started
       keycloak:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   tenant-manager-service:
@@ -151,6 +199,8 @@ services:
       PLATFORM_REGISTRY_CALLBACK_URL: http://platform-registry-service:8081
       # IAM service URL for Keycloak user CRUD
       IAM_URL: http://iam-service:8082
+      # Kafka event bus (consumer side)
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     ports:
       - "8089:8083"
     depends_on:
@@ -163,6 +213,8 @@ services:
       iam-service:
         condition: service_started
       keycloak:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
 volumes:

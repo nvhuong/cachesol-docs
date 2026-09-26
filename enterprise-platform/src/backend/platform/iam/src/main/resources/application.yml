@@ -2,6 +2,19 @@ spring:
   application:
     name: iam-service
   port: 8082
+  # Kafka — IAM publishes keycloak events (user created, realm provisioned, ...)
+  # to topic `keycloak.events` (xem iam.webhook.forward-to-kafka-topic).
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        max.block.ms: 5000
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+        retries: 2
+        spring.json.add.type.headers: false
 
 server:
   port: 8082

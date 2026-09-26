@@ -351,6 +351,32 @@ Response (201):
 Validation codes: `VALIDATION` (400), `CONSENT_REQUIRED` (400), `SLUG_TAKEN` (400),
 `MISSING_COUNTRY` (400), `INTERNAL_ERROR` (500).
 
+### 4.4.2 Frontend consumers
+
+| Endpoint | Mini-app / Host | File |
+|----------|-----------------|------|
+| `GET /public-api/v1/public/mini-apps` | `landing-mini-app` (`LandingPage`, `RegistrationPage`) | `src/frontend/mini-apps/landing-mini-app/src/api/catalog-api.ts` |
+| `GET /public-api/v1/public/mini-apps/{code}` | `landing-mini-app` (`MiniAppDetailPage`) | `src/frontend/mini-apps/landing-mini-app/src/api/catalog-api.ts` |
+| `POST /public-api/v1/tenants/register` | `landing-mini-app` (`RegistrationPage`) | `src/frontend/mini-apps/landing-mini-app/src/api/registration-api.ts` |
+
+Manifest contract (single source of truth cho cả host shell lẫn standalone dev):
+
+```ts
+api: {
+  baseUrl: import.meta.env?.VITE_PLATFORM_REGISTRY_BASE_URL ?? '/public-api/v1',
+  endpoints: {
+    tenantRegister:  '/tenants/register',
+    miniAppsPublic:  '/public/mini-apps',
+    miniAppDetail:   '/public/mini-apps/:code',
+  },
+}
+```
+
+Frontend pattern: mỗi client gọi `fetch()` qua baseUrl, unwrap envelope
+`{ success, data, error }`, fallback về `mock-*` nếu network fail.
+Chi tiết xem
+[`../../../frontend/mini-apps/landing-mini-app/INTEGRATION.md`](../../../frontend/mini-apps/landing-mini-app/INTEGRATION.md).
+
 ### 4.5 Clone snapshot sang tenant-manager (lúc tạo tenant)
 
 Khi `platform-registry` tạo tenant → gọi `POST /service-api/v1/internal/init-schema` của `tenant-manager`:

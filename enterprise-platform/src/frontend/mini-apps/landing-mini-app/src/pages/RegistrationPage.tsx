@@ -21,7 +21,7 @@ import {
   LoadingState,
   Typography,
 } from '@cachesol/design-system';
-import { fetchMockCatalog } from '../api/mock-catalog';
+import { fetchCatalog } from '../api/catalog-api';
 import { submitRegistration } from '../api/registration-api';
 import type { PublicMiniApp } from '../types/miniapp-catalog.types';
 import type { RegistrationRequest } from '../types/registration.types';
@@ -58,7 +58,7 @@ export function RegistrationPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchMockCatalog().then((res) => setCatalog(res.items));
+    fetchCatalog().then((res) => setCatalog(res.items));
     const preselected = searchParams.get('apps');
     if (preselected) {
       form.setFieldValue('subscription', {

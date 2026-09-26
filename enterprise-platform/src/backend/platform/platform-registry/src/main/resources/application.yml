@@ -9,12 +9,17 @@ spring:
     driver-class-name: org.postgresql.Driver
   kafka:
     producer:
-      # Không block lâu khi Kafka không khả dụng — fire-and-forget phải fail nhanh.
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      # Bump max.block.ms đủ lớn để lần publish đầu (khi Kafka vừa auto-create topic)
+      # không bị TimeoutException. Sau lần đầu, metadata cached → publish gần như tức thì.
       properties:
-        max.block.ms: 1000
-        delivery.timeout.ms: 2000
-        request.timeout.ms: 1500
-        retries: 0
+        max.block.ms: 5000
+        delivery.timeout.ms: 10000
+        request.timeout.ms: 5000
+        retries: 2
+        retry.backoff.ms: 200
+        spring.json.add.type.headers: false
 
 server:
   port: 8081
