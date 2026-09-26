@@ -201,6 +201,10 @@ services:
       IAM_URL: http://iam-service:8082
       # Kafka event bus (consumer side)
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      # Shared DB with platform-registry: skip flyway checksum validation
+      # (tenant-manager's V1/V2 collide with platform-registry's seed migrations
+      #  on the same `public` schema; only metadata differs).
+      SPRING_FLYWAY_VALIDATE_ON_MIGRATE: "false"
     ports:
       - "8089:8083"
     depends_on:

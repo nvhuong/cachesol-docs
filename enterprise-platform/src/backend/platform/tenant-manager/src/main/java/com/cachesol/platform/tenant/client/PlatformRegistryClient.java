@@ -1,5 +1,6 @@
 package com.cachesol.platform.tenant.client;
 
+import com.cachesol.platform.shared.common.api.ApiResponse;
 import com.cachesol.platform.tenant.dto.PermissionResponse;
 import com.cachesol.platform.tenant.dto.RoleTemplateSnapshotResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -27,11 +28,11 @@ public class PlatformRegistryClient {
 
     public List<PermissionResponse> getPermissionTemplates() {
         try {
-            PermissionResponse[] arr = restClient.get()
+            ApiResponse<PermissionResponse[]> resp = restClient.get()
                     .uri("/service-api/v1/permissions/templates")
                     .retrieve()
-                    .body(PermissionResponse[].class);
-            return List.of(arr != null ? arr : new PermissionResponse[0]);
+                    .body(new org.springframework.core.ParameterizedTypeReference<>() {});
+            return resp != null && resp.data() != null ? List.of(resp.data()) : List.of();
         } catch (Exception e) {
             log.warn("Không lấy được permission templates từ platform-registry: {}", e.getMessage());
             return List.of();
@@ -40,11 +41,11 @@ public class PlatformRegistryClient {
 
     public List<RoleTemplateSnapshotResponse> getRoleTemplates() {
         try {
-            RoleTemplateSnapshotResponse[] arr = restClient.get()
+            ApiResponse<RoleTemplateSnapshotResponse[]> resp = restClient.get()
                     .uri("/service-api/v1/roles/templates")
                     .retrieve()
-                    .body(RoleTemplateSnapshotResponse[].class);
-            return List.of(arr != null ? arr : new RoleTemplateSnapshotResponse[0]);
+                    .body(new org.springframework.core.ParameterizedTypeReference<>() {});
+            return resp != null && resp.data() != null ? List.of(resp.data()) : List.of();
         } catch (Exception e) {
             log.warn("Không lấy được role templates từ platform-registry: {}", e.getMessage());
             return List.of();
