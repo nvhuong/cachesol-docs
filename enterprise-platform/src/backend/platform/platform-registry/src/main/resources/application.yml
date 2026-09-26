@@ -38,6 +38,19 @@ flyway:
   baseline-version: 0
   validate-on-migrate: true
 
+# Service-to-service URLs
+iam:
+  url: ${IAM_URL:http://iam-service:8082}
+tenant-manager:
+  url: ${TENANT_MANAGER_URL:http://tenant-manager-service:8083}
+
+# Tenant provisioning retry job
+cachesol:
+  registry:
+    provisioning:
+      retry-after-seconds: 30
+      retry-interval-ms: 15000
+
 info:
   app:
     name: "Platform Registry"

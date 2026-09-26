@@ -1,6 +1,8 @@
 package com.cachesol.platform.registry.service;
 
 import com.cachesol.platform.registry.client.IamClient;
+import com.cachesol.platform.registry.client.TenantManagerClient;
+import com.cachesol.platform.registry.dto.InitTenantSchemaRequestDto;
 import com.cachesol.platform.registry.dto.ProvisionRealmRequestDto;
 import com.cachesol.platform.registry.entity.Tenant;
 import com.cachesol.platform.registry.event.TenantEventPublisher;
@@ -34,6 +36,7 @@ public class TenantProvisioningRetryJob {
 
     private final TenantRepository tenantRepository;
     private final IamClient iamClient;
+    private final TenantManagerClient tenantManagerClient;
     private final TenantEventPublisher eventPublisher;
 
     /** Retry tenants older than this many seconds. */
@@ -58,6 +61,7 @@ public class TenantProvisioningRetryJob {
         for (Tenant tenant : stuck) {
             tryProvision(tenant);
             tryPublish(tenant);
+            tryInitSchema(tenant);
         }
     }
 
@@ -84,6 +88,22 @@ public class TenantProvisioningRetryJob {
                     tenant.getSlug());
         } catch (Exception e) {
             log.warn("Retry failed: publish TenantCreatedEvent for tenant '{}': {}",
+                    tenant.getSlug(), e.getMessage());
+        }
+    }
+
+    private void tryInitSchema(Tenant tenant) {
+        try {
+            tenantManagerClient.initTenantSchema(
+                    InitTenantSchemaRequestDto.forNewTenant(
+                            tenant.getSlug(),
+                            tenant.getDisplayName()
+                    )
+            );
+            log.info("Retry succeeded: TenantManager init-schema triggered for tenant '{}'",
+                    tenant.getSlug());
+        } catch (Exception e) {
+            log.warn("Retry failed: TenantManager init-schema for tenant '{}': {}",
                     tenant.getSlug(), e.getMessage());
         }
     }

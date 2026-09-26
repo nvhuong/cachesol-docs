@@ -1,8 +1,10 @@
 package com.cachesol.platform.registry.service;
 
+import com.cachesol.platform.registry.dto.InitTenantSchemaRequestDto;
 import com.cachesol.platform.registry.dto.PublicRegistrationRequest;
 import com.cachesol.platform.registry.dto.PublicRegistrationResponse;
 import com.cachesol.platform.registry.client.IamClient;
+import com.cachesol.platform.registry.client.TenantManagerClient;
 import com.cachesol.platform.registry.entity.Tenant;
 import com.cachesol.platform.registry.event.TenantEventPublisher;
 import com.cachesol.platform.registry.exception.RegistrationValidationException;
@@ -51,6 +53,7 @@ public class PublicRegistrationService {
     private final PublicTenantPersister persister;
     private final TenantEventPublisher eventPublisher;
     private final IamClient iamClient;
+    private final TenantManagerClient tenantManagerClient;
 
     /** Single-thread daemon executor cho fire-and-forget post-commit work. */
     private ExecutorService asyncExecutor;
@@ -102,8 +105,12 @@ public class PublicRegistrationService {
     }
 
     /**
-     * Đăng ký post-commit hook để fire IAM + Kafka async SAU khi transaction commit.
-     * Nếu đang test ngoài transaction, submit thẳng vào executor.
+     * Đăng ký post-commit hook để fire IAM + Kafka + TenantManager init-schema
+     * async SAU khi transaction commit. Nếu đang test ngoài transaction,
+     * submit thẳng vào executor.
+     *
+     * <p>Thứ tự: IAM provision → Kafka publish → TenantManager init-schema.
+     * Mỗi bước độc lập: nếu lỗi thì log warn và nuốt (retry job sẽ retry sau).
      */
     private void schedulePostCommitWork(Tenant saved) {
         Runnable work = () -> {
@@ -124,6 +131,18 @@ public class PublicRegistrationService {
                 eventPublisher.publishCreated(saved.getSlug(), saved.getDisplayName());
             } catch (Exception e) {
                 log.warn("Publish TenantCreatedEvent failed for '{}': {}",
+                        saved.getSlug(), e.getMessage());
+            }
+            try {
+                tenantManagerClient.initTenantSchema(
+                        InitTenantSchemaRequestDto.forNewTenant(
+                                saved.getSlug(),
+                                saved.getDisplayName()
+                        )
+                );
+                log.info("TenantManager init-schema triggered for tenant '{}'", saved.getSlug());
+            } catch (Exception e) {
+                log.warn("TenantManager init-schema failed for '{}': {}. Will retry async.",
                         saved.getSlug(), e.getMessage());
             }
         };
