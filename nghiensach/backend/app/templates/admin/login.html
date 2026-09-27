@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Đăng nhập · Nghiện Sách</title>
+  <link rel="stylesheet" href="/static/admin.css">
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-card">
+      <div class="login-brand"><i>NS</i><div><b>Nghiện Sách</b><small>Content Studio</small></div></div>
+      <p class="eyebrow">TRUNG TÂM NỘI DUNG</p>
+      <h1>Chào mừng trở lại</h1>
+      <p class="login-copy">Đăng nhập để quản lý sách, chương và giọng đọc.</p>
+      {% if error %}<div class="login-error">{{ error }}</div>{% endif %}
+      <form action="/admin/login" method="post" class="login-form">
+        <label>Tên đăng nhập<input name="username" autocomplete="username" required autofocus></label>
+        <label>Mật khẩu<input name="password" type="password" autocomplete="current-password" required></label>
+        <button type="submit">Đăng nhập</button>
+      </form>
+      <small class="login-hint">Tài khoản mặc định: admin / admin</small>
+    </section>
+    <section class="login-art"><span>PDF</span><b>Biến mỗi trang sách<br>thành một trải nghiệm nghe.</b><p>Quản lý toàn bộ quy trình PDF → Text → Audio tại một nơi.</p></section>
+  </main>
+</body>
+</html>

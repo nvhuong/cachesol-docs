@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Quản trị{% endblock %} · Nghiện Sách</title>
+  <link rel="stylesheet" href="/static/admin.css">
+</head>
+<body>
+  <aside><div class="brand"><i>NS</i><div>Nghiện Sách<small>Content Studio</small></div></div><nav>
+    <a href="/admin">⌂ <span>Tổng quan</span></a><a href="/admin/categories">▦ <span>Thể loại</span></a>
+    <a href="/admin/books">▤ <span>Thư viện sách</span></a><a href="/admin/chapters">▶ <span>Chương & nội dung</span></a><a href="/admin/voices">◉ <span>Giọng đọc</span></a><a href="/docs" target="_blank" rel="noopener">↗ <span>API docs</span></a>
+  </nav><div class="sidebar-note"><b>VieNeu‑TTS v3 Turbo</b><small>PDF → Text → Audio</small></div></aside>
+  <main><header><div><p class="eyebrow">TRUNG TÂM NỘI DUNG</p><h1>{% block heading %}Quản trị{% endblock %}</h1></div><div class="header-actions"><a class="view-app" href="http://localhost:8099" target="_blank" rel="noopener">Xem ứng dụng ↗</a><form action="/admin/logout" method="post"><button class="logout-button" type="submit">Đăng xuất</button></form></div></header>{% block content %}{% endblock %}</main>
+</body></html>

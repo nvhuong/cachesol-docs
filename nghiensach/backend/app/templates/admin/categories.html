@@ -1,0 +1,3 @@
+{% extends "admin/base.html" %}{% block heading %}Thể loại{% endblock %}{% block content %}
+<section class="panel"><h2>Thêm thể loại</h2><form method="post"><input name="name" placeholder="Tên thể loại" required><input name="description" placeholder="Mô tả"><button>Thêm</button></form></section>
+<section class="panel"><table><tr><th>Tên</th><th>Mô tả</th><th></th></tr>{% for x in categories %}<tr><td>{{ x.name }}</td><td>{{ x.description }}</td><td><form method="post" action="/admin/categories/{{ x.id }}/delete" onsubmit="return confirm('Xóa cả sách thuộc thể loại?')"><button class="danger">Xóa</button></form></td></tr>{% endfor %}</table></section>{% endblock %}

@@ -1,0 +1,6 @@
+{% extends "admin/base.html" %}{% block heading %}Tổng quan{% endblock %}{% block content %}
+<section class="stats">
+{% for label, value in [('Thể loại', counts.categories), ('Sách', counts.books), ('Chương', counts.chapters), ('Audio hoàn tất', counts.ready)] %}<article><strong>{{ value }}</strong><span>{{ label }}</span></article>{% endfor %}
+</section>
+<section class="panel"><h2>Chương cập nhật gần đây</h2><table><tr><th>Sách</th><th>Chương</th><th>Trạng thái</th></tr>{% for c in chapters %}<tr><td>{{ c.book.title }}</td><td>{{ c.title }}</td><td><span class="badge {{ c.status.value }}">{{ c.status.value }}</span></td></tr>{% else %}<tr><td colspan="3">Chưa có dữ liệu.</td></tr>{% endfor %}</table></section>
+{% endblock %}
