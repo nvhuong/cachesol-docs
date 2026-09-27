@@ -11,6 +11,9 @@
       "types": "./src/index.ts",
       "import": "./src/index.ts"
     },
+    "./styles.css": {
+      "import": "./src/styles/landing.css"
+    },
     "./manifest": {
       "types": "./src/manifest/types.ts",
       "import": "./src/manifest/types.ts"

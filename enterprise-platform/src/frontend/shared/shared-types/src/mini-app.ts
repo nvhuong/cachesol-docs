@@ -19,6 +19,17 @@ export interface MiniAppManifest {
   /** Author */
   author?: string;
 
+  /**
+   * URL prefix cho tất cả routes của mini-app này trong shell.
+   * VD: 'hrm' → routes mount ở /hrm/employees, /hrm/employees/:id
+   *     'registry' → routes mount ở /registry/tenants, /registry/mini-apps
+   *     'tenant-manager' → routes mount ở /tenant-manager/employees, /tenant-manager/roles
+   *
+   * Mặc định: inferred từ manifest.id (strip '-mini-app' suffix).
+   * Landing mini-app KHÔNG set routePrefix → mount trực tiếp ở root ('/').
+   */
+  routePrefix?: string;
+
   /** Routes mà mini app đăng ký */
   routes: MiniAppRoute[];
 
@@ -48,7 +59,7 @@ export interface MiniAppManifest {
 }
 
 export interface MiniAppRoute {
-  /** Path của route (VD: '/employees') */
+  /** Path của route (VD: '/employees'). Relative to the mini-app's routePrefix. */
   path: string;
   /** Title cho page */
   title?: string;

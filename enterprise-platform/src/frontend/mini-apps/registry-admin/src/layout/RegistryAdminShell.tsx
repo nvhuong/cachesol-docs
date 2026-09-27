@@ -1,5 +1,14 @@
 /**
  * RegistryAdminShell — composes AdminShell + sidebar + router outlet.
+ *
+ * Embedded mode (chạy trong web-shell): ShellContext có sẵn → chỉ render
+ * sidebar + outlet. AppHeader đã được render ở MainLayout phía trên — tránh
+ * double header.
+ *
+ * Standalone mode (chạy trong dev.tsx): ShellContext không có → render đầy
+ * đủ AdminShell với AppHeader riêng để dev/test độc lập.
+ *
+ * Source: design-system/patterns/app-header.md
  */
 import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -13,6 +22,12 @@ import {
   HistoryOutlined,
 } from '@ant-design/icons';
 import { AdminShell } from '@cachesol/design-system';
+import {
+  useShell,
+  useShellAvailable,
+  resolveIcon,
+  type AppSwitcherItem,
+} from '@cachesol/design-system';
 import { PlatformRegistryProvider, usePlatformRegistryContext } from './PlatformRegistryContext';
 
 const MENU_ITEMS = [
@@ -24,24 +39,51 @@ const MENU_ITEMS = [
   { key: '/audit', label: 'Audit log', icon: <HistoryOutlined /> },
 ];
 
-function RegistryAdminInner({ children }: { children: React.ReactNode }) {
+const REGISTRY_DEFAULT_APPS: AppSwitcherItem[] = [
+  { id: 'registry-admin', label: 'Platform Registry', href: '/registry', icon: resolveIcon('appstore'), description: 'Tenants, mini-apps, providers', active: true },
+  { id: 'tenant-manager-admin', label: 'Tenant Manager', href: '/tenant-manager', icon: resolveIcon('team'), description: 'Quản trị tenant' },
+  { id: 'hrm-mini-app', label: 'HRM', href: '/hrm/employees', icon: resolveIcon('team'), description: 'Quản lý nhân sự' },
+];
+
+function RegistryAdminInner({ children, embedded }: { children: React.ReactNode; embedded: boolean }) {
   const navigate = useNavigate();
   const location = useLocation();
   const ctx = usePlatformRegistryContext();
+  const shell = useShell();
 
-  // Auto-login admin nếu chưa có (mock trong dev).
+  // ── Sync local context → ShellContext (embedded mode only) ──
   useEffect(() => {
+    if (!embedded) return;
+
+    // Sync app switcher
+    shell.setAppSwitcher(REGISTRY_DEFAULT_APPS);
+    shell.setActiveAppId('registry-admin');
+    shell.setBrand({ name: 'Platform Registry' });
+
+    // Config dropdown — pull from existing shell.user if any
+    shell.setConfigItems([
+      { key: 'general', label: <Link to="/settings">General settings</Link> },
+      { key: 'mini-apps', label: <Link to="/mini-apps">Mini-apps catalog</Link> },
+      { key: 'providers', label: <Link to="/providers">Providers</Link> },
+      { key: 'audit', label: <Link to="/audit">Audit log</Link> },
+    ]);
+  }, [embedded, shell]);
+
+  // Standalone mode: auto-login admin nếu chưa có (mock trong dev).
+  useEffect(() => {
+    if (embedded) return;
     if (!ctx.user) {
       ctx.login({ name: 'Platform Admin', email: 'admin@cachesol.io' });
     }
-  }, [ctx]);
+  }, [ctx, embedded]);
 
-  const selectedKey = MENU_ITEMS.find((m) => location.pathname === m.key)
-    ? location.pathname
-    : MENU_ITEMS.find((m) => m.key !== '/' && location.pathname.startsWith(m.key))?.key ?? '/';
+  const selectedKey =
+    MENU_ITEMS.find((m) => location.pathname === m.key)
+      ? location.pathname
+      : MENU_ITEMS.find((m) => m.key !== '/' && location.pathname.startsWith(m.key))?.key ?? '/';
 
   const logo = (
-    <strong style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-body-md)' }}>
+    <strong style={{ color: '#1890ff', fontSize: 18, letterSpacing: 0.5 }}>
       CacheSol
     </strong>
   );
@@ -56,6 +98,12 @@ function RegistryAdminInner({ children }: { children: React.ReactNode }) {
     />
   );
 
+  // ── Embedded: chỉ render children (sidebar + header đã ở MainLayout) ──
+  if (embedded) {
+    return <>{children}</>;
+  }
+
+  // ── Standalone: render full AdminShell + AppHeader ──
   return (
     <AdminShell
       adminId="registry-admin"
@@ -111,9 +159,10 @@ function RegistryAdminInner({ children }: { children: React.ReactNode }) {
 }
 
 export function RegistryAdminShell({ children }: { children: React.ReactNode }) {
+  const embedded = useShellAvailable();
   return (
     <PlatformRegistryProvider>
-      <RegistryAdminInner>{children}</RegistryAdminInner>
+      <RegistryAdminInner embedded={embedded}>{children}</RegistryAdminInner>
     </PlatformRegistryProvider>
   );
 }

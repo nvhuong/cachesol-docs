@@ -40,6 +40,9 @@ export const manifest: MiniAppManifest = {
   icon: 'appstore',
   author: 'CacheSol',
 
+  /** Mounted at /registry/* inside the shell. */
+  routePrefix: 'registry',
+
   routes: [
     { path: '/login', title: 'Sign in', component: LoginPageLazy, layout: 'blank', showInMenu: false, permissions: ['registry_admin'] },
     { path: '/', title: 'Dashboard', component: DashboardPageLazy, layout: 'main', showInMenu: true, permissions: ['registry_admin'] },
@@ -54,12 +57,12 @@ export const manifest: MiniAppManifest = {
   permissions: ['registry_admin'],
 
   menu: [
-    { key: 'dashboard', labelKey: 'menu.dashboard', icon: 'dashboard', order: 1, path: '/' },
-    { key: 'tenants', labelKey: 'menu.tenants', icon: 'team', order: 2, path: '/tenants' },
-    { key: 'mini-apps', labelKey: 'menu.mini-apps', icon: 'appstore', order: 3, path: '/mini-apps' },
-    { key: 'providers', labelKey: 'menu.providers', icon: 'cloud', order: 4, path: '/providers' },
-    { key: 'settings', labelKey: 'menu.settings', icon: 'setting', order: 5, path: '/settings' },
-    { key: 'audit', labelKey: 'menu.audit', icon: 'history', order: 6, path: '/audit' },
+    { key: 'dashboard', labelKey: 'menu.dashboard', icon: 'dashboard', order: 1, path: '/registry/' },
+    { key: 'tenants', labelKey: 'menu.tenants', icon: 'team', order: 2, path: '/registry/tenants' },
+    { key: 'mini-apps', labelKey: 'menu.mini-apps', icon: 'appstore', order: 3, path: '/registry/mini-apps' },
+    { key: 'providers', labelKey: 'menu.providers', icon: 'cloud', order: 4, path: '/registry/providers' },
+    { key: 'settings', labelKey: 'menu.settings', icon: 'setting', order: 5, path: '/registry/settings' },
+    { key: 'audit', labelKey: 'menu.audit', icon: 'history', order: 6, path: '/registry/audit' },
   ],
 
   api: {

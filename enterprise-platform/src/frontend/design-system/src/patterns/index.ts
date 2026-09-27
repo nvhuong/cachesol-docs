@@ -1,6 +1,17 @@
 export { PageHeader, type PageHeaderProps, type BreadcrumbItem } from './PageHeader';
 export { AppHeader, useAppSwitcherSplit, type AppHeaderProps, type AppSwitcherItem, type NotificationItem } from './AppHeader';
 export { AdminShell, type AdminShellProps } from './AdminShell';
+export {
+  ShellProvider,
+  useShell,
+  useShellAvailable,
+  type ShellProviderProps,
+  type ShellContextValue,
+  type ShellConfigItem,
+  type ShellLanguage,
+  type ShellTheme,
+  type ShellDensity,
+} from './ShellContext';
 export { EmptyState, type EmptyStateProps, type EmptyStateType } from './EmptyState';
 export { StatusBadge, type StatusBadgeProps, type Status } from './StatusBadge';
 export { KPI, type KPIProps, type TrendDirection } from './KPI';
@@ -13,3 +24,4 @@ export { FormSection, type FormSectionProps } from './FormSection';
 export { DetailField, type DetailFieldProps } from './DetailField';
 export { CopyButton, type CopyButtonProps } from './CopyButton';
 export { Timeline, type TimelineProps, type TimelineItem } from './Timeline';
+export { resolveIcon, ICON_REGISTRY } from './icons';

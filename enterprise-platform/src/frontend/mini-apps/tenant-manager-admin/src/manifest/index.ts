@@ -50,6 +50,9 @@ export const manifest: MiniAppManifest = {
   icon: 'team',
   author: 'CacheSol',
 
+  /** Mounted at /tenant-manager/* inside the shell. */
+  routePrefix: 'tenant-manager',
+
   routes: [
     { path: '/login', title: 'Sign in', component: LoginPageLazy, layout: 'blank', showInMenu: false, permissions: ['tenant_admin'] },
     { path: '/', title: 'Dashboard', component: DashboardPageLazy, layout: 'main', showInMenu: true, permissions: ['tenant_admin'] },
@@ -67,16 +70,16 @@ export const manifest: MiniAppManifest = {
   permissions: ['tenant_admin'],
 
   menu: [
-    { key: 'dashboard', labelKey: 'menu.dashboard', icon: 'dashboard', order: 1, path: '/' },
-    { key: 'orgs', labelKey: 'menu.organizations', icon: 'cluster', order: 2, path: '/organizations' },
-    { key: 'employees', labelKey: 'menu.employees', icon: 'team', order: 3, path: '/employees' },
-    { key: 'job-titles', labelKey: 'menu.job-titles', icon: 'idcard', order: 4, path: '/job-titles' },
-    { key: 'roles', labelKey: 'menu.roles', icon: 'safety', order: 5, path: '/roles' },
-    { key: 'users', labelKey: 'menu.users', icon: 'user', order: 6, path: '/users' },
-    { key: 'keycloak', labelKey: 'menu.keycloak', icon: 'cloud', order: 7, path: '/keycloak' },
-    { key: 'provisioning', labelKey: 'menu.provisioning', icon: 'rocket', order: 8, path: '/provisioning' },
-    { key: 'audit', labelKey: 'menu.audit', icon: 'history', order: 9, path: '/audit' },
-    { key: 'settings', labelKey: 'menu.settings', icon: 'setting', order: 99, path: '/settings' },
+    { key: 'dashboard', labelKey: 'menu.dashboard', icon: 'dashboard', order: 1, path: '/tenant-manager/' },
+    { key: 'orgs', labelKey: 'menu.organizations', icon: 'cluster', order: 2, path: '/tenant-manager/organizations' },
+    { key: 'employees', labelKey: 'menu.employees', icon: 'team', order: 3, path: '/tenant-manager/employees' },
+    { key: 'job-titles', labelKey: 'menu.job-titles', icon: 'idcard', order: 4, path: '/tenant-manager/job-titles' },
+    { key: 'roles', labelKey: 'menu.roles', icon: 'safety', order: 5, path: '/tenant-manager/roles' },
+    { key: 'users', labelKey: 'menu.users', icon: 'user', order: 6, path: '/tenant-manager/users' },
+    { key: 'keycloak', labelKey: 'menu.keycloak', icon: 'cloud', order: 7, path: '/tenant-manager/keycloak' },
+    { key: 'provisioning', labelKey: 'menu.provisioning', icon: 'rocket', order: 8, path: '/tenant-manager/provisioning' },
+    { key: 'audit', labelKey: 'menu.audit', icon: 'history', order: 9, path: '/tenant-manager/audit' },
+    { key: 'settings', labelKey: 'menu.settings', icon: 'setting', order: 99, path: '/tenant-manager/settings' },
   ],
 
   api: {

@@ -1,7 +1,18 @@
 /**
  * Footer — public footer for landing pages.
+ *
+ * Same pattern as TopNav: anchor links use `/#anchor` so React Router handles
+ * the navigation, then the browser scrolls to the section on the home page.
  */
 import { Link } from 'react-router-dom';
+
+function FooterAnchor({ to, label }: { to: string; label: string }) {
+  return (
+    <Link className="cs-landing-footer__link" to={`/${to}`}>
+      {label}
+    </Link>
+  );
+}
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -22,30 +33,30 @@ export function Footer() {
         <div className="cs-landing-footer__col">
           <h4 className="cs-landing-footer__title">Sản phẩm</h4>
           <ul className="cs-landing-footer__links">
-            <li><a className="cs-landing-footer__link" href="#apps">Mini-apps</a></li>
-            <li><a className="cs-landing-footer__link" href="#pricing">Bảng giá</a></li>
-            <li><a className="cs-landing-footer__link" href="#docs">Tài liệu API</a></li>
-            <li><a className="cs-landing-footer__link" href="#status">Trạng thái</a></li>
+            <li><FooterAnchor to="#apps" label="Mini-apps" /></li>
+            <li><FooterAnchor to="#pricing" label="Bảng giá" /></li>
+            <li><FooterAnchor to="#docs" label="Tài liệu API" /></li>
+            <li><FooterAnchor to="#status" label="Trạng thái" /></li>
           </ul>
         </div>
 
         <div className="cs-landing-footer__col">
           <h4 className="cs-landing-footer__title">Công ty</h4>
           <ul className="cs-landing-footer__links">
-            <li><a className="cs-landing-footer__link" href="#about">Về chúng tôi</a></li>
-            <li><a className="cs-landing-footer__link" href="#contact">Liên hệ</a></li>
-            <li><a className="cs-landing-footer__link" href="#careers">Tuyển dụng</a></li>
-            <li><a className="cs-landing-footer__link" href="#blog">Blog</a></li>
+            <li><FooterAnchor to="#about" label="Về chúng tôi" /></li>
+            <li><FooterAnchor to="#contact" label="Liên hệ" /></li>
+            <li><FooterAnchor to="#careers" label="Tuyển dụng" /></li>
+            <li><FooterAnchor to="#blog" label="Blog" /></li>
           </ul>
         </div>
 
         <div className="cs-landing-footer__col">
           <h4 className="cs-landing-footer__title">Pháp lý</h4>
           <ul className="cs-landing-footer__links">
-            <li><a className="cs-landing-footer__link" href="#privacy">Chính sách bảo mật</a></li>
-            <li><a className="cs-landing-footer__link" href="#terms">Điều khoản dịch vụ</a></li>
-            <li><a className="cs-landing-footer__link" href="#dpa">DPA</a></li>
-            <li><a className="cs-landing-footer__link" href="#security">Security</a></li>
+            <li><FooterAnchor to="#privacy" label="Chính sách bảo mật" /></li>
+            <li><FooterAnchor to="#terms" label="Điều khoản dịch vụ" /></li>
+            <li><FooterAnchor to="#dpa" label="DPA" /></li>
+            <li><FooterAnchor to="#security" label="Security" /></li>
           </ul>
         </div>
       </div>

@@ -1,5 +1,13 @@
 /**
  * Tenant Manager AdminShell — combines AdminShell + sidebar + content router.
+ *
+ * Embedded mode (chạy trong web-shell): ShellContext có sẵn → chỉ render
+ * sidebar + outlet. AppHeader đã được render ở MainLayout phía trên.
+ *
+ * Standalone mode (chạy trong dev.tsx): ShellContext không có → render đầy
+ * đủ AdminShell với AppHeader riêng.
+ *
+ * Source: design-system/patterns/app-header.md
  */
 import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -16,7 +24,13 @@ import {
   HistoryOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
-import { AdminShell } from '@cachesol/design-system';
+import {
+  AdminShell,
+  useShell,
+  useShellAvailable,
+  resolveIcon,
+  type AppSwitcherItem,
+} from '@cachesol/design-system';
 import { TenantManagerProvider, useTenantManager } from './TenantManagerContext';
 
 const MENU_ITEMS = [
@@ -32,16 +46,48 @@ const MENU_ITEMS = [
   { key: '/settings', label: 'Settings', icon: <SettingOutlined /> },
 ];
 
-function TenantManagerAdminInner({ children }: { children: React.ReactNode }) {
+const TENANT_MANAGER_DEFAULT_APPS: AppSwitcherItem[] = [
+  { id: 'tenant-manager-admin', label: 'Tenant Manager', href: '/tenant-manager', icon: resolveIcon('team'), description: 'Quản trị tenant', active: true },
+  { id: 'registry-admin', label: 'Platform Registry', href: '/registry', icon: resolveIcon('appstore'), description: 'Tenants, mini-apps, providers' },
+  { id: 'hrm-mini-app', label: 'HRM', href: '/hrm/employees', icon: resolveIcon('team'), description: 'Quản lý nhân sự' },
+];
+
+function TenantManagerAdminInner({
+  children,
+  embedded,
+}: {
+  children: React.ReactNode;
+  embedded: boolean;
+}) {
   const navigate = useNavigate();
   const location = useLocation();
   const ctx = useTenantManager();
+  const shell = useShell();
 
+  // ── Sync local context → ShellContext (embedded mode only) ──
   useEffect(() => {
+    if (!embedded) return;
+
+    shell.setAppSwitcher(TENANT_MANAGER_DEFAULT_APPS);
+    shell.setActiveAppId('tenant-manager-admin');
+    shell.setBrand({ name: 'Tenant Manager' });
+    shell.setConfigItems([
+      { key: 'general', label: <Link to="/settings">General settings</Link> },
+      { key: 'orgs', label: <Link to="/organizations">Organizations</Link> },
+      { key: 'employees', label: <Link to="/employees">Employees</Link> },
+      { key: 'roles', label: <Link to="/roles">Roles & permissions</Link> },
+      { key: 'keycloak', label: <Link to="/keycloak">Keycloak sync</Link> },
+      { key: 'audit', label: <Link to="/audit">Audit log</Link> },
+    ]);
+  }, [embedded, shell]);
+
+  // Standalone: auto-login mock admin
+  useEffect(() => {
+    if (embedded) return;
     if (!ctx.user) {
       ctx.login({ name: 'Tenant Admin', email: 'admin@acme.com', tenantId: 'tnt_acme' });
     }
-  }, [ctx]);
+  }, [ctx, embedded]);
 
   const selectedKey =
     MENU_ITEMS.find((m) => m.key === location.pathname)?.key ??
@@ -49,7 +95,7 @@ function TenantManagerAdminInner({ children }: { children: React.ReactNode }) {
     '/';
 
   const logo = (
-    <strong style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-body-md)' }}>
+    <strong style={{ color: '#1890ff', fontSize: 18, letterSpacing: 0.5 }}>
       CacheSol
     </strong>
   );
@@ -64,6 +110,12 @@ function TenantManagerAdminInner({ children }: { children: React.ReactNode }) {
     />
   );
 
+  // ── Embedded: chỉ render children (sidebar + header đã ở MainLayout) ──
+  if (embedded) {
+    return <>{children}</>;
+  }
+
+  // ── Standalone: full AdminShell + AppHeader ──
   return (
     <AdminShell
       adminId="tenant-manager-admin"
@@ -116,9 +168,10 @@ function TenantManagerAdminInner({ children }: { children: React.ReactNode }) {
 }
 
 export function TenantManagerAdminShell({ children }: { children: React.ReactNode }) {
+  const embedded = useShellAvailable();
   return (
     <TenantManagerProvider>
-      <TenantManagerAdminInner>{children}</TenantManagerAdminInner>
+      <TenantManagerAdminInner embedded={embedded}>{children}</TenantManagerAdminInner>
     </TenantManagerProvider>
   );
 }

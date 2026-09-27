@@ -13,6 +13,9 @@ export const manifest: MiniAppManifest = {
   icon: 'TeamOutlined',
   author: 'CacheSol HRM Team',
 
+  /** Mounted at /hrm/* inside the shell. */
+  routePrefix: 'hrm',
+
   // Routes mà mini app này đăng ký
   // Shell sẽ tự động load component từ đường dẫn này
   routes: [
@@ -54,7 +57,7 @@ export const manifest: MiniAppManifest = {
       labelKey: 'menu.employees',
       icon: 'TeamOutlined',
       order: 10,
-      path: '/employees',
+      path: '/hrm/employees',
       permissions: ['employee:read'],
     },
   ],
